@@ -1,0 +1,1 @@
+local require = GLOBAL.require

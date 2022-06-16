@@ -1,0 +1,4 @@
+T 13.7
+
+- fixed crash issue : when you equipped Yamchae on head and opened his container.
+- fixed Yamche eggs issue : Prevent it from turning into a hatching state(cracking) in player inventory. 

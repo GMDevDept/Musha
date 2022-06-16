@@ -1,0 +1,100 @@
+[DST] Yamche Manual
+
+[h1] ::::::: Yamche Basic Information :::::: [/h1]
+[*] Yamche is a special companion phoenix.
+[*] Hatch the egg and grow him through 8 stages.
+[*] Many special abilities and fuctions.
+[*] He's color and name is random.(each reborn)
+[*] Only one Yamche => follow one musha.
+[*] Following / Staying: Hotkey (Z)
+[*] Change battle stance: Hotkey (V)
+[*] Collect stuffs: Hotkey (B)
+
+[h1] Level Up System [/h1]
+[*] Yamche grows in 8 stages.
+[*] require [EXP] points for each levels up.
+[*] each levels up: Stamina +100, hunger +10, Damage +5
+(Basic Stat(Level 1): Stamina 100, hunger 30, Damage 10)
+[*] increase container size (0 => 20 slot)
+[*] increase skill damage.
+
+[h1] Survival [/h1]
+[*] Yamche can die if he continues to starve.
+[*] Yamche will find something to eat himself if he is hungry.
+[*] If he is asleep, he will not hungry anymore.
+[*] Yamche will give random item by amazing magic poop when eating a food.
+[*] Yamche can use a healing spell, if master musha's health is low. (Hungry cost)
+[*] Lights up at night. (increase hungry consumption)
+[*] If you drag a burning object like a tree to the Yamche, he will turn into a campfire form.
+[*] A blue Yamche campfire is a cold fire that absorbs heat.
+[*] Yamche will help you when you are in woodcutting or mining.
+[*] Yamche can collect stuffs by (B) key.
+[*] Collect working((B) Key) : increase hungry consumption
+
+[h1] Battle [/h1]
+[*] Brave Yamche fights against enemies with his master.
+[*] Health more than 50%: fast melee attack
+[*] Health less than 50% : keep distance, ranged attack, freeze reflection, health regeneration
+[*] Blue Yamche is weaker damage than other Yamche. however he can always frost attack.
+[*] Green Yamche is slightly less damage than other Yamche, but he will use more often healing spell and the skill cost is free.
+[*] When Master uses [Lightning of Power], he follow attacks with lightning.
+
+Combat Command: (V) Key
+[*] Aggressive
+- Hunting: free fight, first strike.
+- Lightning: sometimes he can attack with lightning spell (random, auto)
+- Armor: Damage absorption 35%
+[*] Defensive
+- Protection: Yamche focus on protecting the Musha in combat.
+- When Master's health is less than 95%, provoke the enemy.
+- When Musha's health is less than 50%, he will provoke the enemies (wide area).
+- Armor: Damage absorption 50%
+[*] Avoiding
+- Always avoid: Do not join all battles.
+- Armor: Damage absorption 95%
+
+[*] Recovery of health
+- Health is slowly recovered.
+- Fast regenerate health when his health is below 50%.
+- When Yamche is asleep, his health will quickly regenerate.
+- All food will restore 5% health.
+- High-value food => Restores 100 ~ 500 health.
+
+-------------------------------------------------- ----
+
+[h1] Other features [/h1]
+
+[*] The sacrifice of the yamche
+- If Musha become a ghost after death, you can resurrect by clicking Yamcha.
+- Yamche will turn into the previous level egg if you resurrection by him.
+
+[*] Lightning Shield
+- if Yamche health less than 50%, healing small health when attacked by ememy.
+
+[*] Freezing Reflections
+- if Yamche health less than 50%, he can reflect frost when attacked by ememy.
+
+[*]shield
+- When health is below 20%, damage absorption 100%
+- Flame reflection
+- Cooldown : 300 seconds
+
+[*] Lightning Strike
+- When you uses [Lightning of Power], Yamche will follow attacks with lightning.
+- Increased damage depending on his level.
+- Cost: -4 ~ -12 (health)
+- Blue Yamche [Freezing Lightning]
+
+[*] Sanity Aura
+- Change aura efficiency according to his current hunger.
+
+[*] Blue one inventory is a refrigerator.
+[*] It is immune to fire.
+[*] Every 5-10 minutes [Glow Dust] Drops.
+
+[*] Yamche Hat (Baby, Level 1)
+- Light, movement speed increase (25%), warmth, sanity recovery (small)
+- If you feed him while wearing, he will not gain exp.
+
+[*] if you feed the crystal, Yamche will return to phoenix egg. (egg of current level)
+- When Yamche eats crystal, will summon one of apple tree or light bulb flower or glow berry.
