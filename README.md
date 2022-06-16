@@ -3,4 +3,4 @@
 
 ## TODO
 
-1. [ ] Display skins on character selection screen
+1. [X] Display skins on character selection screen
