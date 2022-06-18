@@ -6,6 +6,20 @@ STRINGS.CHARACTER_NAMES.musha = "Musha"
 STRINGS.CHARACTER_DESCRIPTIONS.musha = "Level(L) Skill(K) Visual(P) Sleep(T) Shield(C) Valkyrie(V) Strike(R) Music(U) Shadow(G) Yamche(X) Battle(Z) Gather(B) Dall(N) Arong(Y)"
 STRINGS.CHARACTER_QUOTES.musha = " I am a true Princess! "
 
+-- Skins
+STRINGS.SKIN_NAMES.musha_none = "Normal"
+STRINGS.SKIN_DESCRIPTIONS.musha_none = ""
+STRINGS.SKIN_QUOTES.musha_none = ""
+STRINGS.SKIN_NAMES.musha_full = "Full"
+STRINGS.SKIN_DESCRIPTIONS.musha_full = ""
+STRINGS.SKIN_QUOTES.musha_full = ""
+STRINGS.SKIN_NAMES.musha_valkyrie = "Valkyrie"
+STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = ""
+STRINGS.SKIN_QUOTES.musha_valkyrie = ""
+STRINGS.SKIN_NAMES.musha_berserker = "Berserker"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserker = ""
+STRINGS.SKIN_QUOTES.musha_berserker = ""
+
 STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("Maybe, she can join my books club.")
 STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("Royal blood? Hmm...")
 STRINGS.CHARACTERS.WOODIE.DESCRIBE.MUSHA = ("She can transform?... No, maybe not.")

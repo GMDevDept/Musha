@@ -4,10 +4,10 @@ local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
 
     -- Musha character textures
-    Asset( "ANIM", "anim/musha/musha_battle.zip" ), 
-    Asset( "ANIM", "anim/musha/musha.zip" ),
     Asset( "ANIM", "anim/musha/musha_normal.zip" ),
-    Asset( "ANIM", "anim/musha/musha_hunger.zip" ),
+    Asset( "ANIM", "anim/musha/musha_full.zip" ),
+    Asset( "ANIM", "anim/musha/musha_valkyrie.zip" ), 
+    Asset( "ANIM", "anim/musha/musha_berserker.zip" ),
     Asset( "ANIM", "anim/musha/ghost_musha_build.zip" ),
 }
 
@@ -96,15 +96,4 @@ local function master_postinit(inst)
 end
 
 return -- Character and skin on selection screen
-    MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit),
-    CreatePrefabSkin("musha_none", {
-        base_prefab = "musha", 
-        skins = {
-            normal_skin = "musha",
-            ghost_skin = "ghost_musha_build",
-        }, 
-        assets = assets,
-        skin_tags = {"BASE", "CHARACTER"},
-        build_name_override = "musha",
-    })
-
+    MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit)

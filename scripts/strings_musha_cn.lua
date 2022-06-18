@@ -10,10 +10,20 @@ STRINGS.CHARACTER_DESCRIPTIONS.musha = "[升级解锁技能]\n状态(L) 技能(K
 STRINGS.CHARACTER_QUOTES.musha = "我是真正的公主！"
 STRINGS.CHARACTER_SURVIVABILITY.musha = "想死都难"
 
--- Skin
-STRINGS.SKIN_NAMES.musha_none = "经典"
-STRINGS.SKIN_DESCRIPTIONS.musha_none = "公主正装"
-STRINGS.SKIN_QUOTES.musha_none = "这是Musha最喜欢的一套盔甲！"
+-- Skins
+STRINGS.SKIN_NAMES.musha_none = "通常"
+STRINGS.SKIN_DESCRIPTIONS.musha_none = "默认状态，饱食度低于150时自动触发\n"
+STRINGS.SKIN_QUOTES.musha_none = "我是真正的公主！"
+STRINGS.SKIN_NAMES.musha_full = "充盈"
+STRINGS.SKIN_DESCRIPTIONS.musha_full = "充盈状态，饱食度高于150时自动触发\n"
+STRINGS.SKIN_QUOTES.musha_full = "吃饱饱，睡好好~"
+STRINGS.SKIN_NAMES.musha_valkyrie = "女武神"
+STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：等级达到3级后按R键触发\n"
+STRINGS.SKIN_QUOTES.musha_valkyrie = "就让你见识，Musha真正的力量！"
+STRINGS.SKIN_NAMES.musha_berserker = "狂战士"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserker = "解锁条件：满月/新月之夜自动触发（无等级限制），或食用怪物类食物主动触发（要求等级达到7级）"
+STRINGS.SKIN_QUOTES.musha_berserker = "狂暴状态，限制解除！"
+
 
 STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("也许她能成为我书友会的成员。")
 STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("贵族的血？唔...")

@@ -9,9 +9,15 @@ Assets = {
     Asset( "IMAGE", "bigportraits/musha.tex" ),
     Asset( "ATLAS", "bigportraits/musha.xml" ),
 
-    -- Character full portrait (oval) on selecting screen (default skin)
+    -- Character full portrait (oval) on selecting screen (for skins)
     Asset( "IMAGE", "bigportraits/musha_none.tex" ),  
     Asset( "ATLAS", "bigportraits/musha_none.xml" ),
+    Asset( "IMAGE", "bigportraits/musha_full.tex" ),
+    Asset( "ATLAS", "bigportraits/musha_full.xml" ),
+    Asset( "IMAGE", "bigportraits/musha_valkyrie.tex" ),
+    Asset( "ATLAS", "bigportraits/musha_valkyrie.xml" ),
+    Asset( "IMAGE", "bigportraits/musha_berserker.tex" ),
+    Asset( "ATLAS", "bigportraits/musha_berserker.xml" ),
 
     -- Map icon
     Asset( "IMAGE", "images/map_icons/musha_mapicon.tex" ),
