@@ -16,9 +16,9 @@ STRINGS.SKIN_QUOTES.musha_full = ""
 STRINGS.SKIN_NAMES.musha_valkyrie = "Valkyrie"
 STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = ""
 STRINGS.SKIN_QUOTES.musha_valkyrie = ""
-STRINGS.SKIN_NAMES.musha_berserker = "Berserker"
-STRINGS.SKIN_DESCRIPTIONS.musha_berserker = ""
-STRINGS.SKIN_QUOTES.musha_berserker = ""
+STRINGS.SKIN_NAMES.musha_berserk = "Berserk"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserk = ""
+STRINGS.SKIN_QUOTES.musha_berserk = ""
 
 STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("Maybe, she can join my books club.")
 STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("Royal blood? Hmm...")

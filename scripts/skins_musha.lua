@@ -18,7 +18,7 @@
 --     "musha_none",
 --     "musha_full",
 --     "musha_valkyrie",
---     "musha_berserker"
+--     "musha_berserk"
 -- }
 
 local recipe_help = true
@@ -421,13 +421,13 @@ MakeCharacterSkin("musha","musha_valkyrie",{
     skin_tags = {"musha"},
 })
 
-MakeCharacterSkin("musha","musha_berserker",{
-    name = "Berserker",
+MakeCharacterSkin("musha","musha_berserk",{
+    name = "Berserk",
     des = "",
     quotes = "",
-    build_name_override = "musha_berserker",
+    build_name_override = "musha_berserk",
 	rarity = "Spiffy",
 	-- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = {normal_skin = "musha_berserker", ghost_skin = "ghost_musha_build"},
+    skins = {normal_skin = "musha_berserk", ghost_skin = "ghost_musha_build"},
     skin_tags = {"musha"},
 })

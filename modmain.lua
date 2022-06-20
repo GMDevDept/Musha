@@ -1,20 +1,28 @@
 -- Inherit variables from GLOBAL
-GLOBAL.setmetatable(env,{__index=function(t,k) return GLOBAL.rawget(GLOBAL,k) end})
+GLOBAL.setmetatable(env,{__index = function(t,k) 
+    return GLOBAL.rawget(GLOBAL,k) 
+end})
+
 local require = GLOBAL.require
 local STRINGS = GLOBAL.STRINGS
 
 -- Run scripts
 modimport("scripts/prefab_asset.lua")
-modimport("scripts/skin.lua")
+modimport("scripts/skins_musha.lua")
 
--- Configuration options from modinfo.lua
-local modLanguage =  GetModConfigData("modLanguage")
+-- Configuration options from modinfo
+local modlanguage =  GetModConfigData("modlanguage")
+
+-- Hotkeys from modinfo
+GLOBAL.TUNING.MUSHA = {}
+GLOBAL.TUNING.MUSHA.hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114  --R
+GLOBAL.TUNING.MUSHA.hotkey_stealth = GetModConfigData("hotkey_stealth") or 115  --G
 
 -- Custom strings (i18n)
-if  modLanguage == "english" then
+if  modlanguage == "english" then
 	modimport("scripts/strings_musha_en.lua")   
 	STRINGS.CHARACTERS.MUSHA = require "speech_musha_en"    
-elseif modLanguage == "chinese" then
+elseif modlanguage == "chinese" then
 	modimport("scripts/strings_musha_cn.lua")
 	STRINGS.CHARACTERS.MUSHA = require "speech_musha_cn"
 end

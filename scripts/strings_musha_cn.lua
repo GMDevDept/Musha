@@ -20,9 +20,9 @@ STRINGS.SKIN_QUOTES.musha_full = "吃饱饱，睡好好~"
 STRINGS.SKIN_NAMES.musha_valkyrie = "女武神"
 STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：等级达到3级后按R键触发\n"
 STRINGS.SKIN_QUOTES.musha_valkyrie = "就让你见识，Musha真正的力量！"
-STRINGS.SKIN_NAMES.musha_berserker = "狂战士"
-STRINGS.SKIN_DESCRIPTIONS.musha_berserker = "解锁条件：满月/新月之夜自动触发（无等级限制），或食用怪物类食物主动触发（要求等级达到7级）"
-STRINGS.SKIN_QUOTES.musha_berserker = "狂暴状态，限制解除！"
+STRINGS.SKIN_NAMES.musha_berserk = "狂暴"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserk = "解锁条件：满月/新月之夜自动触发（无等级限制），或食用怪物类食物主动触发（要求等级达到7级）"
+STRINGS.SKIN_QUOTES.musha_berserk = "狂暴状态，限制解除！"
 
 
 STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("也许她能成为我书友会的成员。")
