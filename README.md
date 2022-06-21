@@ -8,3 +8,4 @@
 3. [ ] Musha level up
 4. [ ] MP system
 5. [ ] Disable hotkey when typing/console screen is active
+6. [ ] Ghost invisible fix

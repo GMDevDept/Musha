@@ -1,5 +1,8 @@
 PrefabFiles = {
     "musha",
+    
+    -- inventories
+    "frosthammer",
 }
 
 Assets = {
