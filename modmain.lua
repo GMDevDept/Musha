@@ -29,14 +29,14 @@ end
 -- The skins shown in the cycle view window on the character select screen.
 -- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
 local skin_modes = {
-    -- ghost_skin = {
-    --     type = "ghost_skin", -- When skin tab is setup, ghost skin will automatically be added, however you can change the zoom ratio using this option
-    --     anim_bank = "ghost", -- "wilson" or "ghost" unless you are not using the default animation banks like werebeaver
-    --     idle_anim = "idle", -- default animation to play such as "idle" or "idle_loop" for ghosts see SG_wilson
-    --     play_emotes = false, -- enable or disable emotes, werebeaver and ghost cannot play emotes
-    --     scale = 0.5, -- multiplier to change the size: zoom out 50%
-    --     offset = { 0, -25 } -- x,y offset: move down
-    -- },
+    ghost_skin = {
+        type = "ghost_skin", -- When skin tab is setup, ghost skin will automatically be added, however you can change the zoom ratio using this option
+        anim_bank = "ghost", -- "wilson" or "ghost" unless you are not using the default animation banks like werebeaver
+        idle_anim = "idle", -- default animation to play such as "idle" or "idle_loop" for ghosts see SG_wilson
+        play_emotes = false, -- enable or disable emotes, werebeaver and ghost cannot play emotes
+        scale = 0.5, -- multiplier to change the size: zoom out 50%
+        offset = { 0, -25 } -- x,y offset: move down
+    },
 }
 
 -- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.

@@ -7,11 +7,23 @@ local assets = {
 }
 
 local prefabs = {
-    "icespike_fx_1",
-    "icespike_fx_2",
-    "icespike_fx_3",
-    "icespike_fx_4",
+    -- "icespike_fx_1",
+    -- "icespike_fx_2",
+    -- "icespike_fx_3",
+    -- "icespike_fx_4",
 }
+
+-- Check weapon status and set damage
+local function update_damage(inst)
+    if inst.components.fueled:IsEmpty() then
+        inst.broken = true
+        inst.components.weapon:SetDamage(1)
+    else
+        inst.broken = false
+        local level_to_damage = {75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,120,130,140,150,160,170,180,190,200}
+        inst.components.weapon:SetDamage(level_to_damage[inst.level])
+    end
+end
 
 -- Exp to level
 local function update_level(inst)
@@ -19,33 +31,17 @@ local function update_level(inst)
         inst.level = 30
         inst.components.talker:Say("-["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."] \n["..STRINGS.MUSHA_ITEM_GROWPOINTS.."]\n".. "[ LEVEL MAX ]")
     else
-        local exp_to_level = {10,30,50,70,90,120,150,180,210,250,350,450,550,650,750,850,950,1050,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000,4000,9999} -- len = 30
+        local exp_to_level = {10,30,50,70,90,120,150,180,210,250,350,450,550,650,750,850,950,1050,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000,4000} -- len = 29
         for i,v in ipairs(exp_to_level) do
             if inst.exp < v then
                 inst.level = i
+                inst.required_exp = v
                 break
             end
         end
         inst.components.talker:Say("-["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."] \n["..STRINGS.MUSHA_ITEM_GROWPOINTS.."]\n".. (inst.exp).."/"..exp_to_level[inst.level])
     end
-end
-
--- Check weapon status and set damage
-local function update_damage(inst)
-    if inst.components.fueled:IsEmpty() then
-        inst.broken = true
-    elseif not inst.components.fueled:IsEmpty() then
-        inst.broken = false
-    end
-
-    if inst.broken then
-        inst.components.weapon:SetDamage(1)
-        inst.components.talker:Say(STRINGS.MUSHA_WEAPON_BROKEN.." \n"..STRINGS.MUSHA_WEAPON_DAMAGE.." (1)")
-    elseif not inst.broken then
-        local level_to_damage = {75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,120,130,140,150,160,170,180,190,200}
-        inst.components.weapon:SetDamage(level_to_damage[inst.level])
-        inst.components.talker:Say("[" ..STRINGS.MUSHA_WEAPON_FROSTHAMMER.. "] \n(LV"..inst.level..")\n"..STRINGS.MUSHA_WEAPON_DAMAGE.." ("..level_to_damage[inst.level]..")")
-    end
+    update_damage(inst)
 end
 
 -- Broken anime
@@ -70,10 +66,40 @@ local function fx_boost(inst)
     end	
 end
 
--- On attack
-local function onattack(inst, attacker, target, data)
-    update_damage(inst)
+-- Words to declare on boost
+local function speak_boost_on(inst)
+    local base_str = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
+        ..STRINGS.MUSHA_WEAPON_DAMAGE.." ("..inst.components.weapon.damage..")\n"
+        .."LV ( "..inst.level.."/".."30 )\n"
+        .."EXP ( "..inst.exp.."/"..inst.required_exp.." )\n"
+        ..STRINGS.MUSHA_WEAPON_AREA.."\n"
+        ..STRINGS.MUSHA_WEAPON_FREEZESLOW.."\n"
+
+    local extra_str1 = STRINGS.MUSHA_WEAPON_TENTACLE_FROST.."\n"
+    local extra_str2 = STRINGS.MUSHA_WEAPON_COOLER.."\n"
     
+    local declaration = extra_str2..base_str..extra_str1
+    return declaration
+end
+
+-- Words to declare on boost off
+local function speak_boost_off(inst)
+    local base_str = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
+        ..STRINGS.MUSHA_WEAPON_DAMAGE.." ("..inst.components.weapon.damage..")\n"
+        .."LV ( "..inst.level.."/".."30 )\n"
+        .."EXP ( "..inst.exp.."/"..inst.required_exp.." )\n"
+
+    local declaration = base_str
+    return declaration
+end
+
+-- Reticule (gamepad support)
+local function yellow_reticuletargetfn()
+    return Vector3(ThePlayer.entity:LocalToWorldSpace(5, 0, 0))
+end
+
+-- On attack
+local function onattack(inst, attacker, target, data)    
     local freezechance1 = 0.42
     local freezechance2 = 0.52
     local freezechance3 = 0.62
@@ -92,12 +118,16 @@ local function onattack(inst, attacker, target, data)
     TheWorld:DoTaskInTime(1, function() fx2.Transform:SetPosition(pos:Get()) end)
 
     if target and not inst.broken then
-        inst.components.fueled:DoDelta(-50000)
+        inst.components.fueled:DoDelta(-500000)
+        -- same as on deplete
+        -- if inst.components.fueled:IsEmpty() then
+        --     update_damage(inst)
+        -- end
     elseif target and inst.broken then
         fx_splash(inst)
         inst.components.talker:Say(STRINGS.MUSHA_WEAPON_BROKEN.." \n"..STRINGS.MUSHA_WEAPON_DAMAGE.." (1)")
     end
-    
+
     if target.components.freezable then
         target.components.freezable:AddColdness(1.65)
         target.components.freezable:SpawnShatterFX()
@@ -116,18 +146,10 @@ local function onattack(inst, attacker, target, data)
     if target.components.combat and not target:HasTag("companion") then
         target.components.combat:SuggestTarget(attacker)
     end
-
-    fx_boost(inst)
-end
-
--- Reticule
-local function yellow_reticuletargetfn()
-    return Vector3(ThePlayer.entity:LocalToWorldSpace(5, 0, 0))
 end
 
 -- On put in inventory
 local function onputininventory(inst)
-    update_damage(inst)
 end
 
 -- On equip
@@ -137,20 +159,20 @@ local function onequip(inst, owner)
         owner.components.inventory:Unequip(EQUIPSLOTS.HANDS, true)
         owner:DoTaskInTime(0.5, function()  owner.components.inventory:DropItem(inst) end)
     end
-    
-    update_damage(inst)
+
+    if not inst.boost then
+        inst.components.talker:Say(speak_boost_off(inst))
+        owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
+    else
+        fx_boost(inst)
+        inst.components.talker:Say(speak_boost_on(inst))
+		owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer2", "frosthammer")
+    end
+    owner.AnimState:Show("ARM_carry") 
+    owner.AnimState:Hide("ARM_normal")
 
     owner.frost = true
     owner.frosthammer_equipped = true
-    if inst.boost then
-		owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer2", "frosthammer")
-		owner.AnimState:Show("ARM_carry") 
-		owner.AnimState:Hide("ARM_normal")
-    end
-        owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
-        owner.AnimState:Show("ARM_carry") 
-        owner.AnimState:Hide("ARM_normal")
-    end
 end
 
 -- On unequip
@@ -172,8 +194,6 @@ local function onunequip(inst, owner)
         inst.task:Cancel() inst.task = nil 
     end
 
-    update_damage(inst)
-
     inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
     owner.AnimState:Hide("ARM_carry") 
     owner.AnimState:Show("ARM_normal") 
@@ -191,6 +211,7 @@ local function boost_on(inst)
 		owner.AnimState:Hide("ARM_normal")
     end
     inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
+    inst.components.talker:Say(speak_boost_on(inst))
     fx_boost(inst)
     inst.boost = true
 end	
@@ -198,24 +219,24 @@ end
 -- Boost mode off (right click)
 local function boost_off(inst, data)
     local owner = inst.components.inventoryitem.owner 
-    inst.SoundEmitter:PlaySound("dontstarve/common/fireOut")
-    inst.power = false
-    inst.boost = false
-
+    if owner ~= nil then
+        owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
+        owner.AnimState:Show("ARM_carry") 
+        owner.AnimState:Hide("ARM_normal") 
+    end
     if inst.components.heater then
         inst:RemoveComponent("heater")
     end
     if inst.components.spellcaster then
         inst:RemoveComponent("spellcaster")
     end
-    if owner ~= nil then
-        owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
-        owner.AnimState:Show("ARM_carry") 
-        owner.AnimState:Hide("ARM_normal") 
-    end
     if inst.boost_fx then
         inst.boost_fx:Remove()
     end
+    inst.SoundEmitter:PlaySound("dontstarve/common/fireOut")
+    inst.components.talker:Say(speak_boost_off(inst))
+    inst.power = false
+    inst.boost = false
 end
 
 -- On fuel deplete
@@ -225,11 +246,6 @@ end
 
 -- On add fuel
 local function onaddfuel(inst, item, data)
-    inst.components.fueled:DoDelta(8000000)
-    inst.broken = false 
-    fx_splash(inst)
-    update_damage(inst)  
-
     local expchance0 = 1
     local expchance1 = 0.3
     local expchance2 = 0.2
@@ -238,13 +254,15 @@ local function onaddfuel(inst, item, data)
     if not inst.forgelab_on then
             inst.exp = inst.exp + 2
             inst.components.talker:Say("-"..STRINGS.MUSHA_WEAPON_FROSTHAMMER.." \n"..STRINGS.MUSHA_ITEM_LUCKY.." +(2)\n["..STRINGS.MUSHA_ITEM_GROWPOINTS.."]".. (inst.level))
-            update_level(inst)
         end
     -- elseif inst.forgelab_on then
     --     inst.active_forge = true
 
     --     inst.SoundEmitter:PlaySound("dontstarve/common/fireAddFuel")
     -- end
+    inst.components.fueled:DoDelta(8000000)
+    fx_splash(inst)
+    update_level(inst)
 end
 
 
@@ -257,7 +275,7 @@ end
 local function onpreload(inst, data)
 	if data then
 		if data.exp then
-		    inst.exp = data.exp
+		    inst.exp = math.min(data.exp, 4000)
 			update_level(inst)
         end
 	end
@@ -265,14 +283,12 @@ end
 
 -- On load
 local function onload(inst, data)
-    update_damage(inst)
 end
 
 -- Main function
 local function fn()
     local inst = CreateEntity()
-    
-    inst:AddTag("waterproofer")
+
     inst:AddTag("musha_items")
     inst:AddTag("frost_hammer")
         
@@ -289,6 +305,10 @@ local function fn()
     inst.AnimState:PlayAnimation("idle")
 
     inst.MiniMapEntity:SetIcon( "frosthammer.tex" )
+	
+    if not TheWorld.ismastersim then
+        return inst
+    end
 
     inst:AddComponent("talker")
     inst.components.talker.fontsize = 20
@@ -300,20 +320,13 @@ local function fn()
     inst:AddComponent("tool")
     inst.components.tool:SetAction(ACTIONS.HAMMER)
 
-    inst:AddComponent("waterproofer")
-    inst.components.waterproofer.effectiveness = 0
-
     inst:AddComponent("weapon")
     inst.components.weapon:SetOnAttack(onattack)
     inst.components.weapon:SetRange(1.6)
         
-    inst:AddComponent("reticule")
+    inst:AddComponent("reticule") -- for gampad support
     inst.components.reticule.targetfn = yellow_reticuletargetfn
     inst.components.reticule.ease = true
-	
-    if not TheWorld.ismastersim then
-        return inst
-    end
   
     inst:AddComponent("inspectable")
     
@@ -343,9 +356,8 @@ local function fn()
     
     inst.exp = 0 
     inst.level = 1
-    inst.boost = false  
-    -- inst.check_exp = expexp 
-    -- inst:ListenForEvent("expup", expexp)
+    inst.required_exp = 10
+    inst.boost = false
 
     inst.OnSave = onsave
     inst.OnPreLoad = onpreload

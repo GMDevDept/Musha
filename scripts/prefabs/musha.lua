@@ -35,14 +35,14 @@ local function update_status(inst)
             if inst.musha_normal == true then
                 SpawnPrefab("chester_transform_fx").Transform:SetPosition(inst:GetPosition():Get())
             end
-            inst.AnimState:SetBuild("musha_full")
+            inst.components.skinner:SetSkinName("musha_full")
             inst.musha_full = true
             inst.musha_normal = false
         else
             if inst.musha_full == true then
                 SpawnPrefab("chester_transform_fx").Transform:SetPosition(inst:GetPosition():Get())
             end
-            inst.AnimState:SetBuild("musha_normal")
+            inst.components.skinner:SetSkinName("musha_none")
             inst.musha_full = false
             inst.musha_normal = true
         end            
@@ -115,7 +115,7 @@ local function toggle_valkyrie(inst)
         inst.musha_full = false
         inst.musha_normal = false
         SpawnPrefab("lucy_transform_fx").Transform:SetPosition(inst:GetPosition():Get())
-        inst.AnimState:SetBuild("musha_valkyrie")
+        inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.soundsname = "winnie"
     end
 end
@@ -138,7 +138,7 @@ local function toggle_stealth(inst)
         inst.musha_full = false
         inst.musha_normal = false
         SpawnPrefab("statue_transition").Transform:SetPosition(inst:GetPosition():Get())
-        inst.AnimState:SetBuild("musha_berserk")
+        inst.components.skinner:SetSkinName("musha_berserk")
         inst.soundsname = "wendy"
     end
 end
@@ -192,5 +192,4 @@ local function master_postinit(inst)
 	inst.OnPreLoad = onpreload
 end
 
-return -- Character and skin on selection screen
-    MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit)
+return MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit)
