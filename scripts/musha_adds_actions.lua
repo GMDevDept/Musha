@@ -49,10 +49,10 @@ ACTIONS.TURNON.fn = function(act)
     local tar = act.target or act.invobject
 	local owner = act.target.components.follower and act.target.components.follower.leader
 	
-    -- Musha's equipments (not including buildings) put on the ground, should not be able to turn on
-	if tar:HasTag("musha_items") then
-	    return false
-	end
+    -- Musha's equipments (not including buildings) put on the ground, return false if want to disable turning on
+	-- if tar:HasTag("musha_items") then
+	--     return false
+	-- end
 	
     -- General turnon-able items from game, keep unchanged
 	if tar and not tar:HasTag("critter") then

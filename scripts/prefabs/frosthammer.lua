@@ -1,17 +1,13 @@
 local assets = {
 	Asset("ANIM", "anim/inventories/frosthammer.zip"),
+	Asset("ANIM", "anim/inventories/frosthammer2.zip"),
 	Asset("ANIM", "anim/inventories/swap_frosthammer.zip"),
 	Asset("ANIM", "anim/inventories/swap_frosthammer2.zip"),
 	Asset("ATLAS", "images/inventoryimages/frosthammer.xml"),
 	Asset("IMAGE", "images/inventoryimages/frosthammer.tex"),
 }
 
-local prefabs = {
-    -- "icespike_fx_1",
-    -- "icespike_fx_2",
-    -- "icespike_fx_3",
-    -- "icespike_fx_4",
-}
+local prefabs = {}
 
 -- Check weapon status and set damage
 local function update_damage(inst)
@@ -20,7 +16,7 @@ local function update_damage(inst)
         inst.components.weapon:SetDamage(1)
     else
         inst.broken = false
-        local level_to_damage = {75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,120,130,140,150,160,170,180,190,200}
+        local level_to_damage = {75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,120,127,134,141,148,155,162,170,200} -- len = 30
         inst.components.weapon:SetDamage(level_to_damage[inst.level])
     end
 end
@@ -44,20 +40,35 @@ local function update_level(inst)
     update_damage(inst)
 end
 
--- Broken anime
-local function fx_splash(inst)
+-- Broken effects
+local function fx_broken(inst)
     local owner = inst.components.inventoryitem.owner
-    if owner ~= nil then
+    local fx = SpawnPrefab("weaponsparks")
+    if owner then
+        fx.entity:AddFollower():FollowSymbol( owner.GUID, "swap_object", 1, -350, 1 )
+    else
+        local offset = Vector3(0, 2.4, 0)
+        fx.Transform:SetPosition((inst:GetPosition() + offset):Get())
+    end
+    inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
+    inst.components.talker:Say(STRINGS.MUSHA_WEAPON_BROKEN.." \n"..STRINGS.MUSHA_WEAPON_DAMAGE.." (1)")
+end
+
+-- Add fuel effects
+local function fx_addfuel(inst)
+    local owner = inst.components.inventoryitem.owner
+    if owner then
         local fx = SpawnPrefab("firesplash_fx")
-        fx.Transform:SetScale(0.2, 0.2, 0.2)
+        fx.Transform:SetScale(0.3, 0.3, 0.3)
         fx.Transform:SetPosition(owner:GetPosition():Get())
+        inst.SoundEmitter:PlaySound("dontstarve/common/fireAddFuel")
     end	
 end
 
 -- Dynamic anime when boost mode is on
 local function fx_boost(inst)
     local owner = inst.components.inventoryitem.owner
-    if owner ~= nil then
+    if owner then
         inst.boost_fx = SpawnPrefab("lantern_winter_fx_held")
         inst.boost_fx.entity:AddFollower():FollowSymbol( owner.GUID, "swap_object", 1, -350, 1 )
             
@@ -68,28 +79,34 @@ end
 
 -- Words to declare on boost
 local function speak_boost_on(inst)
-    local base_str = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
+    local str1 = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
         ..STRINGS.MUSHA_WEAPON_DAMAGE.." ("..inst.components.weapon.damage..")\n"
-        .."LV ( "..inst.level.."/".."30 )\n"
-        .."EXP ( "..inst.exp.."/"..inst.required_exp.." )\n"
-        ..STRINGS.MUSHA_WEAPON_AREA.."\n"
+
+    local str2 = inst.level<30 and "EXP ( "..inst.exp.."/"..inst.required_exp.." )\n" or ""
+
+    local str3 = STRINGS.MUSHA_WEAPON_AREA.."\n"
         ..STRINGS.MUSHA_WEAPON_FREEZESLOW.."\n"
 
-    local extra_str1 = STRINGS.MUSHA_WEAPON_TENTACLE_FROST.."\n"
-    local extra_str2 = STRINGS.MUSHA_WEAPON_COOLER.."\n"
+    local str4 = STRINGS.MUSHA_WEAPON_TENTACLE_FROST.."\n"
+
+    local str5 = STRINGS.MUSHA_WEAPON_COOLER.."\n"
+
+    local str6 = inst.level<30 and "LV ( "..inst.level.."/30 )\n" or "LV ( "..inst.level.."/30 ) [ MAX ]\n"
     
-    local declaration = extra_str2..base_str..extra_str1
+    local declaration = str1..str6..str2..str3..str4..str5
     return declaration
 end
 
 -- Words to declare on boost off
 local function speak_boost_off(inst)
-    local base_str = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
+    local str1 = "["..STRINGS.MUSHA_WEAPON_FROSTHAMMER.."]\n"
         ..STRINGS.MUSHA_WEAPON_DAMAGE.." ("..inst.components.weapon.damage..")\n"
-        .."LV ( "..inst.level.."/".."30 )\n"
-        .."EXP ( "..inst.exp.."/"..inst.required_exp.." )\n"
 
-    local declaration = base_str
+    local str2 = inst.level<30 and "EXP ( "..inst.exp.."/"..inst.required_exp.." )\n" or ""
+
+    local str6 = inst.level<30 and "LV ( "..inst.level.."/30 )\n" or "LV ( "..inst.level.."/30 ) [ MAX ]\n"
+    
+    local declaration = str1..str6..str2
     return declaration
 end
 
@@ -100,42 +117,32 @@ end
 
 -- On attack
 local function onattack(inst, attacker, target, data)    
-    local freezechance1 = 0.42
-    local freezechance2 = 0.52
-    local freezechance3 = 0.62
-    local expchance = 0.1
-    local damagedur1 = 0.2
-    local damagedur2 = 0.5
-    local damagedur3 = 0.7
-    local damagedur4 = 1
-
     local fx = SpawnPrefab("groundpoundring_fx")
-    local fx2 = SpawnPrefab("groundpoundring_fx")
-    local pos = Vector3(target.Transform:GetWorldPosition())
-    fx.Transform:SetScale(0.3, 0.3, 0.3)
-    fx2.Transform:SetScale(1.2, 1.2, 1.2)
-    fx.Transform:SetPosition(pos:Get())
-    TheWorld:DoTaskInTime(1, function() fx2.Transform:SetPosition(pos:Get()) end)
+    fx.Transform:SetScale(0.45, 0.45, 0.45)
+    fx.Transform:SetPosition(target:GetPosition():Get())
 
     if target and not inst.broken then
-        inst.components.fueled:DoDelta(-500000)
-        -- same as on deplete
-        -- if inst.components.fueled:IsEmpty() then
-        --     update_damage(inst)
-        -- end
-    elseif target and inst.broken then
-        fx_splash(inst)
-        inst.components.talker:Say(STRINGS.MUSHA_WEAPON_BROKEN.." \n"..STRINGS.MUSHA_WEAPON_DAMAGE.." (1)")
-    end
+        inst.components.fueled:DoDelta(-50)
 
-    if target.components.freezable then
-        target.components.freezable:AddColdness(1.65)
-        target.components.freezable:SpawnShatterFX()
-        local prefab = "icespike_fx_"..math.random(1,4)
-        local fx = SpawnPrefab(prefab)
-        fx.Transform:SetScale(1.0, 2, 1.0)
-        fx.Transform:SetPosition(target:GetPosition():Get())
-    end	
+        if inst.boost then
+            local range = 2
+            local excludetags = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "companion", "wall", "musha_companion" }
+            attacker.components.combat:DoAreaAttack(target, range, inst, nil, nil, excludetags)
+        end
+
+        if target.components.freezable then
+            target.components.freezable:AddColdness(1.65)
+            target.components.freezable:SpawnShatterFX()
+            local prefab = "icespike_fx_"..math.random(1,4)
+            local fx = SpawnPrefab(prefab)
+            fx.Transform:SetScale(1.0, 2, 1.0)
+            fx.Transform:SetPosition(target:GetPosition():Get())
+        end	
+
+
+    elseif target and inst.broken then
+        fx_broken(inst)
+    end
 
     if target.components.sleeper and target.components.sleeper:IsAsleep() then
         target.components.sleeper:WakeUp()
@@ -143,13 +150,23 @@ local function onattack(inst, attacker, target, data)
     if target.components.burnable and target.components.burnable:IsBurning() then
         target.components.burnable:Extinguish()
     end
-    if target.components.combat and not target:HasTag("companion") then
-        target.components.combat:SuggestTarget(attacker)
-    end
 end
 
 -- On put in inventory
 local function onputininventory(inst)
+end
+
+-- On dropped to ground
+local function ondropped(inst)
+    if inst.boost then
+        inst.AnimState:SetBuild("frosthammer2")
+    else
+        inst.AnimState:SetBuild("frosthammer")
+    end
+end
+
+-- On pick up
+local function onpickup(inst)
 end
 
 -- On equip
@@ -177,7 +194,6 @@ end
 
 -- On unequip
 local function onunequip(inst, owner) 
-    inst.power = false
     owner.frost = false
     owner.frosthammer_equipped = false
 
@@ -191,10 +207,10 @@ local function onunequip(inst, owner)
         inst:RemoveComponent("spellcaster")
     end
     if inst.task then 
-        inst.task:Cancel() inst.task = nil 
+        inst.task:Cancel() 
+        inst.task = nil 
     end
 
-    inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
     owner.AnimState:Hide("ARM_carry") 
     owner.AnimState:Show("ARM_normal") 
     if inst.boost_fx then
@@ -205,25 +221,27 @@ end
 -- Boost mode on (right click)
 local function boost_on(inst)
     local owner = inst.components.inventoryitem.owner
-    if owner ~= nil then
+    if owner then
 		owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer2", "frosthammer")
-		owner.AnimState:Show("ARM_carry") 
-		owner.AnimState:Hide("ARM_normal")
+    else
+        inst.AnimState:SetBuild("frosthammer2")
     end
     inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
     inst.components.talker:Say(speak_boost_on(inst))
-    fx_boost(inst)
+    inst.components.equippable.walkspeedmult = 0.75
     inst.boost = true
+    fx_boost(inst)
 end	
     
 -- Boost mode off (right click)
 local function boost_off(inst, data)
     local owner = inst.components.inventoryitem.owner 
-    if owner ~= nil then
+    if owner then
         owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
-        owner.AnimState:Show("ARM_carry") 
-        owner.AnimState:Hide("ARM_normal") 
+    else
+        inst.AnimState:SetBuild("frosthammer")
     end
+
     if inst.components.heater then
         inst:RemoveComponent("heater")
     end
@@ -233,9 +251,10 @@ local function boost_off(inst, data)
     if inst.boost_fx then
         inst.boost_fx:Remove()
     end
+
     inst.SoundEmitter:PlaySound("dontstarve/common/fireOut")
     inst.components.talker:Say(speak_boost_off(inst))
-    inst.power = false
+    inst.components.equippable.walkspeedmult = 1
     inst.boost = false
 end
 
@@ -252,19 +271,16 @@ local function onaddfuel(inst, item, data)
     local expchance3 = 0.12  
 
     if not inst.forgelab_on then
-            inst.exp = inst.exp + 2
+            inst.exp = inst.exp + 1995
             inst.components.talker:Say("-"..STRINGS.MUSHA_WEAPON_FROSTHAMMER.." \n"..STRINGS.MUSHA_ITEM_LUCKY.." +(2)\n["..STRINGS.MUSHA_ITEM_GROWPOINTS.."]".. (inst.level))
         end
     -- elseif inst.forgelab_on then
     --     inst.active_forge = true
-
-    --     inst.SoundEmitter:PlaySound("dontstarve/common/fireAddFuel")
     -- end
-    inst.components.fueled:DoDelta(8000000)
-    fx_splash(inst)
+    inst.components.fueled:DoDelta(500)
+    fx_addfuel(inst)
     update_level(inst)
 end
-
 
 -- On save 
 local function onsave(inst, data)
@@ -276,13 +292,14 @@ local function onpreload(inst, data)
 	if data then
 		if data.exp then
 		    inst.exp = math.min(data.exp, 4000)
-			update_level(inst)
         end
 	end
 end
 
 -- On load
 local function onload(inst, data)
+    update_level(inst)
+    update_damage(inst)
 end
 
 -- Main function
@@ -290,6 +307,7 @@ local function fn()
     local inst = CreateEntity()
 
     inst:AddTag("musha_items")
+    inst:AddTag("musha_equipment")
     inst:AddTag("frost_hammer")
         
     inst.entity:AddTransform()
@@ -300,12 +318,14 @@ local function fn()
     inst.entity:SetPristine()
 
     MakeInventoryPhysics(inst)
+    MakeInventoryFloatable(inst, "small", 0.07, 0.73)
+
     inst.AnimState:SetBank("frosthammer")
     inst.AnimState:SetBuild("frosthammer")
     inst.AnimState:PlayAnimation("idle")
 
     inst.MiniMapEntity:SetIcon( "frosthammer.tex" )
-	
+    
     if not TheWorld.ismastersim then
         return inst
     end
@@ -332,6 +352,8 @@ local function fn()
     
     inst:AddComponent("inventoryitem")    
     inst.components.inventoryitem:SetOnPutInInventoryFn(onputininventory)
+    inst.components.inventoryitem:SetOnDroppedFn(ondropped)
+    inst.components.inventoryitem:SetOnPickupFn(onpickup)
     inst.components.inventoryitem.atlasname = "images/inventoryimages/frosthammer.xml"
     
     inst:AddComponent("equippable")
@@ -348,11 +370,13 @@ local function fn()
 
     inst:AddComponent("fueled")
     inst.components.fueled.fueltype = "BURNABLE"
-    inst.components.fueled:InitializeFuelLevel(40000000)    
+    inst.components.fueled:InitializeFuelLevel(1000)    
     inst.components.fueled:SetDepletedFn(ondeplete)
     inst.components.fueled.ontakefuelfn = onaddfuel
     inst.components.fueled.accepting = true
     inst.components.fueled:StopConsuming()        
+
+    MakeHauntableLaunch(inst)
     
     inst.exp = 0 
     inst.level = 1

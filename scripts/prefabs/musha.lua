@@ -179,6 +179,7 @@ local function master_postinit(inst)
 
 	-- Damage multiplier 
     inst.components.combat.damagemultiplier = 0.75
+    inst.components.combat.areahitdamagepercent = 0.5
 
     -- Hunger rate
 	inst.components.hunger.hungerrate = 1 * TUNING.WILSON_HUNGER_RATE
