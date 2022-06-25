@@ -310,22 +310,23 @@ local function fn()
     inst:AddTag("musha_equipment")
     inst:AddTag("frost_hammer")
         
-    inst.entity:AddTransform()
-    inst.entity:AddAnimState()
-    inst.entity:AddSoundEmitter()
-    inst.entity:AddNetwork()
-    inst.entity:AddMiniMapEntity()    
-    inst.entity:SetPristine()
+    inst.entity:AddTransform() -- Allows the entity to have a position in the world
+    inst.entity:AddAnimState() -- Allows the entity to have a sprite and animate it
+    inst.entity:AddSoundEmitter() -- Allows the entity to play sounds
+    inst.entity:AddNetwork() -- For networking the entity
+    inst.entity:AddMiniMapEntity() -- Allows the entity to be shown on the minimap    
 
-    MakeInventoryPhysics(inst)
-    MakeInventoryFloatable(inst, "small", 0.07, 0.73)
+    MakeInventoryPhysics(inst) -- Sets entity physics (radius, collisions, etc.)
+    MakeInventoryFloatable(inst, "small", 0.07, 0.73) -- Sets the inventory floatable
 
-    inst.AnimState:SetBank("frosthammer")
-    inst.AnimState:SetBuild("frosthammer")
-    inst.AnimState:PlayAnimation("idle")
+    inst.AnimState:SetBank("frosthammer") -- The name of the anime file
+    inst.AnimState:SetBuild("frosthammer") -- The name of the build
+    inst.AnimState:PlayAnimation("idle") -- Play idle animation on creation
 
     inst.MiniMapEntity:SetIcon( "frosthammer.tex" )
     
+    inst.entity:SetPristine() -- Initialize. All engine level components (Transform, AnimState, Physics, etc.) should be added before a call to SetPristine for a matter of reducing network usage
+
     if not TheWorld.ismastersim then
         return inst
     end
@@ -376,7 +377,7 @@ local function fn()
     inst.components.fueled.accepting = true
     inst.components.fueled:StopConsuming()        
 
-    MakeHauntableLaunch(inst)
+    MakeHauntableLaunch(inst) -- Sets the entity to be hauntable
     
     inst.exp = 0 
     inst.level = 1

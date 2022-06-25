@@ -12,9 +12,9 @@ local assets = {
 }
 
 -- Basic stats
-TUNING.MUSHA_HEALTH = 100
-TUNING.MUSHA_HUNGER = 100
-TUNING.MUSHA_SANITY = 100
+TUNING.MUSHA_HEALTH = 200
+TUNING.MUSHA_HUNGER = 200
+TUNING.MUSHA_SANITY = 200
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
@@ -119,8 +119,6 @@ local function toggle_valkyrie(inst)
         inst.soundsname = "winnie"
     end
 end
--- Use Remote Procedure Call, because client cannot handel components.health or sg
-AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie) 
 
 -- Toggle stealth mode
 local function toggle_stealth(inst)
@@ -142,7 +140,9 @@ local function toggle_stealth(inst)
         inst.soundsname = "wendy"
     end
 end
+
 -- Use Remote Procedure Call, because client cannot handel components.health or sg
+AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie) 
 AddModRPCHandler("musha", "toggle_stealth", toggle_stealth) 
 
 -- This initializes for both the server and client. Tags, animes and minimap icons can be added here.
@@ -157,11 +157,6 @@ local function common_postinit(inst)
 
 	-- Minimap icon
 	inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
-
-    -- Hotkey binds
-	inst:AddComponent("keyhandler")
-    inst.components.keyhandler:AddActionListener("musha", TUNING.MUSHA.hotkey_valkyrie, "toggle_valkyrie")
-    inst.components.keyhandler:AddActionListener("musha", TUNING.MUSHA.hotkey_stealth, "toggle_stealth")
 end
 
 -- This initializes for the server only. Components are added here.

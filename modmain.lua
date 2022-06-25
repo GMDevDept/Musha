@@ -1,13 +1,14 @@
--- Inherit variables from GLOBAL
+-- Inherit attributes from GLOBAL
 GLOBAL.setmetatable(env,{__index = function(t,k) 
     return GLOBAL.rawget(GLOBAL,k) 
 end})
 
 -- Run scripts
-modimport("scripts/prefab_asset.lua")
-modimport("scripts/musha_adds_skins.lua")
-modimport("scripts/musha_adds_recipe.lua")
-modimport("scripts/musha_adds_actions.lua")
+modimport("scripts/lib/assets.lua")
+modimport("scripts/lib/skins.lua")
+modimport("scripts/lib/recipes.lua")
+modimport("scripts/lib/actions.lua")
+modimport("scripts/lib/hotkeys.lua")
 
 -- Configuration options from modinfo
 local modlanguage =  GetModConfigData("modlanguage")
@@ -19,11 +20,11 @@ GLOBAL.TUNING.MUSHA.hotkey_stealth = GetModConfigData("hotkey_stealth") or 115  
 
 -- Custom strings (i18n)
 if  modlanguage == "english" then
-	modimport("scripts/strings_musha_en.lua")   
-	STRINGS.CHARACTERS.MUSHA = require "speech_musha_en"    
+	modimport("scripts/i18n/strings_musha_en.lua")   
+	STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_en")
 elseif modlanguage == "chinese" then
-	modimport("scripts/strings_musha_cn.lua")
-	STRINGS.CHARACTERS.MUSHA = require "speech_musha_cn"
+	modimport("scripts/i18n/strings_musha_cn.lua")
+	STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_cn")
 end
 
 -- The skins shown in the cycle view window on the character select screen.
