@@ -111,34 +111,33 @@ local function speak_boost_off(inst)
 end
 
 -- Reticule (gamepad support)
-local function yellow_reticuletargetfn()
+local function reticuletargetfn()
     return Vector3(ThePlayer.entity:LocalToWorldSpace(5, 0, 0))
 end
 
 -- On attack
 local function onattack(inst, attacker, target, data)    
-    local fx = SpawnPrefab("groundpoundring_fx")
-    fx.Transform:SetScale(0.45, 0.45, 0.45)
-    fx.Transform:SetPosition(target:GetPosition():Get())
-
     if target and not inst.broken then
         inst.components.fueled:DoDelta(-50)
 
-        if inst.boost then
+        if inst.boost then            
+            local fx = SpawnPrefab("groundpoundring_fx")
+            fx.Transform:SetScale(0.45, 0.45, 0.45)
+            fx.Transform:SetPosition(target:GetPosition():Get())
+
+            if target.components.freezable then
+                target.components.freezable:AddColdness(1.65)
+                target.components.freezable:SpawnShatterFX()
+                local prefab = "icespike_fx_"..math.random(1,4)
+                local fx = SpawnPrefab(prefab)
+                fx.Transform:SetScale(1.0, 2, 1.0)
+                fx.Transform:SetPosition(target:GetPosition():Get())
+            end	
+
             local range = 2
             local excludetags = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "companion", "wall", "musha_companion" }
             attacker.components.combat:DoAreaAttack(target, range, inst, nil, nil, excludetags)
         end
-
-        if target.components.freezable then
-            target.components.freezable:AddColdness(1.65)
-            target.components.freezable:SpawnShatterFX()
-            local prefab = "icespike_fx_"..math.random(1,4)
-            local fx = SpawnPrefab(prefab)
-            fx.Transform:SetScale(1.0, 2, 1.0)
-            fx.Transform:SetPosition(target:GetPosition():Get())
-        end	
-
 
     elseif target and inst.broken then
         fx_broken(inst)
@@ -308,7 +307,8 @@ local function fn()
 
     inst:AddTag("musha_items")
     inst:AddTag("musha_equipment")
-    inst:AddTag("frost_hammer")
+    inst:AddTag("frosthammer")
+    inst:AddTag("attackmodule_smite")
         
     inst.entity:AddTransform() -- Allows the entity to have a position in the world
     inst.entity:AddAnimState() -- Allows the entity to have a sprite and animate it
@@ -324,30 +324,23 @@ local function fn()
     inst.AnimState:PlayAnimation("idle") -- Play idle animation on creation
 
     inst.MiniMapEntity:SetIcon( "frosthammer.tex" )
+
+    inst:AddComponent("talker") -- Added on client side in order to work for clients
+    inst.components.talker.fontsize = 20
+    inst.components.talker.font = TALKINGFONT
+    inst.components.talker.colour = Vector3(0.7, 0.85, 1, 1)
+    inst.components.talker.offset = Vector3(200,-250,0)
+    inst.components.talker.symbol = "swap_object"
+        
+    inst:AddComponent("reticule") -- for gampad support
+    inst.components.reticule.targetfn = reticuletargetfn
+    inst.components.reticule.ease = true
     
     inst.entity:SetPristine() -- Initialize. All engine level components (Transform, AnimState, Physics, etc.) should be added before a call to SetPristine for a matter of reducing network usage
 
     if not TheWorld.ismastersim then
         return inst
     end
-
-    inst:AddComponent("talker")
-    inst.components.talker.fontsize = 20
-    inst.components.talker.font = TALKINGFONT
-    inst.components.talker.colour = Vector3(0.7, 0.85, 1, 1)
-    inst.components.talker.offset = Vector3(200,-250,0)
-    inst.components.talker.symbol = "swap_object"
-
-    inst:AddComponent("tool")
-    inst.components.tool:SetAction(ACTIONS.HAMMER)
-
-    inst:AddComponent("weapon")
-    inst.components.weapon:SetOnAttack(onattack)
-    inst.components.weapon:SetRange(1.6)
-        
-    inst:AddComponent("reticule") -- for gampad support
-    inst.components.reticule.targetfn = yellow_reticuletargetfn
-    inst.components.reticule.ease = true
   
     inst:AddComponent("inspectable")
     
@@ -360,14 +353,14 @@ local function fn()
     inst:AddComponent("equippable")
     inst.components.equippable:SetOnEquip(onequip)
     inst.components.equippable:SetOnUnequip(onunequip)
-    
-    inst:AddComponent("machine")
-    inst.components.machine.turnonfn = boost_on
-    inst.components.machine.turnofffn = boost_off
-    inst.components.machine.cooldowntime = 0
-    
-    inst:AddComponent("useableitem")
-    inst.components.useableitem:SetOnUseFn(boost_on)
+
+    inst:AddComponent("tool")
+    inst.components.tool:SetAction(ACTIONS.HAMMER)
+
+    inst:AddComponent("weapon")
+    inst.components.weapon:SetOnAttack(onattack)
+    inst.components.weapon:SetRange(1.6)
+    inst.components.weapon:SetDamage(75)
 
     inst:AddComponent("fueled")
     inst.components.fueled.fueltype = "BURNABLE"
@@ -375,7 +368,15 @@ local function fn()
     inst.components.fueled:SetDepletedFn(ondeplete)
     inst.components.fueled.ontakefuelfn = onaddfuel
     inst.components.fueled.accepting = true
-    inst.components.fueled:StopConsuming()        
+    inst.components.fueled:StopConsuming()
+    
+    inst:AddComponent("machine")
+    inst.components.machine.turnonfn = boost_on
+    inst.components.machine.turnofffn = boost_off
+    inst.components.machine.cooldowntime = 0
+    
+    inst:AddComponent("useableitem")
+    inst.components.useableitem:SetOnUseFn(boost_on)        
 
     MakeHauntableLaunch(inst) -- Sets the entity to be hauntable
     

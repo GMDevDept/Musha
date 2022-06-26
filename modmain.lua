@@ -9,6 +9,7 @@ modimport("scripts/lib/skins.lua")
 modimport("scripts/lib/recipes.lua")
 modimport("scripts/lib/actions.lua")
 modimport("scripts/lib/hotkeys.lua")
+modimport("scripts/lib/stategraphs.lua")
 
 -- Configuration options from modinfo
 local modlanguage =  GetModConfigData("modlanguage")
