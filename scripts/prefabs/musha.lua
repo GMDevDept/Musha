@@ -4,6 +4,7 @@ local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
 
     -- Musha character textures
+    Asset( "ANIM", "anim/musha/musha.zip" ),
     Asset( "ANIM", "anim/musha/musha_normal.zip" ),
     Asset( "ANIM", "anim/musha/musha_full.zip" ),
     Asset( "ANIM", "anim/musha/musha_valkyrie.zip" ), 
@@ -25,7 +26,16 @@ local start_inv = {}
 for k, v in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
     start_inv[string.lower(k)] = v.MUSHA
 end
-local prefabs = FlattenTree(start_inv, true)
+
+-- Character specific prefabs
+local prefabs = {
+    -- Starting inventories
+	"flowerhat",
+	"torch",
+
+    -- For mana, level, fatigue and stamina
+    "musha_classified", 
+}
 
 -- Update current status
 local function update_status(inst)
@@ -166,6 +176,9 @@ local function master_postinit(inst)
 
 	-- Set starting inventory
     inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
+
+    -- Mana
+    inst:AddComponent("mana")
 
 	-- Stats
     inst.components.health:SetMaxHealth(TUNING.MUSHA_HEALTH)

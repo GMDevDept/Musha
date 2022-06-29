@@ -3,13 +3,17 @@ GLOBAL.setmetatable(env,{__index = function(t,k)
     return GLOBAL.rawget(GLOBAL,k) 
 end})
 
+AddReplicableComponent("mana")
+
 -- Run scripts
+modimport("scripts/lib/prefabs.lua")
 modimport("scripts/lib/assets.lua")
 modimport("scripts/lib/skins.lua")
 modimport("scripts/lib/recipes.lua")
 modimport("scripts/lib/actions.lua")
 modimport("scripts/lib/hotkeys.lua")
 modimport("scripts/lib/stategraphs.lua")
+modimport("scripts/lib/statusdisplays.lua")
 
 -- Configuration options from modinfo
 local modlanguage =  GetModConfigData("modlanguage")

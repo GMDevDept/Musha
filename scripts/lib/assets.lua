@@ -1,10 +1,3 @@
-PrefabFiles = {
-    "musha",
-    
-    -- inventories
-    "frosthammer",
-}
-
 Assets = {
     -- Doesn't change anything ,but if not then error occurs:
     -- [string "scripts/widgets/redux/clothingexplorerpanel..."]:32: attempt to index field 'header' (a nil value)
@@ -40,6 +33,9 @@ Assets = {
     -- Portrait on the right side of toolbar
     Asset( "IMAGE", "images/avatars/self_inspect_musha.tex" ),
     Asset( "ATLAS", "images/avatars/self_inspect_musha.xml" ),
+
+    -- widgets
+    Asset( "ANIM", "anim/widgets/spellpower.zip" ),
 }
     
 AddMinimapAtlas("images/map_icons/musha_mapicon.xml")
