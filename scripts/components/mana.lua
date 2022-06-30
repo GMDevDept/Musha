@@ -7,7 +7,7 @@ local function oncurrent(self, current)
 end
 
 local function OnTaskTick(inst, self, period)
-    self:DoDec(period)
+    self:DoRegen(period)
 end
 
 local Mana = Class(function(self, inst)
@@ -15,12 +15,8 @@ local Mana = Class(function(self, inst)
     self.max = 100
     self.current = self.max
 
-    self.manarate = 1
-    self.hurtrate = 1
-    self.overridestarvefn = nil
-
-    self.burning = true
-    self.burnrate = 1
+    self.regen = true
+    self.regenrate = 1
 
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
@@ -42,28 +38,24 @@ function Mana:OnLoad(data)
     end
 end
 
-function Mana:SetOverrideStarveFn(fn)
-    self.overridestarvefn = fn
-end
-
 function Mana:LongUpdate(dt)
-    self:DoDec(dt, true)
+    self:DoRegen(dt)
 end
 
 function Mana:Pause()
-    self.burning = false
+    self.regen = false
 end
 
 function Mana:Resume()
-    self.burning = true
+    self.regen = true
 end
 
 function Mana:IsPaused()
-    return self.burning
+    return self.regen
 end
 
-function Mana:GetDebugString()
-    return string.format("%2.2f / %2.2f, rate: (%2.2f * %2.2f)", self.current, self.max, self.manarate, self.burnrate)
+function Mana:IsEmpty()
+    return self.current <= 0
 end
 
 function Mana:SetMax(amount)
@@ -71,8 +63,33 @@ function Mana:SetMax(amount)
     self.current = amount
 end
 
-function Mana:IsStarving()
-    return self.current <= 0
+function Mana:GetPercent()
+    return self.current / self.max
+end
+
+function Mana:SetPercent(p, overtime)
+    local old = self.current
+    self.current  = p * self.max
+    self.inst:PushEvent("manadelta", { oldpercent = old / self.max, newpercent = p, overtime = overtime })
+
+    if old > 0 then
+        if self.current <= 0 then
+            self.inst:PushEvent("startmanadepleted")
+            ProfileStatsSet("started_manadepleted", true)
+        end
+    elseif self.current > 0 then
+        self.inst:PushEvent("stopmanadepleted")
+        ProfileStatsSet("stopped_manadepleted", true)
+    end
+end
+
+function Mana:SetRate(rate)
+    self.regenrate = rate
+end
+
+function Mana:DoDeltaToRate(delta)
+    local old = self.regenrate
+    self.regenrate = self.regenrate + delta
 end
 
 function Mana:DoDelta(delta, overtime, ignore_invincible)
@@ -92,57 +109,25 @@ function Mana:DoDelta(delta, overtime, ignore_invincible)
 
     if old > 0 then
         if self.current <= 0 then
-            self.inst:PushEvent("startconsumingmana")
-            ProfileStatsSet("started_consumingmana", true)
+            self.inst:PushEvent("startmanadepleted")
+            ProfileStatsSet("started_manadepleted", true)
         end
     elseif self.current > 0 then
-        self.inst:PushEvent("stopconsumingmana")
-        ProfileStatsSet("stopped_consumingmana", true)
+        self.inst:PushEvent("stopmanadepleted")
+        ProfileStatsSet("stopped_manadepleted", true)
     end
 end
 
-function Mana:GetPercent()
-    return self.current / self.max
-end
-
-function Mana:SetPercent(p, overtime)
-    local old = self.current
-    self.current  = p * self.max
-    self.inst:PushEvent("manadelta", { oldpercent = old / self.max, newpercent = p, overtime = overtime })
-
-    if old > 0 then
-        if self.current <= 0 then
-            self.inst:PushEvent("startconsumingmana")
-            ProfileStatsSet("started_consumingmana", true)
-        end
-    elseif self.current > 0 then
-        self.inst:PushEvent("stopconsumingmana")
-        ProfileStatsSet("stopped_consumingmana", true)
-    end
-end
-
-function Mana:DoDec(dt, ignore_damage)
+function Mana:DoRegen(dt)
     local old = self.current
 
-    if self.burning then
-        if self.current > 0 then
-            self:DoDelta(-self.manarate * dt * self.burnrate, true)
-        elseif not ignore_damage then
-            if self.overridestarvefn ~= nil then
-                self.overridestarvefn(self.inst, dt)
-            else
-                self.inst.components.health:DoDelta(-self.hurtrate * dt, true, "mana") --  ich haber mana
-            end
-        end
+    if self.regen then
+        self:DoDelta(dt * self.regenrate, true)
     end
 end
 
-function Mana:SetKillRate(rate)
-    self.hurtrate = rate
-end
-
-function Mana:SetRate(rate)
-    self.manarate = rate
+function Mana:GetDebugString()
+    return string.format("%2.2f / %2.2f, rate: (%2.2f * %2.2f)", self.current, self.max, self.regenrate)
 end
 
 return Mana

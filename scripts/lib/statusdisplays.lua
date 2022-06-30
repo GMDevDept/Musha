@@ -5,6 +5,7 @@ local function ManaBadgeDisplay(self)
 		self.manabadge = self:AddChild(ManaBadge(self.owner))
 		self.owner.manabadge = self.manabadge
 		self._custombadge = self.manabadge 
+        self.onmanadelta = nil
 
 		local badge_boatmeter = self.boatmeter:GetPosition()
 		local badge_brain = self.brain:GetPosition()
@@ -14,6 +15,7 @@ local function ManaBadgeDisplay(self)
 			local Mod = KnownModIndex:GetModInfo(v).name
 			if Mod == "Combined Status" then 
 				AlwaysOnStatus = true
+                break
 			end
 		end
 
@@ -25,29 +27,25 @@ local function ManaBadgeDisplay(self)
 			self.boatmeter:SetPosition(badge_boatmeter.x - 90, badge_boatmeter.y + 21, 0)
 		end
 
-        self.manabadge:SetPercent(0.5, self.owner.components.mana.max)
+        function self:SetManaPercent(pct)
+            if self.owner.components.mana ~= nil then
+                self.manabadge:SetPercent(pct, self.owner.replica.mana:Max())
+            end
+        end
+        
+        function self:ManaDelta(data)
+            self:SetManaPercent(data.newpercent)
+        end
 
-		-- function self:ManaDelta(data)
-		-- 	self:SetManaPercent(data.newpercent)
-		-- end
+        local function OnSetPlayerMode(self)            
+            if self.onmanadelta == nil then
+                self.onmanadelta = function(owner, data) self:ManaDelta(data) end
+                self.inst:ListenForEvent("manadelta", self.onmanadelta, self.owner)
+                self:SetManaPercent(self.owner.replica.mana:GetPercent())
+            end
+        end
 
-		-- function self:SetManaPercent(pct)
-		-- 	if self.owner.components.mana ~= nil then
-		-- 		self.manabadge:SetPercent(pct, self.owner.components.mana.max)
-		-- 	end
-		-- end
-
-		-- local function OnSetPlayerMode(self)
-		-- 	if self.onmanadelta == nil then
-		-- 		self.onmanadelta = function(owner, data) self:ManaDelta(data) end
-		-- 		self.inst:ListenForEvent("manadelta", self.onmanadelta, self.owner)
-		-- 		if self.owner.components.mana ~= nil then
-		-- 			self:SetManaPercent(self.owner.components.mana:GetPercent())
-		-- 		end
-		-- 	end
-		-- end
-
-		-- OnSetPlayerMode(self)
+		OnSetPlayerMode(self)
 	end
 end
 

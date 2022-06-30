@@ -12,11 +12,6 @@ local assets = {
     Asset( "ANIM", "anim/musha/ghost_musha_build.zip" ),
 }
 
--- Basic stats
-TUNING.MUSHA_HEALTH = 200
-TUNING.MUSHA_HUNGER = 200
-TUNING.MUSHA_SANITY = 200
-
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
 	"flowerhat",
@@ -160,37 +155,36 @@ local function common_postinit(inst)
     -- Tags
     inst:AddTag("musha")
 
-    -- Warly
+    -- Able to craft and use Warly's items
 	inst:AddTag("masterchef")
     inst:AddTag("professionalchef")
     inst:AddTag("expertchef")
 
 	-- Minimap icon
 	inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
+
+	-- Choose which sounds this character will play
+	inst.soundsname = "willow"
 end
 
 -- This initializes for the server only. Components are added here.
 local function master_postinit(inst)
-	-- Choose which sounds this character will play
-	inst.soundsname = "willow"
-
 	-- Set starting inventory
     inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
 
     -- Mana
     inst:AddComponent("mana")
+    inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
+    inst.components.mana:SetRate(TUNING.MUSHA.manaregenrate)
 
 	-- Stats
-    inst.components.health:SetMaxHealth(TUNING.MUSHA_HEALTH)
-    inst.components.hunger:SetMax(TUNING.MUSHA_HUNGER)
-    inst.components.sanity:SetMax(TUNING.MUSHA_SANITY)
+    inst.components.health:SetMaxHealth(TUNING.MUSHA.health)
+    inst.components.hunger:SetMax(TUNING.MUSHA.hunger)
+    inst.components.sanity:SetMax(TUNING.MUSHA.sanity)
 
 	-- Damage multiplier 
     inst.components.combat.damagemultiplier = 0.75
     inst.components.combat.areahitdamagepercent = 0.5
-
-    -- Hunger rate
-	inst.components.hunger.hungerrate = 1 * TUNING.WILSON_HUNGER_RATE
 
     -- Food bonus
 	inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)

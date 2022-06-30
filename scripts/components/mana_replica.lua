@@ -78,4 +78,12 @@ function Mana:GetCurrent()
     end
 end
 
+function Mana:GetRate()
+    if self.inst.components.mana ~= nil then
+        return self.inst.components.mana.regenrate
+    else
+        return 1
+    end
+end
+
 return Mana

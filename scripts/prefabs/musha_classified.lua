@@ -51,10 +51,10 @@ local function OnManaDirty(inst)
         inst._parent:PushEvent("manadelta", data)
         if oldpercent > 0 then
             if percent <= 0 then
-                inst._parent:PushEvent("startconsumingmana")
+                inst._parent:PushEvent("startmanadepleted")
             end
         elseif percent > 0 then
-            inst._parent:PushEvent("stopconsumingmana")
+            inst._parent:PushEvent("stopmanadepleted")
         end
     else
         inst._oldmanapercent = 1
@@ -68,6 +68,7 @@ end
 local function RegisterNetListeners(inst)
     if TheWorld.ismastersim then
         inst._parent = inst.entity:GetParent()
+        inst:ListenForEvent("manadelta", OnManaDelta, inst._parent)
     else
         inst.ismanapulseup:set_local(false)
         inst.ismanapulsedown:set_local(false)

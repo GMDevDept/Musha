@@ -3,9 +3,14 @@ GLOBAL.setmetatable(env,{__index = function(t,k)
     return GLOBAL.rawget(GLOBAL,k) 
 end})
 
+-- Configuration options from modinfo
+local modlanguage =  GetModConfigData("modlanguage")
+
+-- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
 
 -- Run scripts
+modimport("scripts/lib/tuning.lua")
 modimport("scripts/lib/prefabs.lua")
 modimport("scripts/lib/assets.lua")
 modimport("scripts/lib/skins.lua")
@@ -14,14 +19,6 @@ modimport("scripts/lib/actions.lua")
 modimport("scripts/lib/hotkeys.lua")
 modimport("scripts/lib/stategraphs.lua")
 modimport("scripts/lib/statusdisplays.lua")
-
--- Configuration options from modinfo
-local modlanguage =  GetModConfigData("modlanguage")
-
--- Hotkeys from modinfo
-GLOBAL.TUNING.MUSHA = {}
-GLOBAL.TUNING.MUSHA.hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114  --R
-GLOBAL.TUNING.MUSHA.hotkey_stealth = GetModConfigData("hotkey_stealth") or 115  --G
 
 -- Custom strings (i18n)
 if  modlanguage == "english" then
