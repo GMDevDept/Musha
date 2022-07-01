@@ -1,10 +1,9 @@
 PrefabFiles = {
     "musha",
     
-    -- inventories
+    -- Equipments
     "frosthammer",
 
-    -- Misc.
-    "musha_classified"
+    -- Items
 }
 

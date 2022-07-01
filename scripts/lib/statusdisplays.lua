@@ -32,14 +32,12 @@ local function ManaBadgeDisplay(self)
 		end
 
         function self:SetManaPercent(pct)
-            if self.owner.components.mana ~= nil then
-                self.manabadge:SetPercent(pct, self.owner.replica.mana:Max())
-            
-                if pct <= 0 then
-                    self.manabadge:StartWarning()
-                else
-                    self.manabadge:StopWarning()
-                end
+            self.manabadge:SetPercent(pct, self.owner.replica.mana:Max())
+        
+            if pct <= 0 then
+                self.manabadge:StartWarning()
+            else
+                self.manabadge:StopWarning()
             end
         end
         

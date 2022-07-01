@@ -27,9 +27,6 @@ local prefabs = {
     -- Starting inventories
 	"flowerhat",
 	"torch",
-
-    -- For mana, level, fatigue and stamina
-    "musha_classified", 
 }
 
 -- Update current status

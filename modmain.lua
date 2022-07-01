@@ -18,6 +18,7 @@ modimport("scripts/lib/recipes.lua")
 modimport("scripts/lib/actions.lua")
 modimport("scripts/lib/hotkeys.lua")
 modimport("scripts/lib/stategraphs.lua")
+modimport("scripts/lib/player_classified.lua")
 modimport("scripts/lib/statusdisplays.lua")
 
 -- Custom strings (i18n)
