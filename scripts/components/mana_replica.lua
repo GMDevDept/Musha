@@ -82,7 +82,15 @@ function Mana:GetRate()
     if self.inst.components.mana ~= nil then
         return self.inst.components.mana.regenrate
     else
-        return 1
+        return 0
+    end
+end
+
+function Mana:GetDefaultRate()
+    if self.inst.components.mana ~= nil then
+        return self.inst.components.mana.defaultrate
+    else
+        return 0
     end
 end
 

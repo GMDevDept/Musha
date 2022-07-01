@@ -22,10 +22,11 @@ function ManaBadge:OnUpdate(dt)
     local anim = "neutral"
     if  self.owner ~= nil and
         self.owner.replica.mana ~= nil then
-
-        if self.owner.replica.mana:GetRate() > 0 then
+        
+        local defaultrate = self.owner.replica.mana:GetDefaultRate()
+        if self.owner.replica.mana:GetRate() > defaultrate then
             anim = "arrow_loop_increase"
-        elseif self.owner.replica.mana:GetRate() < 0 then
+        elseif self.owner.replica.mana:GetRate() < defaultrate then
             anim = "arrow_loop_decrease"
         end
     end

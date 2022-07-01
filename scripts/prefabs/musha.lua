@@ -176,6 +176,7 @@ local function master_postinit(inst)
     inst:AddComponent("mana")
     inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
     inst.components.mana:SetRate(TUNING.MUSHA.manaregenrate)
+    inst.components.mana.defaultrate = TUNING.MUSHA.manaregenrate
 
 	-- Stats
     inst.components.health:SetMaxHealth(TUNING.MUSHA.health)

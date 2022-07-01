@@ -12,11 +12,12 @@ end
 
 local Mana = Class(function(self, inst)
     self.inst = inst
-    self.max = 100
+    self.max = 0
     self.current = self.max
 
     self.regen = true
-    self.regenrate = 1
+    self.regenrate = 0
+    self.defaultrate = 0
 
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)

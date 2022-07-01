@@ -8,5 +8,5 @@ GLOBAL.TUNING.MUSHA = {
     hunger = 200,
     sanity = 200,
     maxmana = 50,
-    manaregenrate = -1,
+    manaregenrate = -0.33,
 }

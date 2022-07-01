@@ -59,7 +59,6 @@ AddClassPostConstruct("screens/chatinputscreen", function(self)
     end
 end)
 
-
 AddClassPostConstruct("widgets/controls", function(self)
     self.inst:DoTaskInTime(0.1, function()		
 		TheInput:AddKeyDownHandler(GLOBAL.TUNING.MUSHA.hotkey_valkyrie, function()
