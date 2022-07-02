@@ -27,6 +27,9 @@ local prefabs = FlattenTree(start_inv, true)
 
 -- Update current status
 local function update_status(inst)
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+        return
+    end
     -- Won't transform to full or normal if valkyrie or berserk is active
     if not inst.valkyrie_activated and not inst.berserk_activated then
         if inst.components.hunger:GetPercent() > 0.75 then
@@ -50,52 +53,13 @@ end
 
 -- When state changes, update morph availability and 
 local function onnewstate(inst)
-    -- if inst._wasnomorph ~= inst.sg:HasStateTag("nomorph") then
-    --     inst._wasnomorph = not inst._wasnomorph
-    --     if not inst._wasnomorph then
-    --         update_status(inst)
-    --     end
-    -- end
-end
-
--- When the character is revived to human
-local function onbecamehuman(inst)
-    inst.valkyrie_activated = false
-    inst.berserk_activated = false
-    inst:ListenForEvent("hungerdelta", update_status)
-    inst:ListenForEvent("newstate", onnewstate)
-    update_status(inst)
-end
-
--- When the character turn into a ghost 
-local function onbecameghost(inst)
-    inst.valkyrie_activated = false
-    inst.berserk_activated = false
-    inst:RemoveEventCallback("hungerdelta", update_status)
-    inst:RemoveEventCallback("newstate", onnewstate)
-end
-
--- When loading or spawning the character
-local function onload(inst)
-    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)
-    inst:ListenForEvent("ms_becameghost", onbecameghost)
-
-    if inst:HasTag("playerghost") then
-        onbecameghost(inst)
-    else
-        onbecamehuman(inst)
+    if inst._wasnomorph ~= inst.sg:HasStateTag("nomorph") then
+        inst._wasnomorph = not inst._wasnomorph
+        if not inst._wasnomorph then
+            update_status(inst)
+        end
     end
 end
-
--- When save game progress
-local function onsave(inst, data)
-    print("onsave")
-end
-
--- When preload
-local function onpreload(inst, data)
-    print("onpreload")
-end  
 
 -- Toggle valkyrie mode
 local function toggle_valkyrie(inst)
@@ -120,7 +84,7 @@ end
 
 -- Toggle stealth mode
 local function toggle_stealth(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
         return
     end
     if inst.berserk_activated then
@@ -139,19 +103,68 @@ local function toggle_stealth(inst)
     end
 end
 
--- Use Remote Procedure Call, because client cannot handel components.health or sg
-AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie) 
-AddModRPCHandler("musha", "toggle_stealth", toggle_stealth) 
+-- When the character is revived to human
+local function onbecamehuman(inst)
+    inst.valkyrie_activated = false
+    inst.berserk_activated = false
+    
+    update_status(inst)
+
+    inst:ListenForEvent("hungerdelta", update_status)
+    inst:ListenForEvent("newstate", onnewstate)
+end
+
+-- When the character turn into a ghost 
+local function onbecameghost(inst)
+    inst._wasnomorph = nil
+    inst.valkyrie_activated = false
+    inst.berserk_activated = false
+
+    inst:RemoveEventCallback("hungerdelta", update_status)
+    inst:RemoveEventCallback("newstate", onnewstate)
+end
+
+-- When loading or spawning the character
+local function onload(inst)
+    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)
+    inst:ListenForEvent("ms_becameghost", onbecameghost)
+
+    if inst:HasTag("playerghost") then
+        onbecameghost(inst)
+    else
+        onbecamehuman(inst)
+    end
+end
+
+-- When save game progress
+local function onsave(inst, data)
+    print("onsave")
+end
+
+-- When preload
+local function onpreload(inst, data)
+    print("onpreload")
+end
 
 -- This initializes for both the server and client. Tags, animes and minimap icons can be added here.
 local function common_postinit(inst)
     -- Tags
     inst:AddTag("musha")
 
-    -- Able to craft and use Warly's items
+    -- Able to build and read books
+    inst:AddTag("bookbuilder")
+    inst:AddTag("reader")
+
+    -- Able to craft and use Warly's cooking kit
 	inst:AddTag("masterchef")
     inst:AddTag("professionalchef")
     inst:AddTag("expertchef")
+
+    -- Able to craft and use Winona's tools
+    inst:AddTag("handyperson")
+
+    -- Able to craft balloons
+    inst:AddTag("balloonomancer")
 
 	-- Minimap icon
 	inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
@@ -170,6 +183,9 @@ local function master_postinit(inst)
     inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
     inst.components.mana:SetRate(TUNING.MUSHA.manaregenrate)
     inst.components.mana.defaultrate = TUNING.MUSHA.manaregenrate
+
+    -- Read books
+    inst:AddComponent("reader")
 
 	-- Stats
     inst.components.health:SetMaxHealth(TUNING.MUSHA.health)
@@ -193,5 +209,9 @@ local function master_postinit(inst)
 	inst.OnSave = onsave
 	inst.OnPreLoad = onpreload
 end
+
+-- Set up remote procedure call for client side
+AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie) 
+AddModRPCHandler("musha", "toggle_stealth", toggle_stealth) 
 
 return MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit)
