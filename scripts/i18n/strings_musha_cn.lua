@@ -1,6 +1,4 @@
 --translated by deloquac
-STRINGS = GLOBAL.STRINGS
-
 -- The character's name as appears in-game
 STRINGS.NAMES.MUSHA = "Musha"
 -- character select screen
