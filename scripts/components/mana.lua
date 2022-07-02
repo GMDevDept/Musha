@@ -22,11 +22,11 @@ local Mana = Class(function(self, inst)
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
 end,
-nil,
-{
-    max = onmax,
-    current = oncurrent,
-})
+    nil,
+    {
+        max = onmax,
+        current = oncurrent,
+    })
 
 function Mana:OnSave()
     return self.current ~= self.max and { mana = self.current } or nil
@@ -69,8 +69,8 @@ function Mana:GetPercent()
 end
 
 function Mana:SetPercent(p, overtime)
-    local old = self.current
-    self.current  = p * self.max
+    local old    = self.current
+    self.current = p * self.max
     self.inst:PushEvent("manadelta", { oldpercent = old / self.max, newpercent = p, overtime = overtime })
 
     if old > 0 then
@@ -99,14 +99,18 @@ function Mana:DoDelta(delta, overtime, ignore_invincible)
         return
     end
 
-    if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or self.inst.is_teleporting then
+    if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
+        self.inst.is_teleporting then
         return
     end
 
     local old = self.current
+    ---@diagnostic disable-next-line: undefined-field
     self.current = math.clamp(self.current + delta, 0, self.max)
 
-    self.inst:PushEvent("manadelta", { oldpercent = old / self.max, newpercent = self.current / self.max, overtime = overtime, delta = self.current-old })
+    self.inst:PushEvent("manadelta",
+        { oldpercent = old / self.max, newpercent = self.current / self.max, overtime = overtime,
+            delta = self.current - old })
 
     if old > 0 then
         if self.current <= 0 then

@@ -3,7 +3,7 @@ local UIAnim = require "widgets/uianim"
 
 local ManaBadge = Class(Badge, function(self, owner)
     Badge._ctor(self, "health", owner)
-    
+
     self.anim:GetAnimState():SetBuild("spellpower")
 
     self.manaarrow = self.underNumber:AddChild(UIAnim())
@@ -20,9 +20,9 @@ function ManaBadge:OnUpdate(dt)
     if TheNet:IsServerPaused() then return end
 
     local anim = "neutral"
-    if  self.owner ~= nil and
+    if self.owner ~= nil and
         self.owner.replica.mana ~= nil then
-        
+
         local defaultrate = self.owner.replica.mana:GetDefaultRate()
         if self.owner.replica.mana:GetRate() > defaultrate then
             anim = "arrow_loop_increase"

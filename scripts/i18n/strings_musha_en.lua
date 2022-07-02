@@ -1,4 +1,3 @@
-
 STRINGS = GLOBAL.STRINGS
 STRINGS.NAMES.MUSHA = "Musha"
 STRINGS.CHARACTER_TITLES.musha = "The Puppy Princess, Musha"
@@ -26,13 +25,12 @@ STRINGS.CHARACTERS.WOODIE.DESCRIBE.MUSHA = ("She can transform?... No, maybe not
 STRINGS.CHARACTERS.WOLFGANG.DESCRIBE.MUSHA = ("She is weak force... but, seems like she can help us.")
 STRINGS.CHARACTERS.WENDY.DESCRIBE.MUSHA = ("I feel a strong spirit within her...")
 STRINGS.CHARACTERS.WX78.DESCRIBE.MUSHA = ("I feel my heart.")
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = 
-{
-GENERIC = "Feels good!",
-ATTACKER = "Fight fight fight",
-MURDERER = "Assassin!",
-REVIVER = "Return...",
-GHOST = "Go away!",
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
+    GENERIC = "Feels good!",
+    ATTACKER = "Fight fight fight",
+    MURDERER = "Assassin!",
+    REVIVER = "Return...",
+    GHOST = "Go away!",
 }
 
 -- skin
@@ -56,30 +54,30 @@ STRINGS.MUSHA_MUSIC_DYNAMIC = "[Dynamic Music]♪\n:Random"
 STRINGS.MUSHA_MUSIC_DYNAMIC_OFF = "[Dynamic Music]♪\n:OFF"
 STRINGS.MUSHA_DEATH_PENALTY = "[Death]\n[EXP]"
 
-STRINGS.MUSHA_SKILL_ACTIVE  = "[------Active Skill------]"
-STRINGS.MUSHA_SKILL_SLEEP   = "Sleep◑Wake up"
-STRINGS.MUSHA_SKILL_POWER   = "Power Lightning"
-STRINGS.MUSHA_SKILL_SHIELD  = "Spark Shield"
-STRINGS.MUSHA_SKILL_MUSIC   = "Music♪"
-STRINGS.MUSHA_SKILL_SHADOW  = "Hide in the Shadows"
-STRINGS.MUSHA_SKILL_PASSIVE = "[------Passive Skill------] "
-STRINGS.MUSHA_SKILL_VALKYR  = "Valkyrie"
-STRINGS.MUSHA_SKILL_BERSERK = "Berserk"
-STRINGS.MUSHA_SKILL_ELECTRA = "Electric Shield"
-STRINGS.MUSHA_SKILL_CRITIC  = "Critical Hit"
-STRINGS.MUSHA_SKILL_DOUBLE  = "Double Damage"
-STRINGS.MUSHA_T_SKILL_UNLOCK = "Unlock:"
-STRINGS.MUSHA_T_SKILL_VALKYRIE = "Valkyrie"
+STRINGS.MUSHA_SKILL_ACTIVE        = "[------Active Skill------]"
+STRINGS.MUSHA_SKILL_SLEEP         = "Sleep◑Wake up"
+STRINGS.MUSHA_SKILL_POWER         = "Power Lightning"
+STRINGS.MUSHA_SKILL_SHIELD        = "Spark Shield"
+STRINGS.MUSHA_SKILL_MUSIC         = "Music♪"
+STRINGS.MUSHA_SKILL_SHADOW        = "Hide in the Shadows"
+STRINGS.MUSHA_SKILL_PASSIVE       = "[------Passive Skill------] "
+STRINGS.MUSHA_SKILL_VALKYR        = "Valkyrie"
+STRINGS.MUSHA_SKILL_BERSERK       = "Berserk"
+STRINGS.MUSHA_SKILL_ELECTRA       = "Electric Shield"
+STRINGS.MUSHA_SKILL_CRITIC        = "Critical Hit"
+STRINGS.MUSHA_SKILL_DOUBLE        = "Double Damage"
+STRINGS.MUSHA_T_SKILL_UNLOCK      = "Unlock:"
+STRINGS.MUSHA_T_SKILL_VALKYRIE    = "Valkyrie"
 STRINGS.MUSHA_T_SKILL_V_LIGHTNING = "Auto Lightning"
-STRINGS.MUSHA_T_SKILL_V_POWER = "Power Lightning"
-STRINGS.MUSHA_T_SKILL_V_ARMOR = "Valkyrie Armor"
+STRINGS.MUSHA_T_SKILL_V_POWER     = "Power Lightning"
+STRINGS.MUSHA_T_SKILL_V_ARMOR     = "Valkyrie Armor"
 STRINGS.MUSHA_T_SKILL_V_LIGHTNING = "Valkyrie Lightning"
-STRINGS.MUSHA_T_SKILL_UP_ACTIVE = "Upgrade [Active Skills]"
-STRINGS.MUSHA_T_SKILL_CRITICAL = "Critical Hit"
-STRINGS.MUSHA_T_SKILL_E_SHIELD = "Electric Shield"
-STRINGS.MUSHA_T_SKILL_BERSERK = "Berserk"
-STRINGS.MUSHA_T_SKILL_B_ARMOR = "Berserk Armor"
-STRINGS.MUSHA_T_SKILL_DOUBLE = "Double Damage"
+STRINGS.MUSHA_T_SKILL_UP_ACTIVE   = "Upgrade [Active Skills]"
+STRINGS.MUSHA_T_SKILL_CRITICAL    = "Critical Hit"
+STRINGS.MUSHA_T_SKILL_E_SHIELD    = "Electric Shield"
+STRINGS.MUSHA_T_SKILL_BERSERK     = "Berserk"
+STRINGS.MUSHA_T_SKILL_B_ARMOR     = "Berserk Armor"
+STRINGS.MUSHA_T_SKILL_DOUBLE      = "Double Damage"
 
 --TALK
 STRINGS.MUSHA_TALK_READY_POISON = "Poison Attack Is Ready!"
@@ -198,17 +196,17 @@ STRINGS.MUSHA_TALK_ORDER_YAMCHE_LIGHT_OFF = "Light◎[OFF]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_WORKING = "[Working]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_SLEEP = "[Sleeping...]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_SLEEPY = "Sleepy..."
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_COST =  "[Health] Cost:"
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_COST_HUNGER =  "[Hunger] Cost:-5"
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_COST = "[Health] Cost:"
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_COST_HUNGER = "[Hunger] Cost:-5"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_LIGHTNING = "Lightning[ON]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_CAMPFIRE_ON = "Campfire-(ON)"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_CAMPFIRE_OFF = "Campfire-(OFF)"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_FIRE_WARM = "[♨]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_FIRE_COLD = "[※]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_DANGER = "Danger!"
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_OVEN = "[♨]" 
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_FREEZER = "[※]" 
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_INV = "[Inventory]" 
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_OVEN = "[♨]"
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_FREEZER = "[※]"
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_INV = "[Inventory]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_INV_FULL = "[Inventory-Full]"
 STRINGS.MUSHA_TALK_YAMCHE_REVIVE_D = "Hee izzzz tooooo yooouung .."
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_SHIELD_COOL = "[Shield]\nCooldown -[300sec]"
@@ -219,7 +217,7 @@ STRINGS.MUSHA_TALK_ORDER_YAMCHE_HUNT = "Yamche, let the hunt begin!!"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_OFFENSE = "[Offensive]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_PROTECT = "Yamche, protect Musha!"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_DEFFENSE = "[Defensive]"
-STRINGS.MUSHA_TALK_ORDER_YAMCHE_RETREAT ="Yamche, avoid battle!"
+STRINGS.MUSHA_TALK_ORDER_YAMCHE_RETREAT = "Yamche, avoid battle!"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_AVOID = "[Avoidance]"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_BERSERK = "Back off!, Krrr!"
 STRINGS.MUSHA_TALK_ORDER_YAMCHE_GHOST = "Yaaaam.. Dooooo nooooot faaaaaieet.."
@@ -230,7 +228,7 @@ STRINGS.MUSHA_TALK_ORDER_DALL_LOST = "Musha can't call Dall..."
 
 STRINGS.MUSHA_TALK_ORDER_ARONG_FOLLOW = "Arong, follow me!"
 STRINGS.MUSHA_TALK_ORDER_ARONG_STAY = "Arong, stay away!"
-STRINGS.MUSHA_TALK_ORDER_ARONG_SLEEPY = "He needs some rest..."  --can't order
+STRINGS.MUSHA_TALK_ORDER_ARONG_SLEEPY = "He needs some rest..." --can't order
 STRINGS.MUSHA_TALK_ORDER_ARONG_LOST = "Musha can't call Arong..."
 
 --bodyguard wilson
@@ -259,15 +257,15 @@ STRINGS.MUSHA_TALK_WILSON_BYE_3 = "Good bye..."
 STRINGS.MUSHA_TALK_WILSON_BYE_4 = "Thank you."
 STRINGS.MUSHA_TALK_WILSON_FAILED = "Oh no..."
 
-STRINGS.MUSHA_TALK_WILSON_C_R_1	= "I am your blade."
-STRINGS.MUSHA_TALK_WILSON_C_R_2	= "After you"
-STRINGS.MUSHA_TALK_WILSON_C_R_3	= "I'm so cool"
-STRINGS.MUSHA_TALK_WILSON_C_R_4	= "Are we going?"
-STRINGS.MUSHA_TALK_WILSON_C_R_5	= "Adventure is waiting for us."
-STRINGS.MUSHA_TALK_WILSON_C_R_6	= "Are we stopping?"
-STRINGS.MUSHA_TALK_WILSON_C_R_7	= "Interesting..."
-STRINGS.MUSHA_TALK_WILSON_C_R_8	= "Call me a Jedi, if you don't mind."
-STRINGS.MUSHA_TALK_WILSON_C_R_9	= "What is that? Oh... just a bird..."
+STRINGS.MUSHA_TALK_WILSON_C_R_1 = "I am your blade."
+STRINGS.MUSHA_TALK_WILSON_C_R_2 = "After you"
+STRINGS.MUSHA_TALK_WILSON_C_R_3 = "I'm so cool"
+STRINGS.MUSHA_TALK_WILSON_C_R_4 = "Are we going?"
+STRINGS.MUSHA_TALK_WILSON_C_R_5 = "Adventure is waiting for us."
+STRINGS.MUSHA_TALK_WILSON_C_R_6 = "Are we stopping?"
+STRINGS.MUSHA_TALK_WILSON_C_R_7 = "Interesting..."
+STRINGS.MUSHA_TALK_WILSON_C_R_8 = "Call me a Jedi, if you don't mind."
+STRINGS.MUSHA_TALK_WILSON_C_R_9 = "What is that? Oh... just a bird..."
 STRINGS.MUSHA_TALK_WILSON_C_R_10 = "Great adventure."
 
 STRINGS.MUSHA_TALK_WILSON_C_NIGHT_1 = "Darkness is coming..."
@@ -605,10 +603,10 @@ STRINGS.RECIPE_DESC.MUSHA_EGG2 = "Phoenix Egg (Lv.6)"
 STRINGS.RECIPE_DESC.MUSHA_EGG3 = "Phoenix Egg (Lv.7)"
 STRINGS.RECIPE_DESC.MUSHA_EGG8 = "Phoenix Egg (Lv.Max)"
 STRINGS.RECIPE_DESC.REDGEM = "Alchemical recipe for:\nRed Gem"
-STRINGS.RECIPE_DESC.BLUEGEM = "Alchemical recipe for:\nBlue Gem" 
-STRINGS.RECIPE_DESC.GREENGEM = "Alchemical recipe for:\nGreen Gem" 
-STRINGS.RECIPE_DESC.YELLOWGEM = "Alchemical recipe for:\nYellow Gem" 
-STRINGS.RECIPE_DESC.ORANGEGEM = "Alchemical recipe for:\nOrange Gem" 
+STRINGS.RECIPE_DESC.BLUEGEM = "Alchemical recipe for:\nBlue Gem"
+STRINGS.RECIPE_DESC.GREENGEM = "Alchemical recipe for:\nGreen Gem"
+STRINGS.RECIPE_DESC.YELLOWGEM = "Alchemical recipe for:\nYellow Gem"
+STRINGS.RECIPE_DESC.ORANGEGEM = "Alchemical recipe for:\nOrange Gem"
 
 STRINGS.NAMES.MOONNUTDRAKE = "Kkobong"
 STRINGS.NAMES.MOONNUTDRAKE2 = "Booha"
@@ -616,10 +614,10 @@ STRINGS.NAMES.MOONBUSH = "Berry Bush"
 STRINGS.NAMES.MOONLIGHT_PLANT = "Glowberry tree"
 
 STRINGS.NAMES.REDGEM = "Red Gem"
-STRINGS.NAMES.BLUEGEM = "Blue Gem" 
-STRINGS.NAMES.GREENGEM = "Green Gem" 
-STRINGS.NAMES.YELLOWGEM = "Yellow Gem" 
-STRINGS.NAMES.ORANGEGEM = "Orange Gem" 
+STRINGS.NAMES.BLUEGEM = "Blue Gem"
+STRINGS.NAMES.GREENGEM = "Green Gem"
+STRINGS.NAMES.YELLOWGEM = "Yellow Gem"
+STRINGS.NAMES.ORANGEGEM = "Orange Gem"
 
 STRINGS.NAMES.MUSHASWORD_BASE = "Broken Blade"
 STRINGS.NAMES.MUSHASWORD = "Phoenix Blade"
@@ -664,7 +662,7 @@ STRINGS.RECIPE_DESC.FROSTHAMMER = "Upgradeable Weapon Area attack:(Right click)"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.FROSTHAMMER = "Heavy, big, blue friend."
 STRINGS.NAMES.BROKEN_FROSTHAMMER = "Frost Armor"
 STRINGS.RECIPE_DESC.BROKEN_FROSTHAMMER = "Upgradeable Armor, Compact, Fridge"
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.BROKEN_FROSTHAMMER =  "It has multiple functions."
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.BROKEN_FROSTHAMMER = "It has multiple functions."
 STRINGS.NAMES.PHOENIXSPEAR = "Phoenix Glaive"
 STRINGS.RECIPE_DESC.PHOENIXSPEAR = "Upgradeable Weapon Long Blade, Shovel"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.PHOENIXSPEAR = "It's a long weapon, but it's very light!"
@@ -710,29 +708,76 @@ STRINGS.RECIPE_DESC.ARMOR_MUSHAA = "Upgradeable Armor Compact, Backpack"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.ARMOR_MUSHAA = "It's a billow dress."
 STRINGS.NAMES.ARMOR_MUSHAB = "Princess Armor"
 STRINGS.RECIPE_DESC.ARMOR_MUSHAB = "Upgradeable Armor Backpack, Warm and Cool"
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.ARMOR_MUSHAB = "It's billow, but safer." 
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ARMOR_MUSHAB = "It's billow, but safer."
 -----------------random -name
-STRINGS.PHOENIXS=
-{    
-"Captain Yamche","Hulk Yamche","Iron Yamche","Torr Yamche","Yamche","Brave Yamche","Cutie Yamche","Owl Yamche","Sunny Yamche","Moon Yamche","Seoul Yamche","Suri Yamche","Vilja Yamche","Sunny Yamche","Sunnyholic","Musha Yamche","Mellisa Yamche","Lidia Yamche ","Battleborn Yamche ","Grey Yamche","Sky Yamche","Lucia Yamche","Khajit Yamche","Pig Yamche","Mjoll Yamche","Lioness Yamche","Muiri Yamche","Ysolda Yamche","Rayya Yamche","Falkas Yamche","Vilkas Yamche","Aela Yamche","Huter Yamche","Huntress Yamche","Queen Yamche","Fire Yamche","Cicero Yamche","Top Yamche","Lina Yamche","Totoro Yamche","Yu-na Yamche","Winter Yamche","White Yamche","Mellisa Yamche","Riften Yamche","Dawnstar Yamche","Windhelm Yamche","Pho Yamche","Sneaky Yamche","Kiwis Yamche","Coco Yamche","Moon Yamche","Pizza Yamche","Sugar Yamche","Orc Yamche","Elf Yamche","Knight Yamche","Vlad Yamche","Azeroth Yamche","Tauren Yamche","Troll Yamche","Thrall Yamche","Narugar Yamche","Yancook Yamche","Tirano Yamche","Honey Yamche","Golum Yamche","Bosom Yamche","Esmeralda Yamche","Pluvia Yamche","Doraemon Yamche","Dooly Yamche","Apple Yamche","IU Yamche","Gandalf Yamche","Frodo Yamche","Sam Yamche","Regolas Yamche","Gimli Yamche","Boromir Yamche","Wilxon Yamche","Willo Yamche","Wolfkong Yamche","Wenil Yamche","WX79 Yamche","Wickerbi Yamche","Woorie Yamche","Wex Yamche","Maximus Yamche","Wigfreedom Yamche","Webbers Yamche","Naruto Yamche","Sasuke Yamche","Witcher Yamche","Luka Yamche","Arong Yamche","Puppy Yamche",
- }
-STRINGS.ARONG=
-{    
-"Captain Arong","Hulk Arong","Iron Arong","Torr Arong","Yamche","Brave Arong","Cutie Arong","Owl Arong","Sunny Arong","Moon Arong","Seoul Arong","Suri Arong","Vilja Arong","Sunny Arong","Sunnyholic","Musha Arong","Mellisa Arong","Lidia Arong ","Battleborn Arong ","Grey Arong","Sky Arong","Lucia Arong","Khajit Arong","Pig Arong","Mjoll Arong","Lioness Arong","Muiri Arong","Ysolda Arong","Rayya Arong","Falkas Arong","Vilkas Arong","Aela Arong","Huter Arong","Huntress Arong","Queen Arong","Fire Arong","Cicero Arong","Top Arong","Lina Arong","Totoro Arong","Yu-na Arong","Winter Arong","White Arong","Mellisa Arong","Riften Arong","Dawnstar Arong","Windhelm Arong","Pho Arong","Sneaky Arong","Kiwis Arong","Coco Arong","Moon Arong","Pizza Arong","Sugar Arong","Orc Arong","Elf Arong","Knight Arong","Vlad Arong","Azeroth Arong","Tauren Arong","Troll Arong","Thrall Arong","Narugar Arong","Yancook Arong","Tirano Arong","Honey Arong","Golum Arong","Bosom Arong","Esmeralda Arong","Pluvia Arong","Doraemon Arong","Dooly Arong","Apple Arong","IU Arong","Gandalf Arong","Frodo Arong","Sam Arong","Regolas Arong","Gimli Arong","Boromir Arong","Wilxon Arong","Willo Arong","Wolfkong Arong","Wenil Arong","WX79 Arong","Wickerbi Arong","Woorie Arong","Wex Arong","Maximus Arong","Wigfreedom Arong","Webbers Arong","Naruto Arong","Sasuke Arong","Witcher Arong","Luka Arong","Arong Arong","Puppy Arong",
- }
- STRINGS.AROM=
-{    
-"Captain Arom","Hulk Arom","Iron Arom","Torr Arom","Yamche","Brave Arom","Cutie Arom","Owl Arom","Sunny Arom","Moon Arom","Seoul Arom","Suri Arom","Vilja Arom","Sunny Arom","Sunnyholic","Musha Arom","Mellisa Arom","Lidia Arom ","Battleborn Arom ","Grey Arom","Sky Arom","Lucia Arom","Khajit Arom","Pig Arom","Mjoll Arom","Lioness Arom","Muiri Arom","Ysolda Arom","Rayya Arom","Falkas Arom","Vilkas Arom","Aela Arom","Huter Arom","Huntress Arom","Queen Arom","Fire Arom","Cicero Arom","Top Arom","Lina Arom","Totoro Arom","Yu-na Arom","Winter Arom","White Arom","Mellisa Arom","Riften Arom","Dawnstar Arom","Windhelm Arom","Pho Arom","Sneaky Arom","Kiwis Arom","Coco Arom","Moon Arom","Pizza Arom","Sugar Arom","Orc Arom","Elf Arom","Knight Arom","Vlad Arom","Azeroth Arom","Tauren Arom","Troll Arom","Thrall Arom","Narugar Arom","Yancook Arom","Tirano Arom","Honey Arom","Golum Arom","Bosom Arom","Esmeralda Arom","Pluvia Arom","Doraemon Arom","Dooly Arom","Apple Arom","IU Arom","Gandalf Arom","Frodo Arom","Sam Arom","Regolas Arom","Gimli Arom","Boromir Arom","Wilxon Arom","Willo Arom","Wolfkong Arom","Wenil Arom","WX79 Arom","Wickerbi Arom","Woorie Arom","Wex Arom","Maximus Arom","Wigfreedom Arom","Webbers Arom","Naruto Arom","Sasuke Arom","Witcher Arom","Luka Arom","Arong Arom","Puppy Arom",
- }
-STRINGS.DALL=
-{    
-"Captain Dall","Hulk Dall","Iron Dall","Torr Dall","Yamche","Brave Dall","Cutie Dall","Owl Dall","Sunny Dall","Moon Dall","Seoul Dall","Suri Dall","Vilja Dall","Sunny Dall","Sunnyholic","Musha Dall","Mellisa Dall","Lidia Dall ","Battleborn Dall ","Grey Dall","Sky Dall","Lucia Dall","Khajit Dall","Pig Dall","Mjoll Dall","Lioness Dall","Muiri Dall","Ysolda Dall","Rayya Dall","Falkas Dall","Vilkas Dall","Aela Dall","Huter Dall","Huntress Dall","Queen Dall","Fire Dall","Cicero Dall","Top Dall","Lina Dall","Totoro Dall","Yu-na Dall","Winter Dall","White Dall","Mellisa Dall","Riften Dall","Dawnstar Dall","Windhelm Dall","Pho Dall","Sneaky Dall","Kiwis Dall","Coco Dall","Moon Dall","Pizza Dall","Sugar Dall","Orc Dall","Elf Dall","Knight Dall","Vlad Dall","Azeroth Dall","Tauren Dall","Troll Dall","Thrall Dall","Narugar Dall","Yancook Dall","Tirano Dall","Honey Dall","Golum Dall","Bosom Dall","Esmeralda Dall","Pluvia Dall","Doraemon Dall","Dooly Dall","Apple Dall","IU Dall","Gandalf Dall","Frodo Dall","Sam Dall","Regolas Dall","Gimli Dall","Boromir Dall","Wilxon Dall","Willo Dall","Wolfkong Dall","Wenil Dall","WX79 Dall","Wickerbi Dall","Woorie Dall","Wex Dall","Maximus Dall","Wigfreedom Dall","Webbers Dall","Naruto Dall","Sasuke Dall","Witcher Dall","Luka Dall","Arong Dall","Puppy Dall",
- }
- --adds
+STRINGS.PHOENIXS = {
+    "Captain Yamche", "Hulk Yamche", "Iron Yamche", "Torr Yamche", "Yamche", "Brave Yamche", "Cutie Yamche", "Owl Yamche",
+    "Sunny Yamche", "Moon Yamche", "Seoul Yamche", "Suri Yamche", "Vilja Yamche", "Sunny Yamche", "Sunnyholic",
+    "Musha Yamche", "Mellisa Yamche", "Lidia Yamche ", "Battleborn Yamche ", "Grey Yamche", "Sky Yamche", "Lucia Yamche",
+    "Khajit Yamche", "Pig Yamche", "Mjoll Yamche", "Lioness Yamche", "Muiri Yamche", "Ysolda Yamche", "Rayya Yamche",
+    "Falkas Yamche", "Vilkas Yamche", "Aela Yamche", "Huter Yamche", "Huntress Yamche", "Queen Yamche", "Fire Yamche",
+    "Cicero Yamche", "Top Yamche", "Lina Yamche", "Totoro Yamche", "Yu-na Yamche", "Winter Yamche", "White Yamche",
+    "Mellisa Yamche", "Riften Yamche", "Dawnstar Yamche", "Windhelm Yamche", "Pho Yamche", "Sneaky Yamche",
+    "Kiwis Yamche", "Coco Yamche", "Moon Yamche", "Pizza Yamche", "Sugar Yamche", "Orc Yamche", "Elf Yamche",
+    "Knight Yamche", "Vlad Yamche", "Azeroth Yamche", "Tauren Yamche", "Troll Yamche", "Thrall Yamche", "Narugar Yamche",
+    "Yancook Yamche", "Tirano Yamche", "Honey Yamche", "Golum Yamche", "Bosom Yamche", "Esmeralda Yamche",
+    "Pluvia Yamche", "Doraemon Yamche", "Dooly Yamche", "Apple Yamche", "IU Yamche", "Gandalf Yamche", "Frodo Yamche",
+    "Sam Yamche", "Regolas Yamche", "Gimli Yamche", "Boromir Yamche", "Wilxon Yamche", "Willo Yamche", "Wolfkong Yamche",
+    "Wenil Yamche", "WX79 Yamche", "Wickerbi Yamche", "Woorie Yamche", "Wex Yamche", "Maximus Yamche",
+    "Wigfreedom Yamche", "Webbers Yamche", "Naruto Yamche", "Sasuke Yamche", "Witcher Yamche", "Luka Yamche",
+    "Arong Yamche", "Puppy Yamche",
+}
+STRINGS.ARONG = {
+    "Captain Arong", "Hulk Arong", "Iron Arong", "Torr Arong", "Yamche", "Brave Arong", "Cutie Arong", "Owl Arong",
+    "Sunny Arong", "Moon Arong", "Seoul Arong", "Suri Arong", "Vilja Arong", "Sunny Arong", "Sunnyholic", "Musha Arong",
+    "Mellisa Arong", "Lidia Arong ", "Battleborn Arong ", "Grey Arong", "Sky Arong", "Lucia Arong", "Khajit Arong",
+    "Pig Arong", "Mjoll Arong", "Lioness Arong", "Muiri Arong", "Ysolda Arong", "Rayya Arong", "Falkas Arong",
+    "Vilkas Arong", "Aela Arong", "Huter Arong", "Huntress Arong", "Queen Arong", "Fire Arong", "Cicero Arong",
+    "Top Arong", "Lina Arong", "Totoro Arong", "Yu-na Arong", "Winter Arong", "White Arong", "Mellisa Arong",
+    "Riften Arong", "Dawnstar Arong", "Windhelm Arong", "Pho Arong", "Sneaky Arong", "Kiwis Arong", "Coco Arong",
+    "Moon Arong", "Pizza Arong", "Sugar Arong", "Orc Arong", "Elf Arong", "Knight Arong", "Vlad Arong", "Azeroth Arong",
+    "Tauren Arong", "Troll Arong", "Thrall Arong", "Narugar Arong", "Yancook Arong", "Tirano Arong", "Honey Arong",
+    "Golum Arong", "Bosom Arong", "Esmeralda Arong", "Pluvia Arong", "Doraemon Arong", "Dooly Arong", "Apple Arong",
+    "IU Arong", "Gandalf Arong", "Frodo Arong", "Sam Arong", "Regolas Arong", "Gimli Arong", "Boromir Arong",
+    "Wilxon Arong", "Willo Arong", "Wolfkong Arong", "Wenil Arong", "WX79 Arong", "Wickerbi Arong", "Woorie Arong",
+    "Wex Arong", "Maximus Arong", "Wigfreedom Arong", "Webbers Arong", "Naruto Arong", "Sasuke Arong", "Witcher Arong",
+    "Luka Arong", "Arong Arong", "Puppy Arong",
+}
+STRINGS.AROM = {
+    "Captain Arom", "Hulk Arom", "Iron Arom", "Torr Arom", "Yamche", "Brave Arom", "Cutie Arom", "Owl Arom", "Sunny Arom",
+    "Moon Arom", "Seoul Arom", "Suri Arom", "Vilja Arom", "Sunny Arom", "Sunnyholic", "Musha Arom", "Mellisa Arom",
+    "Lidia Arom ", "Battleborn Arom ", "Grey Arom", "Sky Arom", "Lucia Arom", "Khajit Arom", "Pig Arom", "Mjoll Arom",
+    "Lioness Arom", "Muiri Arom", "Ysolda Arom", "Rayya Arom", "Falkas Arom", "Vilkas Arom", "Aela Arom", "Huter Arom",
+    "Huntress Arom", "Queen Arom", "Fire Arom", "Cicero Arom", "Top Arom", "Lina Arom", "Totoro Arom", "Yu-na Arom",
+    "Winter Arom", "White Arom", "Mellisa Arom", "Riften Arom", "Dawnstar Arom", "Windhelm Arom", "Pho Arom",
+    "Sneaky Arom", "Kiwis Arom", "Coco Arom", "Moon Arom", "Pizza Arom", "Sugar Arom", "Orc Arom", "Elf Arom",
+    "Knight Arom", "Vlad Arom", "Azeroth Arom", "Tauren Arom", "Troll Arom", "Thrall Arom", "Narugar Arom",
+    "Yancook Arom", "Tirano Arom", "Honey Arom", "Golum Arom", "Bosom Arom", "Esmeralda Arom", "Pluvia Arom",
+    "Doraemon Arom", "Dooly Arom", "Apple Arom", "IU Arom", "Gandalf Arom", "Frodo Arom", "Sam Arom", "Regolas Arom",
+    "Gimli Arom", "Boromir Arom", "Wilxon Arom", "Willo Arom", "Wolfkong Arom", "Wenil Arom", "WX79 Arom",
+    "Wickerbi Arom", "Woorie Arom", "Wex Arom", "Maximus Arom", "Wigfreedom Arom", "Webbers Arom", "Naruto Arom",
+    "Sasuke Arom", "Witcher Arom", "Luka Arom", "Arong Arom", "Puppy Arom",
+}
+STRINGS.DALL = {
+    "Captain Dall", "Hulk Dall", "Iron Dall", "Torr Dall", "Yamche", "Brave Dall", "Cutie Dall", "Owl Dall", "Sunny Dall",
+    "Moon Dall", "Seoul Dall", "Suri Dall", "Vilja Dall", "Sunny Dall", "Sunnyholic", "Musha Dall", "Mellisa Dall",
+    "Lidia Dall ", "Battleborn Dall ", "Grey Dall", "Sky Dall", "Lucia Dall", "Khajit Dall", "Pig Dall", "Mjoll Dall",
+    "Lioness Dall", "Muiri Dall", "Ysolda Dall", "Rayya Dall", "Falkas Dall", "Vilkas Dall", "Aela Dall", "Huter Dall",
+    "Huntress Dall", "Queen Dall", "Fire Dall", "Cicero Dall", "Top Dall", "Lina Dall", "Totoro Dall", "Yu-na Dall",
+    "Winter Dall", "White Dall", "Mellisa Dall", "Riften Dall", "Dawnstar Dall", "Windhelm Dall", "Pho Dall",
+    "Sneaky Dall", "Kiwis Dall", "Coco Dall", "Moon Dall", "Pizza Dall", "Sugar Dall", "Orc Dall", "Elf Dall",
+    "Knight Dall", "Vlad Dall", "Azeroth Dall", "Tauren Dall", "Troll Dall", "Thrall Dall", "Narugar Dall",
+    "Yancook Dall", "Tirano Dall", "Honey Dall", "Golum Dall", "Bosom Dall", "Esmeralda Dall", "Pluvia Dall",
+    "Doraemon Dall", "Dooly Dall", "Apple Dall", "IU Dall", "Gandalf Dall", "Frodo Dall", "Sam Dall", "Regolas Dall",
+    "Gimli Dall", "Boromir Dall", "Wilxon Dall", "Willo Dall", "Wolfkong Dall", "Wenil Dall", "WX79 Dall",
+    "Wickerbi Dall", "Woorie Dall", "Wex Dall", "Maximus Dall", "Wigfreedom Dall", "Webbers Dall", "Naruto Dall",
+    "Sasuke Dall", "Witcher Dall", "Luka Dall", "Arong Dall", "Puppy Dall",
+}
+--adds
 STRINGS.MUSHA_YAMCHE = "[Yamche]"
 STRINGS.MUSHA_HEALTH_HUNGER = "Health/Hunger"
 STRINGS.MUSHA_HEALTH = "Health"
-STRINGS.MUSHA_HUNGER = "Hunger" 
+STRINGS.MUSHA_HUNGER = "Hunger"
 STRINGS.MUSHA_TALK_ORDER_PET_FOLLOW = "Come with me"
 STRINGS.MUSHA_TALK_ORDER_PET_STAY = "Stay here."
 STRINGS.MUSHA_TALK_ORDER_PET_LOST = "Musha can't see her pet!"

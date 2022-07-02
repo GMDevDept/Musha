@@ -4,18 +4,18 @@ local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
 
     -- Musha character textures
-    Asset( "ANIM", "anim/musha/musha.zip" ),
-    Asset( "ANIM", "anim/musha/musha_normal.zip" ),
-    Asset( "ANIM", "anim/musha/musha_full.zip" ),
-    Asset( "ANIM", "anim/musha/musha_valkyrie.zip" ), 
-    Asset( "ANIM", "anim/musha/musha_berserk.zip" ),
-    Asset( "ANIM", "anim/musha/ghost_musha_build.zip" ),
+    Asset("ANIM", "anim/musha/musha.zip"),
+    Asset("ANIM", "anim/musha/musha_normal.zip"),
+    Asset("ANIM", "anim/musha/musha_full.zip"),
+    Asset("ANIM", "anim/musha/musha_valkyrie.zip"),
+    Asset("ANIM", "anim/musha/musha_berserk.zip"),
+    Asset("ANIM", "anim/musha/ghost_musha_build.zip"),
 }
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
-	"flowerhat",
-	"torch",
+    "flowerhat",
+    "torch",
 }
 local start_inv = {}
 for k, v in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
@@ -27,7 +27,8 @@ local prefabs = FlattenTree(start_inv, true)
 
 -- Update current status
 local function update_status(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("nomorph") then
         return
     end
     -- Won't transform to full or normal if valkyrie or berserk is active
@@ -46,12 +47,12 @@ local function update_status(inst)
             inst.components.skinner:SetSkinName("musha_none")
             inst.musha_full = false
             inst.musha_normal = true
-        end            
+        end
         inst.soundsname = "willow"
     end
 end
 
--- When state changes, update morph availability and 
+-- When state changes, update morph availability and
 local function onnewstate(inst)
     if inst._wasnomorph ~= inst.sg:HasStateTag("nomorph") then
         inst._wasnomorph = not inst._wasnomorph
@@ -63,7 +64,8 @@ end
 
 -- Toggle valkyrie mode
 local function toggle_valkyrie(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("nomorph") then
         return
     end
     if inst.valkyrie_activated then
@@ -84,7 +86,8 @@ end
 
 -- Toggle stealth mode
 local function toggle_stealth(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("nomorph") then
         return
     end
     if inst.berserk_activated then
@@ -107,14 +110,14 @@ end
 local function onbecamehuman(inst)
     inst.valkyrie_activated = false
     inst.berserk_activated = false
-    
+
     update_status(inst)
 
     inst:ListenForEvent("hungerdelta", update_status)
     inst:ListenForEvent("newstate", onnewstate)
 end
 
--- When the character turn into a ghost 
+-- When the character turn into a ghost
 local function onbecameghost(inst)
     inst._wasnomorph = nil
     inst.valkyrie_activated = false
@@ -156,7 +159,7 @@ local function common_postinit(inst)
     inst:AddTag("reader")
 
     -- Able to craft and use Warly's cooking kit
-	inst:AddTag("masterchef")
+    inst:AddTag("masterchef")
     inst:AddTag("professionalchef")
     inst:AddTag("expertchef")
 
@@ -166,16 +169,16 @@ local function common_postinit(inst)
     -- Able to craft balloons
     inst:AddTag("balloonomancer")
 
-	-- Minimap icon
-	inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
+    -- Minimap icon
+    inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
 
-	-- Choose which sounds this character will play
-	inst.soundsname = "willow"
+    -- Choose which sounds this character will play
+    inst.soundsname = "willow"
 end
 
 -- This initializes for the server only. Components are added here.
 local function master_postinit(inst)
-	-- Set starting inventory
+    -- Set starting inventory
     inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
 
     -- Mana
@@ -187,17 +190,17 @@ local function master_postinit(inst)
     -- Read books
     inst:AddComponent("reader")
 
-	-- Stats
+    -- Stats
     inst.components.health:SetMaxHealth(TUNING.MUSHA.health)
     inst.components.hunger:SetMax(TUNING.MUSHA.hunger)
     inst.components.sanity:SetMax(TUNING.MUSHA.sanity)
 
-	-- Damage multiplier 
+    -- Damage multiplier
     inst.components.combat.damagemultiplier = 0.75
     inst.components.combat.areahitdamagepercent = 0.5
 
     -- Food bonus
-	inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
+    inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
 
     -- Character specific attributes
     inst.toggle_valkyrie = toggle_valkyrie
@@ -206,12 +209,12 @@ local function master_postinit(inst)
     -- Common attributes
     inst.OnLoad = onload
     inst.OnNewSpawn = onload
-	inst.OnSave = onsave
-	inst.OnPreLoad = onpreload
+    inst.OnSave = onsave
+    inst.OnPreLoad = onpreload
 end
 
 -- Set up remote procedure call for client side
-AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie) 
-AddModRPCHandler("musha", "toggle_stealth", toggle_stealth) 
+AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie)
+AddModRPCHandler("musha", "toggle_stealth", toggle_stealth)
 
 return MakePlayerCharacter("musha", prefabs, assets, common_postinit, master_postinit)

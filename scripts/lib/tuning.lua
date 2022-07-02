@@ -1,7 +1,7 @@
 GLOBAL.TUNING.MUSHA = {
-    -- Hotkeys from modinfo    
-    hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114,  --R
-    hotkey_stealth = GetModConfigData("hotkey_stealth") or 115,  --G
+    -- Hotkeys from modinfo
+    hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114, --R
+    hotkey_stealth = GetModConfigData("hotkey_stealth") or 115, --G
 
     -- Stats related
     health = 200,

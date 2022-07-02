@@ -14,7 +14,7 @@ local function PrefabPostInitFn(inst)
             SetDirty(parent.player_classified.ismanapulsedown, true)
         end
     end
-    
+
     _OnEntityReplicated = inst.OnEntityReplicated
     local function OnEntityReplicated(inst)
         inst._parent = inst.entity:GetParent()
@@ -28,7 +28,7 @@ local function PrefabPostInitFn(inst)
         end
         return _OnEntityReplicated(inst)
     end
-    
+
     local function OnManaDirty(inst)
         if inst._parent ~= nil then
             local oldpercent = inst._oldmanapercent
@@ -38,7 +38,7 @@ local function PrefabPostInitFn(inst)
                 oldpercent = oldpercent,
                 newpercent = percent,
                 overtime =
-                    not (inst.ismanapulseup:value() and percent > oldpercent) and
+                not (inst.ismanapulseup:value() and percent > oldpercent) and
                     not (inst.ismanapulsedown:value() and percent < oldpercent),
             }
             inst._oldmanapercent = percent
@@ -58,9 +58,9 @@ local function PrefabPostInitFn(inst)
             inst.ismanapulsedown:set_local(false)
         end
     end
-    
+
     --------------------------------------------------------------------------
-    
+
     local function RegisterNetListeners(inst)
         if TheWorld.ismastersim then
             inst._parent = inst.entity:GetParent()
@@ -69,7 +69,7 @@ local function PrefabPostInitFn(inst)
             inst.ismanapulseup:set_local(false)
             inst.ismanapulsedown:set_local(false)
             inst:ListenForEvent("manadirty", OnManaDirty)
-            
+
             if inst._parent ~= nil then
                 inst._oldmanapercent = inst.maxmana:value() > 0 and inst.currentmana:value() / inst.maxmana:value() or 0
             end
@@ -86,7 +86,7 @@ local function PrefabPostInitFn(inst)
     inst.ismanapulsedown = net_bool(inst.GUID, "mana.dodeltaovertime(down)", "manadirty")
     inst.currentmana:set(0)
     inst.maxmana:set(0)
-    
+
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)
 

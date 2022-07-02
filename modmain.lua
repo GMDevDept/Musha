@@ -1,10 +1,10 @@
 -- Inherit attributes from GLOBAL
-GLOBAL.setmetatable(env,{__index = function(t,k) 
-    return GLOBAL.rawget(GLOBAL,k) 
-end})
+GLOBAL.setmetatable(env, { __index = function(t, k)
+    return GLOBAL.rawget(GLOBAL, k)
+end })
 
 -- Configuration options from modinfo
-local modlanguage =  GetModConfigData("modlanguage")
+local modlanguage = GetModConfigData("modlanguage")
 
 -- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
@@ -22,12 +22,12 @@ modimport("scripts/lib/player_classified.lua")
 modimport("scripts/lib/statusdisplays.lua")
 
 -- Custom strings (i18n)
-if  modlanguage == "english" then
-	modimport("scripts/i18n/strings_musha_en.lua")   
-	STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_en")
+if modlanguage == "english" then
+    modimport("scripts/i18n/strings_musha_en.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_en")
 elseif modlanguage == "chinese" then
-	modimport("scripts/i18n/strings_musha_cn.lua")
-	STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_cn")
+    modimport("scripts/i18n/strings_musha_cn.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_cn")
 end
 
 -- The skins shown in the cycle view window on the character select screen.
@@ -45,4 +45,3 @@ local skin_modes = {
 
 -- Add mod character to mod character list. Also specify a gender. Possible genders are MALE, FEMALE, ROBOT, NEUTRAL, and PLURAL.
 AddModCharacter("musha", "FEMALE", skin_modes)
-

@@ -8,26 +8,26 @@ ACTIONS.GIVE.priority = 2
 -- Open a useable item (for musha's equipments they can be always right-clicked while kept being equipped)
 ACTIONS.USEITEM.fn = function(act)
     -- Most of musha's equipments
-	if act.invobject ~= nil and act.invobject:HasTag("musha_items") and
-        act.invobject.components.useableitem ~= nil and 
+    if act.invobject ~= nil and act.invobject:HasTag("musha_items") and
+        act.invobject.components.useableitem ~= nil and
         act.invobject.components.machine ~= nil and
         act.doer.components.inventory ~= nil then
-		if not act.invobject.boost then
+        if not act.invobject.boost then
             act.invobject.components.machine:TurnOn()
             return true
-		end
-		if act.invobject.boost then
+        end
+        if act.invobject.boost then
             act.invobject.components.machine:TurnOff()
-		    return true
-		end
+            return true
+        end
 
-    -- General useable items from game, keep unchanged
-	elseif act.invobject ~= nil and not act.invobject:HasTag("musha_items") and
+        -- General useable items from game, keep unchanged
+    elseif act.invobject ~= nil and not act.invobject:HasTag("musha_items") and
         act.invobject.components.useableitem ~= nil and
         act.invobject.components.useableitem:CanInteract() and
         act.doer.components.inventory ~= nil and
         act.doer.components.inventory:IsOpenedBy(act.doer) then
-        return act.invobject.components.useableitem:StartUsingItem()	
+        return act.invobject.components.useableitem:StartUsingItem()
     end
 end
 
@@ -35,42 +35,42 @@ end
 ACTIONS.TURNON.str = STRINGS.ACTIONS.TURNON
 ACTIONS.TURNON.id = "TURNON"
 ACTIONS.TURNON.strfn = function(act)
-	local targ = act.target or act.invobject
-	if targ:HasTag("critter") then
-		STRINGS.ACTIONS.TURNON = (STRINGS.CRITTER_ACTION_TURNON)
-		return 
-	else
-		STRINGS.ACTIONS.TURNON = (STRINGS.ACTIONS.TURNON)
-		return 
-	end	
+    local targ = act.target or act.invobject
+    if targ:HasTag("critter") then
+        STRINGS.ACTIONS.TURNON = (STRINGS.CRITTER_ACTION_TURNON)
+        return
+    else
+        STRINGS.ACTIONS.TURNON = (STRINGS.ACTIONS.TURNON)
+        return
+    end
 end
 
 ACTIONS.TURNON.fn = function(act)
     local tar = act.target or act.invobject
-	local owner = act.target.components.follower and act.target.components.follower.leader
-	
+    local owner = act.target.components.follower and act.target.components.follower.leader
+
     -- Musha's equipments (not including buildings) put on the ground, return false if want to disable turning on
-	-- if tar:HasTag("musha_items") then
-	--     return false
-	-- end
-	
+    -- if tar:HasTag("musha_items") then
+    --     return false
+    -- end
+
     -- General turnon-able items from game, keep unchanged
-	if tar and not tar:HasTag("critter") then
+    if tar and not tar:HasTag("critter") then
 
         if tar and tar.components.machine and not tar.components.machine:IsOn() then
             tar.components.machine:TurnOn(tar)
             return true
-	    end
+        end
 
-	elseif tar and tar:HasTag("critter") and not tar:HasTag("musha_items") and act.doer.components.petleash ~= nil then
+    elseif tar and tar:HasTag("critter") and not tar:HasTag("musha_items") and act.doer.components.petleash ~= nil then
 
         if act.doer.despawn then
             if tar.despawn_confirm and tar.components.talker and owner == act.doer then
                 if act.target.components.container then
-                    act.target.components.container:DropEverything() 
+                    act.target.components.container:DropEverything()
                 end
                 if act.target.components.inventory then
-                    act.target.components.inventory:DropEverything() 
+                    act.target.components.inventory:DropEverything()
                 end
                 act.doer.components.talker:Say(STRINGS.CRITTER_BYEBYE)
                 act.doer.components.petleash:DespawnPet(act.target)
@@ -81,8 +81,8 @@ ACTIONS.TURNON.fn = function(act)
                 tar.sg:GoToState("hungry")
                 tar.despawn_confirm = true
                 return true
-            end	
-        elseif not act.doer.despawn then		
+            end
+        elseif not act.doer.despawn then
             if tar.woby and not act.doer.bigwoby_cool then
                 tar.item_ready_drop = false
                 tar.working_food = false
@@ -96,31 +96,33 @@ ACTIONS.TURNON.fn = function(act)
                         tar.components.container:Close()
                     end
                     tar:PushEvent("transform")
-                
+
                     act.doer.bigwoby_cool = true
-                    act.doer:DoTaskInTime( 60, function()
+                    act.doer:DoTaskInTime(60, function()
                         act.doer.bigwoby_cool = false
                     end)
                 end
-                return	
+                return
             elseif tar.woby and act.doer.bigwoby_cool then
-                act.doer.components.talker:Say(STRINGS.CRITTER_BIGWOBY_COOL)		
+                act.doer.components.talker:Say(STRINGS.CRITTER_BIGWOBY_COOL)
                 return
             elseif not tar.woby then
-                if tar.components.machine and not tar.components.machine:IsOn() and owner == act.doer and not tar.components.container:IsFull() then
+                if tar.components.machine and not tar.components.machine:IsOn() and owner == act.doer and
+                    not tar.components.container:IsFull() then
                     if not tar:HasTag("musha_items") then
                         tar.components.machine:TurnOn(tar)
                         return true
                     end
-                elseif tar.components.machine and not tar.components.machine:IsOn() and owner == act.doer and tar.components.container:IsFull() then
+                elseif tar.components.machine and not tar.components.machine:IsOn() and owner == act.doer and
+                    tar.components.container:IsFull() then
                     tar.components.talker:Say(STRINGS.CRITTER_INV_FULL)
                     act.doer.components.talker:Say(STRINGS.CRITTER_REFUSE_INV)
-                    return false	                
+                    return false
                 elseif tar.components.machine and not tar.components.machine:IsOn() and owner ~= act.doer then
-                    return false	
+                    return false
                 end
                 if tar.despawn_confirm then
-                    tar.despawn_confirm = false 
+                    tar.despawn_confirm = false
                 end
             end
         end
@@ -132,14 +134,14 @@ ACTIONS.ADDFUEL.str = STRINGS.ACTIONS.ADDFUEL
 ACTIONS.ADDFUEL.id = "ADDFUEL"
 
 ACTIONS.ADDFUEL.strfn = function(act)
-	local targ = act.target or act.invobject
-	if targ:HasTag("musha_items") then
-		STRINGS.ACTIONS.ADDFUEL = (STRINGS.MUSHA_ACTION_REPAIR)
-		return 
-	else
-		STRINGS.ACTIONS.ADDFUEL = (STRINGS.ACTIONS.ADDFUEL)
-		return 
-	end	
+    local targ = act.target or act.invobject
+    if targ:HasTag("musha_items") then
+        STRINGS.ACTIONS.ADDFUEL = (STRINGS.MUSHA_ACTION_REPAIR)
+        return
+    else
+        STRINGS.ACTIONS.ADDFUEL = (STRINGS.ACTIONS.ADDFUEL)
+        return
+    end
 end
 
 ACTIONS.ADDFUEL.fn = function(act)
@@ -161,14 +163,14 @@ ACTIONS.RUMMAGE.fn = function(act)
 
     -- Containers except for arong and yamche
     if targ ~= nil and targ.components.container ~= nil and not targ:HasTag("critter") and not targ:HasTag("yamcheb") then
-   
+
         if targ.components.container:IsOpenedBy(act.doer) then
             targ.components.container:Close(act.doer)
             act.doer:PushEvent("closecontainer", { container = targ })
             return true
         elseif targ:HasTag("mastercookware") and not act.doer:HasTag("masterchef") then
             return false, "NOTMASTERCHEF"
-        --elseif targ:HasTag("professionalcookware") and not act.doer:HasTag("professionalchef") then
+            --elseif targ:HasTag("professionalcookware") and not act.doer:HasTag("professionalchef") then
             --return false, "NOTPROCHEF"
         elseif not targ.components.container:IsOpenedBy(act.doer) and not targ.components.container:CanOpen() then
             return false, "INUSE"
@@ -204,12 +206,13 @@ ACTIONS.RUMMAGE.fn = function(act)
                 return true
             elseif targ:HasTag("mastercookware") and not act.doer:HasTag("masterchef") then
                 return false, "NOTMASTERCHEF"
-            --elseif targ:HasTag("professionalcookware") and not act.doer:HasTag("professionalchef") then
+                --elseif targ:HasTag("professionalcookware") and not act.doer:HasTag("professionalchef") then
                 --return false, "NOTPROCHEF"
             elseif not targ.components.container:IsOpenedBy(act.doer) and not targ.components.container:CanOpen() then
                 return false, "INUSE"
             elseif targ.components.container.canbeopened then
-                local owner = targ.components.inventoryitem ~= nil and targ.components.inventoryitem:GetGrandOwner() or nil
+                local owner = targ.components.inventoryitem ~= nil and targ.components.inventoryitem:GetGrandOwner() or
+                    nil
                 if owner ~= nil and (targ.components.quagmire_stewer ~= nil or targ.components.container.droponopen) then
                     if owner == act.doer then
                         owner.components.inventory:DropItem(targ, true, true)
@@ -227,9 +230,9 @@ ACTIONS.RUMMAGE.fn = function(act)
                 end
                 return true
             end
-        
-        -- Yamche house mode
-        elseif targ.house then 
+
+            -- Yamche house mode
+        elseif targ.house then
             if targ.components.container:IsOpenedBy(act.doer) then
                 targ.components.container:Close(act.doer)
                 act.doer:PushEvent("closecontainer", { container = targ })
@@ -237,10 +240,10 @@ ACTIONS.RUMMAGE.fn = function(act)
             elseif CanEntitySeeTarget(act.doer, targ) then
                 act.doer:PushEvent("opencontainer", { container = targ })
                 targ.components.container:Open(act.doer)
-                return true		
+                return true
             end
-        end	
-	end
+        end
+    end
 end
 
 -- On pick up item from ground
@@ -252,10 +255,10 @@ ACTIONS.PICKUP.fn = function(act)
             act.target ~= nil and
             act.target.components.inventoryitem ~= nil and
             (act.target.components.inventoryitem.canbepickedup or
-            (act.target.components.inventoryitem.canbepickedupalive and not act.doer:HasTag("player"))) and
+                (act.target.components.inventoryitem.canbepickedupalive and not act.doer:HasTag("player"))) and
             not (act.target:IsInLimbo() or
                 (act.target.components.burnable ~= nil and act.target.components.burnable:IsBurning()) or
-                (act.target.components.projectile ~= nil and act.target.components.projectile:IsThrown())) then 
+                (act.target.components.projectile ~= nil and act.target.components.projectile:IsThrown())) then
 
             if act.target.components.container ~= nil and act.target:HasTag("drop_inventory_onpickup") then
                 act.target.components.container:TransferInventory(act.doer)
@@ -266,18 +269,19 @@ ACTIONS.PICKUP.fn = function(act)
         end
     end
 
-    if not act.doer.critter_musha and not act.doer:HasTag("yamcheb") then	
+    if not act.doer.critter_musha and not act.doer:HasTag("yamcheb") then
 
         if act.doer.components.inventory ~= nil and
             act.target ~= nil and
             act.target.components.inventoryitem ~= nil and
             (act.target.components.inventoryitem.canbepickedup or
-            (act.target.components.inventoryitem.canbepickedupalive and not act.doer:HasTag("player"))) and
+                (act.target.components.inventoryitem.canbepickedupalive and not act.doer:HasTag("player"))) and
             not (act.target:IsInLimbo() or
                 (act.target.components.burnable ~= nil and act.target.components.burnable:IsBurning()) or
                 (act.target.components.projectile ~= nil and act.target.components.projectile:IsThrown())) then
 
-            if act.doer.components.itemtyperestrictions ~= nil and not act.doer.components.itemtyperestrictions:IsAllowed(act.target) then
+            if act.doer.components.itemtyperestrictions ~= nil and
+                not act.doer.components.itemtyperestrictions:IsAllowed(act.target) then
                 return false, "restriction"
             elseif act.target.components.container ~= nil and act.target.components.container:IsOpenedByOthers(act.doer) then
                 return false, "INUSE"
@@ -290,7 +294,7 @@ ACTIONS.PICKUP.fn = function(act)
                 return false, "NO_HEAVY_LIFTING"
             end
 
-            if (act.target:HasTag("spider") and act.doer:HasTag("spiderwhisperer")) and 
+            if (act.target:HasTag("spider") and act.doer:HasTag("spiderwhisperer")) and
                 (act.target.components.follower.leader ~= nil and act.target.components.follower.leader ~= act.doer) then
                 return false, "NOTMINE_SPIDER"
             end
@@ -307,7 +311,8 @@ ACTIONS.PICKUP.fn = function(act)
                     --special case for trying to carry two backpacks
                     if equip.components.inventoryitem ~= nil and equip.components.inventoryitem.cangoincontainer then
                         --act.doer.components.inventory:SelectActiveItemFromEquipSlot(act.target.components.equippable.equipslot)
-                        act.doer.components.inventory:GiveItem(act.doer.components.inventory:Unequip(act.target.components.equippable.equipslot))
+                        act.doer.components.inventory:GiveItem(act.doer.components.inventory:Unequip(act.target.components
+                            .equippable.equipslot))
                     else
                         act.doer.components.inventory:DropItem(equip)
                     end
@@ -331,13 +336,13 @@ ACTIONS.PICKUP.fn = function(act)
     end
 end
 
--- On harvest crop, crockpot, dried meats or other harvestables 
+-- On harvest crop, crockpot, dried meats or other harvestables
 ACTIONS.HARVEST.fn = function(act)
     -- When havester is arong or yamche
     if act.doer.critter_musha or act.doer:HasTag("yamcheb") then
 
         if act.target.components.crop ~= nil then
-            local harvested--[[, product]] = act.target.components.crop:Harvest(act.doer)
+            local harvested--[[, product]]  = act.target.components.crop:Harvest(act.doer)
             return harvested
         elseif act.target.components.harvestable ~= nil then
             return act.target.components.harvestable:Harvest(act.doer)
@@ -356,10 +361,10 @@ ACTIONS.HARVEST.fn = function(act)
         end
     end
 
-    if not act.doer.critter_musha and not act.doer:HasTag("yamcheb") then	
+    if not act.doer.critter_musha and not act.doer:HasTag("yamcheb") then
 
         if act.target.components.crop ~= nil then
-            local harvested--[[, product]] = act.target.components.crop:Harvest(act.doer)
+            local harvested--[[, product]]  = act.target.components.crop:Harvest(act.doer)
             return harvested
         elseif act.target.components.harvestable ~= nil then
             return act.target.components.harvestable:Harvest(act.doer)
@@ -382,10 +387,10 @@ end
 -- On feed
 ACTIONS.FEED.fn = function(act)
     -- Except for arong
-	if act.target and not act.target.critter_musha then
-	
+    if act.target and not act.target.critter_musha then
+
         if act.target.components.trader then
-            local abletoaccept, reason = act.target.components.trader:AbleToAccept(act.invobject,act.doer)
+            local abletoaccept, reason = act.target.components.trader:AbleToAccept(act.invobject, act.doer)
             if abletoaccept then
                 act.target.components.trader:AcceptGift(act.doer, act.invobject, 1)
                 return true
@@ -393,10 +398,11 @@ ACTIONS.FEED.fn = function(act)
                 return false, reason
             end
 
-        elseif act.doer ~= nil and act.target ~= nil and act.target.components.eater ~= nil and act.target.components.eater:CanEat(act.invobject) then
+        elseif act.doer ~= nil and act.target ~= nil and act.target.components.eater ~= nil and
+            act.target.components.eater:CanEat(act.invobject) then
             act.target.components.eater:Eat(act.invobject, act.doer)
             local murdered =
-                act.target:IsValid() and
+            act.target:IsValid() and
                 act.target.components.health ~= nil and
                 act.target.components.health:IsDead() and
                 act.target or nil
@@ -416,13 +422,15 @@ ACTIONS.FEED.fn = function(act)
                     murdered.Transform:SetPosition(x, y, z)
 
                     if murdered.components.health.murdersound ~= nil and grandowner.SoundEmitter then
-                        grandowner.SoundEmitter:PlaySound(FunctionOrValue(murdered.components.health.murdersound, murdered, act.doer))
+                        grandowner.SoundEmitter:PlaySound(FunctionOrValue(murdered.components.health.murdersound,
+                            murdered, act.doer))
                     end
 
                     if murdered.components.lootdropper ~= nil then
                         local container = owner.components.inventory or owner.components.container
                         if container ~= nil then
-                            local stacksize = murdered.components.stackable ~= nil and murdered.components.stackable:StackSize() or 1
+                            local stacksize = murdered.components.stackable ~= nil and
+                                murdered.components.stackable:StackSize() or 1
                             for i = 1, stacksize do
                                 local loots = murdered.components.lootdropper:GenerateLoot()
                                 for k, v in pairs(loots) do
@@ -442,13 +450,14 @@ ACTIONS.FEED.fn = function(act)
                     murdered:Remove()
                 end
             end
-            return true	            
+            return true
         end
 
-    -- Arong on feed
-	elseif act.target and act.target.critter_musha then
-		
-        if act.doer ~= nil and act.target ~= nil and act.target.components.eater ~= nil and act.target.components.eater:CanEat(act.invobject) then
+        -- Arong on feed
+    elseif act.target and act.target.critter_musha then
+
+        if act.doer ~= nil and act.target ~= nil and act.target.components.eater ~= nil and
+            act.target.components.eater:CanEat(act.invobject) then
             local pet = act.target
             if pet:HasTag("woby") then
                 pet.components.eater:Eat(act.invobject, act.doer)
@@ -468,7 +477,7 @@ ACTIONS.FEED.fn = function(act)
                         pet.components.talker:Say(STRINGS.CRITTER_REFUSE3)
                     end
                     pet.sg:GoToState("hungry")
-                    return false            
+                    return false
                 else
                     pet.components.talker:Say(STRINGS.CRITTER_REFUSE3)
                     pet.sg:GoToState("hungry")

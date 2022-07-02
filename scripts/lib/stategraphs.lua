@@ -1,6 +1,7 @@
+---@diagnostic disable: need-check-nil
 -- Add customized states to SGwison and SGwilson_client
 -- Smite
-local musha_smite = State{
+local musha_smite = State {
     name = "musha_smite",
     tags = { "attack", "notalking", "abouttoattack", "autopredict" },
 
@@ -25,14 +26,14 @@ local musha_smite = State{
             inst.AnimState:PlayAnimation("atk_pre")
             inst.AnimState:PushAnimation("atk", false)
             DoMountSound(inst, inst.components.rider:GetMount(), "angry", true)
-            cooldown = math.max(cooldown, 16 * FRAMES)     
+            cooldown = math.max(cooldown, 16 * FRAMES)
         else
             inst.AnimState:PlayAnimation("pickaxe_pre")
             inst.AnimState:PushAnimation("pickaxe_loop", false)
             if equip and equip:HasTag("phoenix_axe") then
-				inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
             else
-				inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
             end
             cooldown = math.max(cooldown, 999 * FRAMES)
         end
@@ -84,7 +85,7 @@ local musha_smite = State{
 }
 
 -- Smite_client
-local musha_smite_client = State{
+local musha_smite_client = State {
     name = "musha_smite_client",
     tags = { "attack", "notalking", "abouttoattack" },
 
@@ -118,9 +119,9 @@ local musha_smite_client = State{
             inst.AnimState:PlayAnimation("pickaxe_pre")
             inst.AnimState:PushAnimation("pickaxe_loop", false)
             if equip and equip:HasTag("phoenix_axe") then
-				inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
             else
-				inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
             end
             if cooldown > 0 then
                 cooldown = math.max(cooldown, 999 * FRAMES)
@@ -180,7 +181,10 @@ AddStategraphState("wilson_client", musha_smite_client)
 AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ATTACK,
     function(inst, action)
         inst.sg.mem.localchainattack = not action.forced or nil
-        if not (inst.sg:HasStateTag("attack") and action.target == inst.sg.statemem.attacktarget or inst.components.health:IsDead()) then
+        if not
+            (
+            inst.sg:HasStateTag("attack") and action.target == inst.sg.statemem.attacktarget or
+                inst.components.health:IsDead()) then
             local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon() or nil
             return (weapon == nil and "attack")
                 or (weapon:HasTag("blowdart") and "blowdart")

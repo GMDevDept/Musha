@@ -36,7 +36,7 @@ function MakeCharacterSkin(base, skinname, data)
     end
     characterskins[skinname] = data
     data.base_prefab = base
-    data.rarity = data.rarity or "Loyal"    --默认珍稀度
+    data.rarity = data.rarity or "Loyal" --默认珍稀度
     data.build_name_override = data.build_name_override or skinname
 
     --不存在的珍稀度 自动注册字符串
@@ -67,7 +67,7 @@ function MakeCharacterSkin(base, skinname, data)
         prefab_skin.clear_fn = data.clear_fn
     end
     prefab_skin.type = "base"
-    RegisterPrefabs(prefab_skin)    --注册并加载皮肤的prefab
+    RegisterPrefabs(prefab_skin) --注册并加载皮肤的prefab
     TheSim:LoadPrefabs({ skinname })
 
     return prefab_skin
@@ -76,14 +76,15 @@ end
 --物品皮肤
 local itemskins = {}
 local itembaseimage = {}
-function MakeItemSkinDefaultImage (base, atlas, image)
+function MakeItemSkinDefaultImage(base, atlas, image)
     itembaseimage[base] = { atlas, (image or base) .. ".tex", "default.tex" }
 end
+
 function MakeItemSkin(base, skinname, data)
     data.type = nil
     itemskins[skinname] = data
     data.base_prefab = base
-    data.rarity = data.rarity or "Loyal"    --默认珍稀度
+    data.rarity = data.rarity or "Loyal" --默认珍稀度
     data.build_name_override = data.build_name_override or skinname
 
     --不存在的珍稀度 自动注册字符串
@@ -115,20 +116,20 @@ function MakeItemSkin(base, skinname, data)
     data.skininit_fn = data.init_fn or nil
     data.skinclear_fn = data.clear_fn or nil
     data.init_fn = function(i)
-        basic_skininit_fn(i, skinname)
+        BasicSkinInitFn(i, skinname)
     end
     data.clear_fn = function(i)
-        basic_skinclear_fn(i, skinname)
+        BasicSkinClearFn(i, skinname)
     end
     if data.skinpostfn then
-        data.skinpostfn(data)   --给一个玩家改init_fn的接口
+        data.skinpostfn(data) --给一个玩家改init_fn的接口
     end
     local prefab_skin = CreatePrefabSkin(skinname, data)
     if data.clear_fn then
         prefab_skin.clear_fn = data.clear_fn
     end
     prefab_skin.type = "item"
-    RegisterPrefabs(prefab_skin)    --注册并加载皮肤的prefab
+    RegisterPrefabs(prefab_skin) --注册并加载皮肤的prefab
     TheSim:LoadPrefabs({ skinname })
 
     return prefab_skin
@@ -203,7 +204,7 @@ GLOBAL.ExceptionArrays = function(ta, tb, ...)
     if need then
         local newt = oldExceptionArrays(ta, tb, ...)
         for k, v in pairs(skincharacters) do
-            table.insert(newt, k)        --偷渡
+            table.insert(newt, k) --偷渡
         end
         return newt
     else
@@ -230,14 +231,16 @@ AddClassPostConstruct("widgets/widget", function(self)
     if self.name == "LoadoutSelect" then
         --加载LoadoutSelect之前
         for k, v in pairs(skincharacters) do
-            if not table.contains(DST_CHARACTERLIST, k) then
+            -- if not table.contains(DST_CHARACTERLIST, k) then
+            if not DST_CHARACTERLIST[k] then
                 table.insert(DST_CHARACTERLIST, k)
             end
         end
     elseif self.name == "LoadoutRoot" then
         --已经判断完have_base_option了  可以删了 哈哈
         for k, v in pairs(skincharacters) do
-            if table.contains(DST_CHARACTERLIST, k) then
+            -- if table.contains(DST_CHARACTERLIST, k) then
+            if DST_CHARACTERLIST[k] then
                 RemoveByValue(DST_CHARACTERLIST, k)
             end
         end
@@ -285,7 +288,8 @@ AddClassPostConstruct("widgets/recipepopup", function(self)
                 end
             end
             for k, v in pairs(s.skins_list) do
-                if ret[k + 1] and ret[k + 1].image and v and v.item and itemskins[v.item] and (itemskins[v.item].atlas or itemskins[v.item].image) then
+                if ret[k + 1] and ret[k + 1].image and v and v.item and itemskins[v.item] and
+                    (itemskins[v.item].atlas or itemskins[v.item].image) then
                     local image = itemskins[v.item].image or v.item .. ".tex"
                     if image:sub(-4) ~= ".tex" then
                         image = image .. ".tex"
@@ -300,7 +304,7 @@ AddClassPostConstruct("widgets/recipepopup", function(self)
 end)
 
 --这是全局函数 所以可以放后面 在执行前定义好就行
-function basic_skininit_fn(inst, skinname)
+function BasicSkinInitFn(inst, skinname)
     if inst.components.placer == nil and not TheWorld.ismastersim then
         return
     end
@@ -323,7 +327,8 @@ function basic_skininit_fn(inst, skinname)
         data.skininit_fn(inst, skinname)
     end
 end
-function basic_skinclear_fn(inst, skinname)
+
+function BasicSkinClearFn(inst, skinname)
     --默认认为 build 和prefab同名 不对的话自己改
     local prefab = inst.prefab or ""
     local data = itemskins[skinname]
@@ -352,6 +357,7 @@ function basic_skinclear_fn(inst, skinname)
         itemskins[skinname].skinclear_fn(inst, skinname)
     end
 end
+
 local oldSpawnPrefab = SpawnPrefab
 GLOBAL.SpawnPrefab = function(prefab, skin, skinid, userid, ...)
     if itemskins[skin] then
@@ -388,46 +394,46 @@ function GetSkin(name)
 end
 
 --创建皮肤
-MakeCharacterSkin("musha","musha_none",{
+MakeCharacterSkin("musha", "musha_none", {
     name = "Normal",
     des = "",
     quotes = "",
     build_name_override = "musha_normal",
     rarity = "Timeless",
     -- raritycorlor = {120/255, 120/255, 160/255,1}, -- Rarity font color
-    skins = {normal_skin = "musha_normal", ghost_skin = "ghost_musha_build"},
-    skin_tags = {"BASE", "musha", "CHARACTER"},
+    skins = { normal_skin = "musha_normal", ghost_skin = "ghost_musha_build" },
+    skin_tags = { "BASE", "musha", "CHARACTER" },
 })
 
-MakeCharacterSkin("musha","musha_full",{
+MakeCharacterSkin("musha", "musha_full", {
     name = "Full",
     des = "",
     quotes = "",
     build_name_override = "musha_full",
-	rarity = "Loyal",
-	-- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = {normal_skin = "musha_full", ghost_skin = "ghost_musha_build"},
-    skin_tags = {"musha"},
+    rarity = "Loyal",
+    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
+    skins = { normal_skin = "musha_full", ghost_skin = "ghost_musha_build" },
+    skin_tags = { "musha" },
 })
 
-MakeCharacterSkin("musha","musha_valkyrie",{
+MakeCharacterSkin("musha", "musha_valkyrie", {
     name = "Valkyrie",
     des = "",
     quotes = "",
     build_name_override = "musha_valkyrie",
-	rarity = "Elegant",
-	-- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = {normal_skin = "musha_valkyrie", ghost_skin = "ghost_musha_build"},
-    skin_tags = {"musha"},
+    rarity = "Elegant",
+    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
+    skins = { normal_skin = "musha_valkyrie", ghost_skin = "ghost_musha_build" },
+    skin_tags = { "musha" },
 })
 
-MakeCharacterSkin("musha","musha_berserk",{
+MakeCharacterSkin("musha", "musha_berserk", {
     name = "Berserk",
     des = "",
     quotes = "",
     build_name_override = "musha_berserk",
-	rarity = "Spiffy",
-	-- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = {normal_skin = "musha_berserk", ghost_skin = "ghost_musha_build"},
-    skin_tags = {"musha"},
+    rarity = "Spiffy",
+    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
+    skins = { normal_skin = "musha_berserk", ghost_skin = "ghost_musha_build" },
+    skin_tags = { "musha" },
 })
