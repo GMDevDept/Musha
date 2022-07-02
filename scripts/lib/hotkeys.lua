@@ -1,3 +1,25 @@
+-- Hotkey: toggle_valkyrie
+TheInput:AddKeyDownHandler(GLOBAL.TUNING.MUSHA.hotkey_valkyrie, function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        if TheWorld.ismastersim then
+            ThePlayer.toggle_valkyrie(ThePlayer)
+        else 
+            SendModRPCToServer( MOD_RPC.musha.toggle_valkyrie )
+        end
+    end
+end)
+
+-- Hotkey: toggle_stealth
+TheInput:AddKeyDownHandler(GLOBAL.TUNING.MUSHA.hotkey_stealth, function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        if TheWorld.ismastersim then
+            ThePlayer.toggle_stealth(ThePlayer)
+        else 
+            SendModRPCToServer( MOD_RPC.musha.toggle_stealth )
+        end
+    end
+end)
+
 -- Disable hotkeys when console screen is active
 AddClassPostConstruct("screens/consolescreen", function(self)
 	function self:OnBecomeActive()
@@ -57,20 +79,4 @@ AddClassPostConstruct("screens/chatinputscreen", function(self)
             ThePlayer.HUD.controls.networkchatqueue:Show()
         end
     end
-end)
-
-AddClassPostConstruct("widgets/controls", function(self)
-    self.inst:DoTaskInTime(0.1, function()		
-		TheInput:AddKeyDownHandler(GLOBAL.TUNING.MUSHA.hotkey_valkyrie, function()
-			if ThePlayer:HasTag("musha") and not IsPaused() then
-				SendModRPCToServer( MOD_RPC.musha.toggle_valkyrie )
-			end
-        end)
-		
-		TheInput:AddKeyDownHandler(GLOBAL.TUNING.MUSHA.hotkey_stealth, function()
-			if ThePlayer:HasTag("musha") and not IsPaused() then
-				SendModRPCToServer( MOD_RPC.musha.toggle_stealth )
-			end
-        end)
-    end)
 end)

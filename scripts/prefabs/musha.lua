@@ -22,12 +22,8 @@ for k, v in pairs(TUNING.GAMEMODE_STARTING_ITEMS) do
     start_inv[string.lower(k)] = v.MUSHA
 end
 
--- Character specific prefabs
-local prefabs = {
-    -- Starting inventories
-	"flowerhat",
-	"torch",
-}
+-- Character required prefabs
+local prefabs = FlattenTree(start_inv, true)
 
 -- Update current status
 local function update_status(inst)
@@ -187,6 +183,11 @@ local function master_postinit(inst)
     -- Food bonus
 	inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
 
+    -- Character specific attributes
+    inst.toggle_valkyrie = toggle_valkyrie
+    inst.toggle_stealth = toggle_stealth
+
+    -- Common attributes
     inst.OnLoad = onload
     inst.OnNewSpawn = onload
 	inst.OnSave = onsave
