@@ -15,20 +15,6 @@ local function PrefabPostInitFn(inst)
         end
     end
 
-    _OnEntityReplicated = inst.OnEntityReplicated
-    local function OnEntityReplicated(inst)
-        inst._parent = inst.entity:GetParent()
-        if inst._parent then
-            inst._parent:AttachClassified(inst)
-            for i, v in ipairs({ "mana" }) do
-                if inst._parent.replica[v] ~= nil then
-                    inst._parent.replica[v]:AttachClassified(inst)
-                end
-            end
-        end
-        return _OnEntityReplicated(inst)
-    end
-
     local function OnManaDirty(inst)
         if inst._parent ~= nil then
             local oldpercent = inst._oldmanapercent
@@ -59,16 +45,45 @@ local function PrefabPostInitFn(inst)
         end
     end
 
+    local function OnLevelerDelta(parent, data)
+        -- reserved for future use (e.g. exp badge and level up animation)
+    end
+
+    local function OnLevelerDirty(inst)
+        print(inst._parent)
+        if inst._parent ~= nil then
+            local data = nil -- reserved for future use
+            inst._parent:PushEvent("levelerdelta", data)
+        end
+    end
+
+    _OnEntityReplicated = inst.OnEntityReplicated
+    local function OnEntityReplicated(inst)
+        inst._parent = inst.entity:GetParent()
+        if inst._parent then
+            inst._parent:AttachClassified(inst)
+            if inst._parent.replica.leveler ~= nil then
+                inst._parent.replica.leveler:AttachClassified(inst)
+            end
+            if inst._parent.replica.mana ~= nil then
+                inst._parent.replica.mana:AttachClassified(inst)
+            end
+        end
+        return _OnEntityReplicated(inst)
+    end
+
     --------------------------------------------------------------------------
 
     local function RegisterNetListeners(inst)
         if TheWorld.ismastersim then
             inst._parent = inst.entity:GetParent()
             inst:ListenForEvent("manadelta", OnManaDelta, inst._parent)
+            inst:ListenForEvent("levelerdelta", OnLevelerDelta, inst._parent)
         else
             inst.ismanapulseup:set_local(false)
             inst.ismanapulsedown:set_local(false)
             inst:ListenForEvent("manadirty", OnManaDirty)
+            inst:ListenForEvent("levelerdirty", OnLevelerDirty)
 
             if inst._parent ~= nil then
                 inst._oldmanapercent = inst.maxmana:value() > 0 and inst.currentmana:value() / inst.maxmana:value() or 0
@@ -78,7 +93,17 @@ local function PrefabPostInitFn(inst)
 
     --------------------------------------------------------------------------
 
-    --Mana variables
+    --Net variables
+    inst.maxexperience = net_ushortint(inst.GUID, "leveler.maxexp", "levelerdirty")
+    inst.maxlevel = net_ushortint(inst.GUID, "leveler.maxlvl", "levelerdirty")
+    inst.experience = net_ushortint(inst.GUID, "leveler.exp", "levelerdirty")
+    inst.level = net_ushortint(inst.GUID, "leveler.lvl", "levelerdirty")
+    inst.maxexperience:set(0)
+    inst.maxlevel:set(30)
+    inst.experience:set(0)
+    inst.level:set(0)
+
+    --Net variables
     inst._oldmanapercent = 1
     inst.currentmana = net_ushortint(inst.GUID, "mana.current", "manadirty")
     inst.maxmana = net_ushortint(inst.GUID, "mana.max", "manadirty")

@@ -80,7 +80,7 @@ end
 
 function Mana:GetRate()
     if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.regenrate
+        return self.inst.components.mana.regenspeed
     else
         return 0
     end

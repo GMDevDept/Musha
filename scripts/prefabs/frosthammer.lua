@@ -317,6 +317,7 @@ local function fn()
     inst:AddTag("musha_equipment")
     inst:AddTag("frosthammer")
     inst:AddTag("attackmodule_smite")
+    inst:AddTag("levelerattached")
 
     inst.entity:AddTransform() -- Allows the entity to have a position in the world
     inst.entity:AddAnimState() -- Allows the entity to have a sprite and animate it

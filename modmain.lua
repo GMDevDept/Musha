@@ -8,6 +8,7 @@ local modlanguage = GetModConfigData("modlanguage")
 
 -- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
+AddReplicableComponent("leveler")
 
 -- Run scripts
 modimport("scripts/lib/tuning.lua") -- Settings, values and parameters
@@ -18,7 +19,7 @@ modimport("scripts/lib/recipes.lua") -- Recipe list
 modimport("scripts/lib/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
 modimport("scripts/lib/hotkeys.lua") -- Add key handlers
 modimport("scripts/lib/stategraphs.lua") -- Add action modules and anims (smite,etc.)
-modimport("scripts/lib/player_classified.lua") -- Redefine prefabs/player_classified for replicable components like mana/stamina/fatigue
+modimport("scripts/lib/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
 modimport("scripts/lib/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
 
 -- Custom strings (i18n)

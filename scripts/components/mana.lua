@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-field
 local function onmax(self, max)
     self.inst.replica.mana:SetMax(max)
 end
@@ -16,7 +17,7 @@ local Mana = Class(function(self, inst)
     self.current = self.max
 
     self.regen = true
-    self.regenrate = 0
+    self.regenspeed = 0
     self.defaultrate = 0
 
     local period = 1
@@ -85,12 +86,20 @@ function Mana:SetPercent(p, overtime)
 end
 
 function Mana:SetRate(rate)
-    self.regenrate = rate
+    self.regenspeed = rate
 end
 
 function Mana:DoDeltaToRate(delta)
-    local old = self.regenrate
-    self.regenrate = self.regenrate + delta
+    local old = self.regenspeed
+    self.regenspeed = self.regenspeed + delta
+end
+
+function Mana:DoRegen(dt)
+    local old = self.current
+
+    if self.regen then
+        self:DoDelta(dt * self.regenspeed, true)
+    end
 end
 
 function Mana:DoDelta(delta, overtime, ignore_invincible)
@@ -105,7 +114,6 @@ function Mana:DoDelta(delta, overtime, ignore_invincible)
     end
 
     local old = self.current
-    ---@diagnostic disable-next-line: undefined-field
     self.current = math.clamp(self.current + delta, 0, self.max)
 
     self.inst:PushEvent("manadelta",
@@ -123,16 +131,8 @@ function Mana:DoDelta(delta, overtime, ignore_invincible)
     end
 end
 
-function Mana:DoRegen(dt)
-    local old = self.current
-
-    if self.regen then
-        self:DoDelta(dt * self.regenrate, true)
-    end
-end
-
 function Mana:GetDebugString()
-    return string.format("%2.2f / %2.2f, rate: (%2.2f * %2.2f)", self.current, self.max, self.regenrate)
+    return string.format("%2.2f / %2.2f, rate: (%2.2f * %2.2f)", self.current, self.max, self.regenspeed)
 end
 
 return Mana
