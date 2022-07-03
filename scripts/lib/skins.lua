@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-field
 -- API source: https://steamcommunity.com/sharedfiles/filedetails/?id=2601796546
 
 -- -- Register musha to official character list to enable skin panel
@@ -231,16 +232,14 @@ AddClassPostConstruct("widgets/widget", function(self)
     if self.name == "LoadoutSelect" then
         --加载LoadoutSelect之前
         for k, v in pairs(skincharacters) do
-            -- if not table.contains(DST_CHARACTERLIST, k) then
-            if not DST_CHARACTERLIST[k] then
+            if not table.contains(DST_CHARACTERLIST, k) then
                 table.insert(DST_CHARACTERLIST, k)
             end
         end
     elseif self.name == "LoadoutRoot" then
         --已经判断完have_base_option了  可以删了 哈哈
         for k, v in pairs(skincharacters) do
-            -- if table.contains(DST_CHARACTERLIST, k) then
-            if DST_CHARACTERLIST[k] then
+            if table.contains(DST_CHARACTERLIST, k) then
                 RemoveByValue(DST_CHARACTERLIST, k)
             end
         end
