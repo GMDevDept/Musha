@@ -18,7 +18,6 @@ local Mana = Class(function(self, inst)
 
     self.regen = true
     self.regenspeed = 0
-    self.defaultrate = 0
 
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
@@ -28,6 +27,7 @@ end,
         max = onmax,
         current = oncurrent,
     })
+
 
 function Mana:OnSave()
     return self.current ~= self.max and { mana = self.current } or nil
@@ -60,11 +60,6 @@ function Mana:IsEmpty()
     return self.current <= 0
 end
 
-function Mana:SetMax(amount)
-    self.max = amount
-    self.current = amount
-end
-
 function Mana:GetPercent()
     return self.current / self.max
 end
@@ -85,8 +80,14 @@ function Mana:SetPercent(p, overtime)
     end
 end
 
+function Mana:SetMax(amount)
+    self.max = amount
+    self.current = amount
+end
+
 function Mana:SetRate(rate)
     self.regenspeed = rate
+    self.inst.replica.mana:SetRate(rate)
 end
 
 function Mana:DoDeltaToRate(delta)

@@ -36,23 +36,21 @@ end
 
 --------------------------------------------------------------------------
 
-function Mana:SetCurrent(current)
-    if self.classified ~= nil then
-        self.classified:SetValue("currentmana", current)
-    end
-end
-
-function Mana:SetMax(max)
-    if self.classified ~= nil then
-        self.classified:SetValue("maxmana", max)
-    end
-end
-
 function Mana:Max()
     if self.inst.components.mana ~= nil then
         return self.inst.components.mana.max
     elseif self.classified ~= nil then
         return self.classified.maxmana:value()
+    else
+        return 100
+    end
+end
+
+function Mana:GetCurrent()
+    if self.inst.components.mana ~= nil then
+        return self.inst.components.mana.current
+    elseif self.classified ~= nil then
+        return self.classified.currentmana:value()
     else
         return 100
     end
@@ -68,29 +66,31 @@ function Mana:GetPercent()
     end
 end
 
-function Mana:GetCurrent()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.current
-    elseif self.classified ~= nil then
-        return self.classified.currentmana:value()
-    else
-        return 100
-    end
-end
-
-function Mana:GetRate()
+function Mana:GetCurrentRate()
     if self.inst.components.mana ~= nil then
         return self.inst.components.mana.regenspeed
+    elseif self.classified ~= nil then
+        return self.classified.manaregenspeed:value()
     else
         return 0
     end
 end
 
-function Mana:GetDefaultRate()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.defaultrate
-    else
-        return 0
+function Mana:SetMax(max)
+    if self.classified ~= nil then
+        self.classified:SetValue("maxmana", max)
+    end
+end
+
+function Mana:SetCurrent(current)
+    if self.classified ~= nil then
+        self.classified:SetValue("currentmana", current)
+    end
+end
+
+function Mana:SetRate(rate)
+    if self.classified ~= nil then
+        self.classified.manaregenspeed:set(rate) -- float below 0 cannot use player_classified:SetValue()
     end
 end
 

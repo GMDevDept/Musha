@@ -187,8 +187,8 @@ local function master_postinit(inst)
 
     -- Leveler
     inst:AddComponent("leveler")
-    inst.components.leveler:SetMaxExperience(TUNING.MUSHA.maxexp)
-    inst.components.leveler:SetMaxLevel(TUNING.MUSHA.maxlvl)
+    inst.components.leveler:SetMaxExperience(TUNING.MUSHA.maxexperience)
+    inst.components.leveler:SetMaxLevel(TUNING.MUSHA.maxlevel)
     inst.components.leveler.exprate = TUNING.MUSHA.exprate
     inst.components.leveler.exp_to_level = TUNING.MUSHA.exp_to_level
 
@@ -196,7 +196,6 @@ local function master_postinit(inst)
     inst:AddComponent("mana")
     inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
     inst.components.mana:SetRate(TUNING.MUSHA.manaregenspeed)
-    inst.components.mana.defaultrate = TUNING.MUSHA.manaregenspeed
 
     -- Read books
     inst:AddComponent("reader")

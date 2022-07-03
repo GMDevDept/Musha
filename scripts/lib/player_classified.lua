@@ -93,7 +93,7 @@ local function PrefabPostInitFn(inst)
 
     --------------------------------------------------------------------------
 
-    --Net variables
+    --Net variables for leveler
     inst.maxexperience = net_ushortint(inst.GUID, "leveler.maxexp", "levelerdirty")
     inst.maxlevel = net_ushortint(inst.GUID, "leveler.maxlvl", "levelerdirty")
     inst.experience = net_ushortint(inst.GUID, "leveler.exp", "levelerdirty")
@@ -103,14 +103,16 @@ local function PrefabPostInitFn(inst)
     inst.experience:set(0)
     inst.level:set(0)
 
-    --Net variables
+    --Net variables for mana
     inst._oldmanapercent = 1
     inst.currentmana = net_ushortint(inst.GUID, "mana.current", "manadirty")
     inst.maxmana = net_ushortint(inst.GUID, "mana.max", "manadirty")
+    inst.manaregenspeed = net_float(inst.GUID, "mana.regenspeed", "manadirty")
     inst.ismanapulseup = net_bool(inst.GUID, "mana.dodeltaovertime(up)", "manadirty")
     inst.ismanapulsedown = net_bool(inst.GUID, "mana.dodeltaovertime(down)", "manadirty")
     inst.currentmana:set(0)
     inst.maxmana:set(0)
+    inst.manaregenspeed:set(0)
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)

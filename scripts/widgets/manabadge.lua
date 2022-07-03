@@ -23,10 +23,11 @@ function ManaBadge:OnUpdate(dt)
     if self.owner ~= nil and
         self.owner.replica.mana ~= nil then
 
-        local defaultrate = self.owner.replica.mana:GetDefaultRate()
-        if self.owner.replica.mana:GetRate() > defaultrate then
+        local defaultrate = TUNING.MUSHA.manaregenspeed
+        local currentrate = self.owner.replica.mana:GetCurrentRate() -- 32-bit float
+        if currentrate > defaultrate + 0.001 then
             anim = "arrow_loop_increase"
-        elseif self.owner.replica.mana:GetRate() < defaultrate then
+        elseif currentrate < defaultrate - 0.001 and currentrate < -0.001 then
             anim = "arrow_loop_decrease"
         end
     end
