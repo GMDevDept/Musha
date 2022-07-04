@@ -1,4 +1,4 @@
-local Mana = Class(function(self, inst)
+local Stamina = Class(function(self, inst)
     self.inst = inst
 
     if TheWorld.ismastersim then
@@ -10,7 +10,7 @@ end)
 
 --------------------------------------------------------------------------
 
-function Mana:OnRemoveFromEntity()
+function Stamina:OnRemoveFromEntity()
     if self.classified ~= nil then
         if TheWorld.ismastersim then
             self.classified = nil
@@ -21,77 +21,77 @@ function Mana:OnRemoveFromEntity()
     end
 end
 
-Mana.OnRemoveEntity = Mana.OnRemoveFromEntity
+Stamina.OnRemoveEntity = Stamina.OnRemoveFromEntity
 
-function Mana:AttachClassified(classified)
+function Stamina:AttachClassified(classified)
     self.classified = classified
     self.ondetachclassified = function() self:DetachClassified() end
     self.inst:ListenForEvent("onremove", self.ondetachclassified, classified)
 end
 
-function Mana:DetachClassified()
+function Stamina:DetachClassified()
     self.classified = nil
     self.ondetachclassified = nil
 end
 
 --------------------------------------------------------------------------
 
-function Mana:Max()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.max
+function Stamina:Max()
+    if self.inst.components.stamina ~= nil then
+        return self.inst.components.stamina.max
     elseif self.classified ~= nil then
-        return self.classified.maxmana:value()
+        return self.classified.maxstamina:value()
     else
         return 100
     end
 end
 
-function Mana:GetCurrent()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.current
+function Stamina:GetCurrent()
+    if self.inst.components.stamina ~= nil then
+        return self.inst.components.stamina.current
     elseif self.classified ~= nil then
-        return self.classified.currentmana:value()
+        return self.classified.currentstamina:value()
     else
         return 100
     end
 end
 
-function Mana:GetPercent()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana:GetPercent()
+function Stamina:GetPercent()
+    if self.inst.components.stamina ~= nil then
+        return self.inst.components.stamina:GetPercent()
     elseif self.classified ~= nil then
-        return self.classified.currentmana:value() / self.classified.maxmana:value()
+        return self.classified.currentstamina:value() / self.classified.maxstamina:value()
     else
         return 1
     end
 end
 
-function Mana:GetCurrentRate()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.regenspeed
+function Stamina:GetCurrentRate()
+    if self.inst.components.stamina ~= nil then
+        return self.inst.components.stamina.rate
     elseif self.classified ~= nil then
-        return self.classified.manaregenspeed:value()
+        return self.classified.staminarate:value()
     else
         return 0
     end
 end
 
-function Mana:SetMax(max)
+function Stamina:SetMax(max)
     if self.classified ~= nil then
-        self.classified.maxmana:set(max)
+        self.classified.maxstamina:set(max)
     end
 end
 
-function Mana:SetCurrent(current)
+function Stamina:SetCurrent(current)
     if self.classified ~= nil then
-        self.classified.currentmana:set(current)
+        self.classified.currentstamina:set(current)
     end
 end
 
-function Mana:SetRate(rate)
+function Stamina:SetRate(rate)
     if self.classified ~= nil then
-        self.classified.manaregenspeed:set(rate) -- value below 0 cannot use player_classified:SetValue()
+        self.classified.staminarate:set(rate) -- value below 0 cannot use player_classified:SetValue()
     end
 end
 
-return Mana
+return Stamina

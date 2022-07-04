@@ -53,7 +53,7 @@ function Mana:Resume()
 end
 
 function Mana:IsPaused()
-    return self.regen
+    return not self.regen
 end
 
 function Mana:IsEmpty()
@@ -99,16 +99,11 @@ function Mana:DoRegen(dt)
     local old = self.current
 
     if self.regen then
-        self:DoDelta(dt * self.regenspeed, true)
+        self:DoDelta(dt * self.regenspeed / 1000, true)
     end
 end
 
 function Mana:DoDelta(delta, overtime, ignore_invincible)
-    if self.redirect ~= nil then
-        self.redirect(self.inst, delta, overtime)
-        return
-    end
-
     if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
         self.inst.is_teleporting then
         return

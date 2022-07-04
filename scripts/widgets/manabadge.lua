@@ -4,7 +4,7 @@ local UIAnim = require "widgets/uianim"
 local ManaBadge = Class(Badge, function(self, owner)
     Badge._ctor(self, "health", owner)
 
-    self.anim:GetAnimState():SetBuild("spellpower")
+    self.anim:GetAnimState():SetBuild("mana")
 
     self.manaarrow = self.underNumber:AddChild(UIAnim())
     self.manaarrow:GetAnimState():SetBank("sanity_arrow")
@@ -16,6 +16,10 @@ local ManaBadge = Class(Badge, function(self, owner)
     self:StartUpdating()
 end)
 
+function ManaBadge:SetPercent(val, max)
+    Badge.SetPercent(self, val, max)
+end
+
 function ManaBadge:OnUpdate(dt)
     if TheNet:IsServerPaused() then return end
 
@@ -24,10 +28,10 @@ function ManaBadge:OnUpdate(dt)
         self.owner.replica.mana ~= nil then
 
         local defaultrate = TUNING.MUSHA.manaregenspeed
-        local currentrate = self.owner.replica.mana:GetCurrentRate() -- 32-bit float
-        if currentrate > defaultrate + 0.001 then
+        local currentrate = self.owner.replica.mana:GetCurrentRate()
+        if currentrate > defaultrate then
             anim = "arrow_loop_increase"
-        elseif currentrate < defaultrate - 0.001 and currentrate < -0.001 then
+        elseif currentrate < defaultrate and currentrate < 0 then
             anim = "arrow_loop_decrease"
         end
     end
@@ -36,10 +40,6 @@ function ManaBadge:OnUpdate(dt)
         self.arrowdir = anim
         self.manaarrow:GetAnimState():PlayAnimation(anim, true)
     end
-end
-
-function ManaBadge:SetPercent(val, max)
-    Badge.SetPercent(self, val, max)
 end
 
 return ManaBadge

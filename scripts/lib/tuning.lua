@@ -9,7 +9,10 @@ TUNING.MUSHA = {
     sanity = 200,
 
     maxmana = 50,
-    manaregenspeed = -0.33,
+    manaregenspeed = -333, -- net_ushortint limit
+
+    staminarate = 1000,
+    fatiguerate = -1000,
 
     maxexperience = 300,
     maxlevel = 30,

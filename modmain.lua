@@ -9,6 +9,8 @@ local modlanguage = GetModConfigData("modlanguage")
 -- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
 AddReplicableComponent("leveler")
+AddReplicableComponent("fatigue")
+AddReplicableComponent("stamina")
 
 -- Run scripts
 modimport("scripts/lib/tuning.lua") -- Settings, values and parameters

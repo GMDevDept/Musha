@@ -1,4 +1,4 @@
-local Mana = Class(function(self, inst)
+local Fatigue = Class(function(self, inst)
     self.inst = inst
 
     if TheWorld.ismastersim then
@@ -10,7 +10,7 @@ end)
 
 --------------------------------------------------------------------------
 
-function Mana:OnRemoveFromEntity()
+function Fatigue:OnRemoveFromEntity()
     if self.classified ~= nil then
         if TheWorld.ismastersim then
             self.classified = nil
@@ -21,77 +21,77 @@ function Mana:OnRemoveFromEntity()
     end
 end
 
-Mana.OnRemoveEntity = Mana.OnRemoveFromEntity
+Fatigue.OnRemoveEntity = Fatigue.OnRemoveFromEntity
 
-function Mana:AttachClassified(classified)
+function Fatigue:AttachClassified(classified)
     self.classified = classified
     self.ondetachclassified = function() self:DetachClassified() end
     self.inst:ListenForEvent("onremove", self.ondetachclassified, classified)
 end
 
-function Mana:DetachClassified()
+function Fatigue:DetachClassified()
     self.classified = nil
     self.ondetachclassified = nil
 end
 
 --------------------------------------------------------------------------
 
-function Mana:Max()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.max
+function Fatigue:Max()
+    if self.inst.components.fatigue ~= nil then
+        return self.inst.components.fatigue.max
     elseif self.classified ~= nil then
-        return self.classified.maxmana:value()
+        return self.classified.maxfatigue:value()
     else
         return 100
     end
 end
 
-function Mana:GetCurrent()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.current
+function Fatigue:GetCurrent()
+    if self.inst.components.fatigue ~= nil then
+        return self.inst.components.fatigue.current
     elseif self.classified ~= nil then
-        return self.classified.currentmana:value()
+        return self.classified.currentfatigue:value()
     else
         return 100
     end
 end
 
-function Mana:GetPercent()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana:GetPercent()
+function Fatigue:GetPercent()
+    if self.inst.components.fatigue ~= nil then
+        return self.inst.components.fatigue:GetPercent()
     elseif self.classified ~= nil then
-        return self.classified.currentmana:value() / self.classified.maxmana:value()
+        return self.classified.currentfatigue:value() / self.classified.maxfatigue:value()
     else
         return 1
     end
 end
 
-function Mana:GetCurrentRate()
-    if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.regenspeed
+function Fatigue:GetCurrentRate()
+    if self.inst.components.fatigue ~= nil then
+        return self.inst.components.fatigue.rate
     elseif self.classified ~= nil then
-        return self.classified.manaregenspeed:value()
+        return self.classified.fatiguerate:value()
     else
         return 0
     end
 end
 
-function Mana:SetMax(max)
+function Fatigue:SetMax(max)
     if self.classified ~= nil then
-        self.classified.maxmana:set(max)
+        self.classified.maxfatigue:set(max)
     end
 end
 
-function Mana:SetCurrent(current)
+function Fatigue:SetCurrent(current)
     if self.classified ~= nil then
-        self.classified.currentmana:set(current)
+        self.classified.currentfatigue:set(current)
     end
 end
 
-function Mana:SetRate(rate)
+function Fatigue:SetRate(rate)
     if self.classified ~= nil then
-        self.classified.manaregenspeed:set(rate) -- value below 0 cannot use player_classified:SetValue()
+        self.classified.fatiguerate:set(rate) -- value below 0 cannot use player_classified:SetValue()
     end
 end
 
-return Mana
+return Fatigue

@@ -35,7 +35,9 @@ Assets = {
     Asset("ATLAS", "images/avatars/self_inspect_musha.xml"),
 
     -- widgets
-    Asset("ANIM", "anim/widgets/spellpower.zip"),
+    Asset("ANIM", "anim/widgets/mana.zip"),
+    Asset("ANIM", "anim/widgets/stamina.zip"),
+    Asset("ANIM", "anim/widgets/fatigue.zip"),
 }
 
 AddMinimapAtlas("images/map_icons/musha_mapicon.xml")

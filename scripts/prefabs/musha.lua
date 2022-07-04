@@ -197,6 +197,14 @@ local function master_postinit(inst)
     inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
     inst.components.mana:SetRate(TUNING.MUSHA.manaregenspeed)
 
+    -- Stamina
+    inst:AddComponent("stamina")
+    inst.components.stamina:SetRate(TUNING.MUSHA.staminarate)
+
+    -- Fatigue
+    inst:AddComponent("fatigue")
+    inst.components.fatigue:SetRate(TUNING.MUSHA.fatiguerate)
+
     -- Read books
     inst:AddComponent("reader")
 
