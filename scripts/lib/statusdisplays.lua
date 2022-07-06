@@ -121,7 +121,7 @@ local function StaminaBadgeDisplay(self)
         function self:SetStaminaPercent(pct)
             self.staminabadge:SetPercent(pct, self.owner.replica.stamina:Max())
 
-            if pct <= 0 then
+            if pct >= 1 then
                 self.staminabadge:StartWarning()
             else
                 self.staminabadge:StopWarning()
@@ -238,7 +238,6 @@ local function FatigueBadgeDisplay(self)
                 return
             elseif ghostmode then
                 self.fatiguebadge:Hide()
-                self.fatiguebadge:StopWarning()
             else
                 self.fatiguebadge:Show()
             end

@@ -176,12 +176,6 @@ end
 
 -- On equip
 local function onequip(inst, owner)
-    -- Check owner
-    if not inst.share_item and owner and not owner:HasTag("musha") and owner.components.inventory then
-        owner.components.inventory:Unequip(EQUIPSLOTS.HANDS, true)
-        owner:DoTaskInTime(0.5, function() owner.components.inventory:DropItem(inst) end)
-    end
-
     if not inst.boost then
         inst.components.talker:Say(speak_boost_off(inst))
         owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer", "frosthammer")
@@ -264,16 +258,13 @@ local function boost_off(inst, data)
 end
 
 -- On fuel deplete
-local function ondeplete(inst, data)
+local function ondepleted(inst, data)
     update_damage(inst)
 end
 
 -- On add fuel
-local function onaddfuel(inst, item, data)
-    local expchance0 = 1
-    local expchance1 = 0.3
-    local expchance2 = 0.2
-    local expchance3 = 0.12
+local function ontakefuel(inst, fuelvalue, fuel_obj)
+    local fuel = fuel_obj.prefab
 
     if not inst.forgelab_on then
         inst.exp = inst.exp + 1995
@@ -281,33 +272,40 @@ local function onaddfuel(inst, item, data)
             STRINGS.MUSHA_WEAPON_FROSTHAMMER ..
             " \n" .. STRINGS.MUSHA_ITEM_LUCKY .. " +(2)\n[" .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]" .. (inst.level))
     end
-    -- elseif inst.forgelab_on then
-    --     inst.active_forge = true
-    -- end
     inst.components.fueled:DoDelta(500)
     fx_addfuel(inst)
     update_level(inst)
 end
 
+---------------------------------------------------------------------------------------------------------
+
 -- On save
 local function onsave(inst, data)
-    data.exp = inst.exp
+    data["local_attributes"] = {
+        exp = inst.exp
+    }
 end
 
 -- On preload
 local function onpreload(inst, data)
-    if data then
-        if data.exp then
-            inst.exp = math.min(data.exp, 4000)
-        end
-    end
+    -- Reserved for possible future use
 end
 
 -- On load
 local function onload(inst, data)
+    if data.local_attributes then
+        for k, v in pairs(data.local_attributes) do
+            if v then
+                inst[k] = v
+            end
+        end
+    end
+
     update_level(inst)
     update_damage(inst)
 end
+
+---------------------------------------------------------------------------------------------------------
 
 -- Main function
 local function fn()
@@ -362,6 +360,7 @@ local function fn()
     inst:AddComponent("equippable")
     inst.components.equippable:SetOnEquip(onequip)
     inst.components.equippable:SetOnUnequip(onunequip)
+    inst.components.equippable.restrictedtag = "musha"
 
     inst:AddComponent("tool")
     inst.components.tool:SetAction(ACTIONS.HAMMER)
@@ -373,10 +372,10 @@ local function fn()
 
     inst:AddComponent("fueled")
     inst.components.fueled.fueltype = "BURNABLE"
-    inst.components.fueled:InitializeFuelLevel(1000)
-    inst.components.fueled:SetDepletedFn(ondeplete)
-    inst.components.fueled.ontakefuelfn = onaddfuel
     inst.components.fueled.accepting = true
+    inst.components.fueled:InitializeFuelLevel(1000)
+    inst.components.fueled:SetDepletedFn(ondepleted)
+    inst.components.fueled:SetTakeFuelFn(ontakefuel)
     inst.components.fueled:StopConsuming()
 
     inst:AddComponent("machine")
@@ -389,7 +388,10 @@ local function fn()
 
     MakeHauntableLaunch(inst) -- Sets the entity to be hauntable
 
+    -- Saving required
     inst.exp = 0
+
+    -- Don't need to be saved
     inst.level = 1
     inst.required_exp = 10
     inst.boost = false

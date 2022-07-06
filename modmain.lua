@@ -23,6 +23,7 @@ modimport("scripts/lib/hotkeys.lua") -- Add key handlers
 modimport("scripts/lib/stategraphs.lua") -- Add action modules and anims (smite,etc.)
 modimport("scripts/lib/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
 modimport("scripts/lib/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
+modimport("scripts/lib/fueled.lua") -- Redefine components/fueled for musha's equipments
 
 -- Custom strings (i18n)
 if modlanguage == "english" then

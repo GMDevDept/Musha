@@ -53,16 +53,6 @@ local function update_mode(inst)
     end
 end
 
--- When state changes, update morph availability and
-local function onnewstate(inst)
-    if inst._wasnomorph ~= inst.sg:HasStateTag("nomorph") then
-        inst._wasnomorph = not inst._wasnomorph
-        if not inst._wasnomorph then
-            update_mode(inst)
-        end
-    end
-end
-
 -- Toggle valkyrie mode
 local function toggle_valkyrie(inst)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
@@ -109,6 +99,23 @@ local function toggle_stealth(inst)
     end
 end
 
+-- When state changes, update morph availability and
+local function onnewstate(inst)
+    if inst._wasnomorph ~= inst.sg:HasStateTag("nomorph") then
+        inst._wasnomorph = not inst._wasnomorph
+        if not inst._wasnomorph then
+            update_mode(inst)
+        end
+    end
+end
+
+-- When level up
+local function onlevelup(inst, data)
+
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- When the character is revived to human
 local function onbecamehuman(inst)
     inst.valkyrie_activated = false
@@ -130,6 +137,16 @@ local function onbecameghost(inst)
     inst:RemoveEventCallback("newstate", onnewstate)
 end
 
+-- When save game progress
+local function onsave(inst, data)
+    print("onsave")
+end
+
+-- When preload (before loading components)
+local function onpreload(inst, data)
+    print("onpreload")
+end
+
 -- When loading or spawning the character
 local function onload(inst)
     inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)
@@ -142,15 +159,7 @@ local function onload(inst)
     end
 end
 
--- When save game progress
-local function onsave(inst, data)
-    print("onsave")
-end
-
--- When preload
-local function onpreload(inst, data)
-    print("onpreload")
-end
+---------------------------------------------------------------------------------------------------------
 
 -- This initializes for both the server and client. Tags, animes and minimap icons can be added here.
 local function common_postinit(inst)
@@ -179,6 +188,8 @@ local function common_postinit(inst)
     -- Choose which sounds this character will play
     inst.soundsname = "willow"
 end
+
+---------------------------------------------------------------------------------------------------------
 
 -- This initializes for the server only. Components are added here.
 local function master_postinit(inst)
@@ -225,6 +236,13 @@ local function master_postinit(inst)
     inst.toggle_stealth = toggle_stealth
 
     -- Common attributes
+
+    -- Event handlers
+    inst:ListenForEvent("levelup", onlevelup)
+
+    -- FIRST, the entity runs its PreLoad method.
+    -- SECOND, the entity runs the OnLoad function of its components.
+    -- THIRD, the entity runs its OnLoad method.
     inst.OnLoad = onload
     inst.OnNewSpawn = onload
     inst.OnSave = onsave

@@ -1,4 +1,9 @@
 local function PrefabPostInitFn(inst)
+    local player = ThePlayer or AllPlayers[1]
+    if not player:HasTag("musha") then
+        return
+    end
+
     local function SetDirty(netvar, val)
         --Forces a netvar to be dirty regardless of value
         netvar:set_local(val)
@@ -46,12 +51,12 @@ local function PrefabPostInitFn(inst)
     end
 
     local function OnLevelerDelta(parent, data)
-        -- reserved for future use (e.g. exp badge and level up animation)
+        -- Reserved for possible future use (e.g. exp badge and level up animation)
     end
 
     local function OnLevelerDirty(inst)
         if inst._parent ~= nil then
-            local data = nil -- reserved for future use
+            local data = nil -- Reserved for possible future use
             inst._parent:PushEvent("levelerdelta", data)
         end
     end
@@ -175,7 +180,8 @@ local function PrefabPostInitFn(inst)
             inst:ListenForEvent("staminadirty", OnStaminaDirty)
 
             if inst._parent ~= nil then
-                inst._oldmanapercent = inst.maxmana:value() > 0 and inst.currentmana:value() / inst.maxmana:value() or 0
+                inst._oldmanapercent = inst.maxmana:value() > 0 and inst.currentmana:value() / inst.maxmana:value()
+                    or 0
             end
         end
     end
