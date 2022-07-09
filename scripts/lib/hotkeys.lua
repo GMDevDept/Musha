@@ -1,5 +1,5 @@
 -- Hotkey: toggle_valkyrie
-TheInput:AddKeyDownHandler(TUNING.MUSHA.hotkey_valkyrie, function()
+TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
             ThePlayer.toggle_valkyrie(ThePlayer)
@@ -10,7 +10,7 @@ TheInput:AddKeyDownHandler(TUNING.MUSHA.hotkey_valkyrie, function()
 end)
 
 -- Hotkey: toggle_stealth
-TheInput:AddKeyDownHandler(TUNING.MUSHA.hotkey_stealth, function()
+TheInput:AddKeyDownHandler(TUNING.musha.hotkey_stealth, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
             ThePlayer.toggle_stealth(ThePlayer)

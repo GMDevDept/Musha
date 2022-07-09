@@ -31,7 +31,7 @@ function FatigueBadge:OnUpdate(dt)
     if self.owner ~= nil and
         self.owner.replica.fatigue ~= nil then
 
-        local defaultrate = TUNING.MUSHA.fatiguerate
+        local defaultrate = TUNING.musha.fatiguerate
         local currentrate = self.owner.replica.fatigue:GetCurrentRate()
         if currentrate > defaultrate then
             anim = "arrow_loop_increase"

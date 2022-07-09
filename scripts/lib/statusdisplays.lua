@@ -14,7 +14,7 @@ local function ManaBadgeDisplay(self)
 
         local badge_boatmeter = self.boatmeter:GetPosition()
         local badge_brain = self.brain:GetPosition()
-        local AlwaysOnStatus = false
+        local AlwaysOnStatus = nil
         for k, v in ipairs(KnownModIndex:GetModsToLoad()) do
             local Mod = KnownModIndex:GetModInfo(v).name
             if Mod == "Combined Status" then
@@ -103,7 +103,7 @@ local function StaminaBadgeDisplay(self)
         (self.inst.player_classified ~= nil and self.inst.player_classified.isghostmode:value()) or
             (self.inst.player_classified == nil and self.inst:HasTag("playerghost"))
 
-        local AlwaysOnStatus = false
+        local AlwaysOnStatus = nil
         for k, v in ipairs(KnownModIndex:GetModsToLoad()) do
             local Mod = KnownModIndex:GetModInfo(v).name
             if Mod == "Combined Status" then
@@ -190,7 +190,7 @@ local function FatigueBadgeDisplay(self)
         (self.inst.player_classified ~= nil and self.inst.player_classified.isghostmode:value()) or
             (self.inst.player_classified == nil and self.inst:HasTag("playerghost"))
 
-        local AlwaysOnStatus = false
+        local AlwaysOnStatus = nil
         for k, v in ipairs(KnownModIndex:GetModsToLoad()) do
             local Mod = KnownModIndex:GetModInfo(v).name
             if Mod == "Combined Status" then

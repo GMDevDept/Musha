@@ -198,31 +198,31 @@ local function master_postinit(inst)
 
     -- Leveler
     inst:AddComponent("leveler")
-    inst.components.leveler:SetMaxExperience(TUNING.MUSHA.maxexperience)
-    inst.components.leveler:SetMaxLevel(TUNING.MUSHA.maxlevel)
-    inst.components.leveler.exprate = TUNING.MUSHA.exprate
-    inst.components.leveler.exp_to_level = TUNING.MUSHA.exp_to_level
+    inst.components.leveler:SetMaxExperience(TUNING.musha.maxexperience)
+    inst.components.leveler:SetMaxLevel(TUNING.musha.maxlevel)
+    inst.components.leveler.exprate = TUNING.musha.exprate
+    inst.components.leveler.exp_to_level = TUNING.musha.exp_to_level
 
     -- Mana
     inst:AddComponent("mana")
-    inst.components.mana:SetMax(TUNING.MUSHA.maxmana)
-    inst.components.mana:SetRate(TUNING.MUSHA.manaregenspeed)
+    inst.components.mana:SetMax(TUNING.musha.maxmana)
+    inst.components.mana:SetRate(TUNING.musha.manaregenspeed)
 
     -- Stamina
     inst:AddComponent("stamina")
-    inst.components.stamina:SetRate(TUNING.MUSHA.staminarate)
+    inst.components.stamina:SetRate(TUNING.musha.staminarate)
 
     -- Fatigue
     inst:AddComponent("fatigue")
-    inst.components.fatigue:SetRate(TUNING.MUSHA.fatiguerate)
+    inst.components.fatigue:SetRate(TUNING.musha.fatiguerate)
 
     -- Read books
     inst:AddComponent("reader")
 
     -- Stats
-    inst.components.health:SetMaxHealth(TUNING.MUSHA.health)
-    inst.components.hunger:SetMax(TUNING.MUSHA.hunger)
-    inst.components.sanity:SetMax(TUNING.MUSHA.sanity)
+    inst.components.health:SetMaxHealth(TUNING.musha.health)
+    inst.components.hunger:SetMax(TUNING.musha.hunger)
+    inst.components.sanity:SetMax(TUNING.musha.sanity)
 
     -- Damage multiplier
     inst.components.combat.damagemultiplier = 0.75

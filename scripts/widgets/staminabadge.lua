@@ -31,7 +31,7 @@ function StaminaBadge:OnUpdate(dt)
     if self.owner ~= nil and
         self.owner.replica.stamina ~= nil then
 
-        local defaultrate = TUNING.MUSHA.staminarate
+        local defaultrate = TUNING.musha.staminarate
         local currentrate = self.owner.replica.stamina:GetCurrentRate()
         if currentrate > defaultrate then
             anim = "arrow_loop_increase"
