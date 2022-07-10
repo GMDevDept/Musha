@@ -13,17 +13,17 @@ AddReplicableComponent("fatigue")
 AddReplicableComponent("stamina")
 
 -- Run scripts
-modimport("scripts/lib/tuning.lua") -- Settings, values and parameters
-modimport("scripts/lib/prefabs.lua") -- Prefab list
-modimport("scripts/lib/assets.lua") -- Asset list
-modimport("scripts/lib/skins.lua") -- Show skins on character creation
-modimport("scripts/lib/recipes.lua") -- Recipe list
-modimport("scripts/lib/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
-modimport("scripts/lib/hotkeys.lua") -- Add key handlers
-modimport("scripts/lib/stategraphs.lua") -- Add action modules and anims (smite,etc.)
-modimport("scripts/lib/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
-modimport("scripts/lib/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
-modimport("scripts/lib/fueled.lua") -- Redefine components/fueled for musha's equipments
+modimport("scripts/src/tuning.lua") -- Settings, values and parameters
+modimport("scripts/src/prefabs.lua") -- Prefab list
+modimport("scripts/src/assets.lua") -- Asset list
+modimport("scripts/src/skins.lua") -- Show skins on character creation
+modimport("scripts/src/recipes.lua") -- Recipe list
+modimport("scripts/src/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
+modimport("scripts/src/hotkeys.lua") -- Add key handlers
+modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,etc.)
+modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
+modimport("scripts/src/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
+modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 
 -- Custom strings (i18n)
 if modlanguage == "english" then
