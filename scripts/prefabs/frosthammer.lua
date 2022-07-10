@@ -112,13 +112,13 @@ local function speak_boost_on(inst)
     local str3 = STRINGS.MUSHA_WEAPON_AREA .. "\n"
         .. STRINGS.MUSHA_WEAPON_FREEZESLOW .. "\n"
 
-    local str7 = "----------" .. STRINGS.musha.enchant_skill .. "----------"
+    local str7 = "------" .. STRINGS.musha.enchant_skill .. "------\n"
 
     local str8 = inst.cast_spell and "" or STRINGS.musha.skill_locked .. " "
     local str4 = STRINGS.musha.frosthammer.enchant.cast_spell .. "\n"
 
     local str9 = inst.cooling and "" or STRINGS.musha.skill_locked .. " "
-    local str5 = STRINGS.MUSHA_WEAPON_COOLER .. "\n"
+    local str5 = STRINGS.musha.frosthammer.enchant.cooling .. "\n"
 
     local declaration = str1 .. str6 .. str2 .. str3 .. str7 .. str8 .. str4 .. str9 .. str5
     return declaration
@@ -362,18 +362,17 @@ end
 
 -- On save
 local function onsave(inst, data)
-    data["local_attributes"] = {
-        exp = inst.exp,
-        enchant_precondition = inst.enchant_precondition
-    }
+    data.exp = inst.exp
+    data.enchant_precondition = inst.enchant_precondition
 end
 
 -- On preload
 local function onpreload(inst, data)
-    if data.local_attributes then
-        for k, v in pairs(data.local_attributes) do
-            if v then
-                inst[k] = v
+    if data.exp then inst.exp = data.exp end
+    if data.enchant_precondition then
+        for k, v in pairs(data.enchant_precondition) do
+            if inst.enchant_precondition[k] then
+                inst.enchant_precondition[k] = v
             end
         end
     end
@@ -453,7 +452,7 @@ local function fn()
     inst.components.weapon:SetDamage(75)
 
     inst:AddComponent("fueled")
-    inst.components.fueled.fueltype = "BURNABLE"
+    inst.components.fueled.fueltype = "MUSHA"
     inst.components.fueled.accepting = true
     inst.components.fueled:InitializeFuelLevel(1000)
     inst.components.fueled:SetDepletedFn(ondepleted)
@@ -475,7 +474,7 @@ local function fn()
     inst.required_exp = 0
     inst.boost = nil
     inst.enchant_ability = {
-        tentaclespots = "cast_spell",
+        tentaclespike = "cast_spell",
         ice = "cooling"
     }
     inst.cast_spell = nil
@@ -484,8 +483,8 @@ local function fn()
     -- Saving required
     inst.exp = 0
     inst.enchant_precondition = {
-        tentaclespots = 5,
-        ice = 15
+        tentaclespike = 1,
+        ice = 5,
     }
 
     inst.OnSave = onsave

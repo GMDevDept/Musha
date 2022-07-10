@@ -24,6 +24,7 @@ modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,
 modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
 modimport("scripts/src/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
+modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
 
 -- Custom strings (i18n)
 if modlanguage == "english" then
