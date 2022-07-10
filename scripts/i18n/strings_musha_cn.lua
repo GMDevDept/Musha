@@ -10,18 +10,17 @@ STRINGS.CHARACTER_SURVIVABILITY.musha = "想死都难"
 
 -- Skins
 STRINGS.SKIN_NAMES.musha_none = "通常"
-STRINGS.SKIN_DESCRIPTIONS.musha_none = "默认状态，饱食度低于150时自动触发\n"
+STRINGS.SKIN_DESCRIPTIONS.musha_none = "默认状态，饱食度低于75%时自动触发\n"
 STRINGS.SKIN_QUOTES.musha_none = "我是真正的公主！"
 STRINGS.SKIN_NAMES.musha_full = "充盈"
-STRINGS.SKIN_DESCRIPTIONS.musha_full = "充盈状态，饱食度高于150时自动触发\n"
+STRINGS.SKIN_DESCRIPTIONS.musha_full = "充盈状态，饱食度高于75%时自动触发\n"
 STRINGS.SKIN_QUOTES.musha_full = "吃饱饱，睡好好~"
 STRINGS.SKIN_NAMES.musha_valkyrie = "女武神"
-STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：等级达到3级后按R键触发\n"
+STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：暂无，按R键触发\n"
 STRINGS.SKIN_QUOTES.musha_valkyrie = "就让你见识，Musha真正的力量！"
 STRINGS.SKIN_NAMES.musha_berserk = "狂暴"
-STRINGS.SKIN_DESCRIPTIONS.musha_berserk = "解锁条件：满月/新月之夜自动触发（无等级限制），或食用怪物类食物主动触发（要求等级达到7级）"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserk = "解锁条件：暂无，按G键触发\n"
 STRINGS.SKIN_QUOTES.musha_berserk = "狂暴状态，限制解除！"
-
 
 STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("也许她能成为我书友会的成员。")
 STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("贵族的血？唔...")
@@ -35,6 +34,23 @@ STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
     MURDERER = "谋杀！",
     REVIVER = "回来..",
     GHOST = "走开！",
+}
+
+STRINGS.musha = {
+    segmentation = "------------------------------\n",
+    enchant_skill = "附魔技能",
+    enchant_material_added = "附魔素材已添加",
+    skill_unlocked = "已解锁技能",
+    skill_locked = "[未解锁]",
+    material_required = "所需素材",
+    lack_of_mana = "Musha的魔力不够了！",
+    lack_of_sanity = "Musha的精神值不够了！",
+    frosthammer = {
+        enchant = {
+            cast_spell = "⊙ 召唤：冰霜触手",
+            cooling = "◇ 冷却体温"
+        }
+    }
 }
 
 --status

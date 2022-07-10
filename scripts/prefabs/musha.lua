@@ -16,6 +16,11 @@ local assets = {
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
     "flowerhat",
     "torch",
+    "tentaclespots",
+    "tentaclespots",
+    "tentaclespots",
+    "tentaclespots",
+    "tentaclespots",
 }
 
 local start_inv = {}

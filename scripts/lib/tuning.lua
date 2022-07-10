@@ -9,7 +9,7 @@ TUNING.musha = {
     sanity = 200,
 
     maxmana = 50,
-    manaregenspeed = -333, -- net_ushortint limit
+    manaregenspeed = 333, -- net_ushortint limit
 
     staminarate = 1000,
     fatiguerate = -1000,
@@ -19,13 +19,4 @@ TUNING.musha = {
     exprate = 1,
     exp_to_level = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
-
-    -- Frost hammer
-    frosthammer = {
-        enchant = {
-            precondition = {
-                tentaclespots = 5,
-            }
-        }
-    }
 }

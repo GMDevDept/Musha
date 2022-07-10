@@ -15,7 +15,7 @@ local function update_damage(inst)
         inst.broken = true
         inst.components.weapon:SetDamage(1)
     else
-        inst.broken = false
+        inst.broken = nil
         local level_to_damage = { 75, 77, 79, 81, 83, 85, 87, 89, 91, 93, 95, 97, 99, 101, 103, 105, 107, 109, 111, 113,
             115, 120, 127, 134, 141, 148, 155, 162, 170, 200 } -- len = 30
         inst.components.weapon:SetDamage(level_to_damage[inst.level])
@@ -23,11 +23,14 @@ local function update_damage(inst)
 end
 
 -- Exp to level
-local function update_level(inst)
+local function update_level(inst, extra_str)
+    local declaration = ""
+
     if inst.exp >= 4000 then
         inst.level = 30
-        inst.components.talker:Say("-[" ..
-            STRINGS.MUSHA_WEAPON_FROSTHAMMER .. "] \n[" .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]\n" .. "[ LEVEL MAX ]")
+        declaration = "-[" .. STRINGS.MUSHA_WEAPON_FROSTHAMMER .. "] \n["
+            .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]\n"
+            .. "[ LEVEL MAX ]\n"
     else
         local exp_to_level = { 10, 30, 50, 70, 90, 120, 150, 180, 210, 250, 350, 450, 550, 650, 750, 850, 950, 1050, 1200,
             1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 4000 } -- len = 29
@@ -38,11 +41,26 @@ local function update_level(inst)
                 break
             end
         end
-        inst.components.talker:Say("-[" ..
-            STRINGS.MUSHA_WEAPON_FROSTHAMMER ..
-            "] \n[" .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]\n" .. (inst.exp) .. "/" .. exp_to_level[inst.level])
+        declaration = "-[" .. STRINGS.MUSHA_WEAPON_FROSTHAMMER .. "] \n["
+            .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]\n"
+            .. (inst.exp) .. "/" .. exp_to_level[inst.level] .. "\n"
     end
+
+    if extra_str then
+        declaration = declaration .. extra_str
+    end
+
+    inst.components.talker:Say(declaration)
     update_damage(inst)
+end
+
+-- Determine if enchants are activated
+local function enchant_determine(inst)
+    for k, v in pairs(inst.enchant_precondition) do
+        if not v then
+            inst[inst.enchant_ability[k]] = true
+        end
+    end
 end
 
 -- Broken effects
@@ -87,18 +105,22 @@ local function speak_boost_on(inst)
     local str1 = "[" .. STRINGS.MUSHA_WEAPON_FROSTHAMMER .. "]\n"
         .. STRINGS.MUSHA_WEAPON_DAMAGE .. " (" .. inst.components.weapon.damage .. ")\n"
 
+    local str6 = inst.level < 30 and "LV ( " .. inst.level .. "/30 )\n" or "LV ( " .. inst.level .. "/30 ) [ MAX ]\n"
+
     local str2 = inst.level < 30 and "EXP ( " .. inst.exp .. "/" .. inst.required_exp .. " )\n" or ""
 
     local str3 = STRINGS.MUSHA_WEAPON_AREA .. "\n"
         .. STRINGS.MUSHA_WEAPON_FREEZESLOW .. "\n"
 
-    local str4 = STRINGS.MUSHA_WEAPON_TENTACLE_FROST .. "\n"
+    local str7 = "----------" .. STRINGS.musha.enchant_skill .. "----------"
 
+    local str8 = inst.cast_spell and "" or STRINGS.musha.skill_locked .. " "
+    local str4 = STRINGS.musha.frosthammer.enchant.cast_spell .. "\n"
+
+    local str9 = inst.cooling and "" or STRINGS.musha.skill_locked .. " "
     local str5 = STRINGS.MUSHA_WEAPON_COOLER .. "\n"
 
-    local str6 = inst.level < 30 and "LV ( " .. inst.level .. "/30 )\n" or "LV ( " .. inst.level .. "/30 ) [ MAX ]\n"
-
-    local declaration = str1 .. str6 .. str2 .. str3 .. str4 .. str5
+    local declaration = str1 .. str6 .. str2 .. str3 .. str7 .. str8 .. str4 .. str9 .. str5
     return declaration
 end
 
@@ -115,6 +137,53 @@ local function speak_boost_off(inst)
     return declaration
 end
 
+local function SpellFn(inst, target, pos)
+    local caster = inst.components.inventoryitem.owner
+
+    if caster.components.mana.current >= 10 and caster.components.sanity.current >= 25 then
+        local prefab1 = SpawnPrefab("shadowmeteor")
+        prefab1.Transform:SetPosition(pos.x, pos.y, pos.z)
+        caster.components.mana:DoDelta(-10)
+        caster.components.sanity:DoDelta(-25)
+    else
+        local fx_fail = SpawnPrefab("small_puff")
+        fx_fail.Transform:SetPosition(pos.x, pos.y, pos.z)
+
+        if caster.components.mana.current < 10 then
+            caster.components.talker:Say(STRINGS.musha.lack_of_mana)
+        elseif caster.components.sanity.current < 25 then
+            caster.components.talker:Say(STRINGS.musha.lack_of_sanity)
+        end
+    end
+
+    -- if caster.components.spellpower.current >= 25 and caster.components.leader:CountFollowers("frost_tentacle") < 8 then
+    --     local light1 = SpawnPrefab("splash")
+    --     local monster = SpawnPrefab("tentacle_frost")
+    --     local fail1 = SpawnPrefab("statue_transition")
+    --     local fail2 = SpawnPrefab("statue_transition_2")
+
+    --     fail1.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     fail2.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     light1.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     monster.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     --monster.limited = true
+    --     monster.components.follower:SetLeader(caster)
+
+    --     caster.components.spellpower:DoDelta(-25)
+
+    -- elseif caster.components.spellpower.current < 25 then
+    --     local fail1 = SpawnPrefab("small_puff")
+    --     fail1.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     caster.components.talker:Say(STRINGS.MUSHA_TALK_CANNOT)
+
+    -- elseif caster.components.leader:CountFollowers("frost_tentacle") >= 8 then
+    --     local fail1 = SpawnPrefab("small_puff")
+    --     fail1.Transform:SetPosition(pos.x, pos.y, pos.z)
+    --     caster.components.talker:Say(STRINGS.MUSHA_TALK_CANNOT2)
+
+    -- end
+end
+
 -- Reticule (gamepad support)
 local function reticuletargetfn()
     return Vector3(ThePlayer.entity:LocalToWorldSpace(5, 0, 0))
@@ -127,7 +196,7 @@ local function onattack(inst, attacker, target, data)
 
         if inst.boost then
             local fx = SpawnPrefab("groundpoundring_fx")
-            fx.Transform:SetScale(0.45, 0.45, 0.45)
+            fx.Transform:SetScale(0.6, 0.6, 0.6)
             fx.Transform:SetPosition(target:GetPosition():Get())
 
             if target.components.freezable then
@@ -186,30 +255,10 @@ local function onequip(inst, owner)
     end
     owner.AnimState:Show("ARM_carry")
     owner.AnimState:Hide("ARM_normal")
-
-    owner.frost = true
-    owner.frosthammer_equipped = true
 end
 
 -- On unequip
 local function onunequip(inst, owner)
-    owner.frost = false
-    owner.frosthammer_equipped = false
-
-    if inst.components.heater then
-        inst:RemoveComponent("heater")
-    end
-    if inst.components.reticule then
-        inst:RemoveComponent("reticule")
-    end
-    if inst.components.spellcaster then
-        inst:RemoveComponent("spellcaster")
-    end
-    if inst.task then
-        inst.task:Cancel()
-        inst.task = nil
-    end
-
     owner.AnimState:Hide("ARM_carry")
     owner.AnimState:Show("ARM_normal")
     if inst.boost_fx then
@@ -220,15 +269,26 @@ end
 -- Boost mode on (right click)
 local function boost_on(inst)
     local owner = inst.components.inventoryitem.owner
+
     if owner then
         owner.AnimState:OverrideSymbol("swap_object", "swap_frosthammer2", "frosthammer")
     else
         inst.AnimState:SetBuild("frosthammer2")
     end
+
     inst.SoundEmitter:PlaySound("dontstarve/common/gem_shatter")
     inst.components.talker:Say(speak_boost_on(inst))
     inst.components.equippable.walkspeedmult = 0.75
     inst.boost = true
+
+    if inst["cast_spell"] then
+        if not inst.components.spellcaster then
+            inst:AddComponent("spellcaster")
+            inst.components.spellcaster:SetSpellFn(SpellFn)
+            inst.components.spellcaster.canuseonpoint = true
+        end
+    end
+
     fx_boost(inst)
 end
 
@@ -254,7 +314,7 @@ local function boost_off(inst, data)
     inst.SoundEmitter:PlaySound("dontstarve/common/fireOut")
     inst.components.talker:Say(speak_boost_off(inst))
     inst.components.equippable.walkspeedmult = 1
-    inst.boost = false
+    inst.boost = nil
 end
 
 -- On fuel deplete
@@ -265,6 +325,8 @@ end
 -- On add fuel
 local function ontakefuel(inst, fuelvalue, fuel_obj)
     local fuel = fuel_obj.prefab
+    local enchant_req = inst.enchant_precondition[fuel]
+    local extra_str = nil
 
     if not inst.forgelab_on then
         inst.exp = inst.exp + 1995
@@ -273,8 +335,27 @@ local function ontakefuel(inst, fuelvalue, fuel_obj)
             " \n" .. STRINGS.MUSHA_ITEM_LUCKY .. " +(2)\n[" .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]" .. (inst.level))
     end
     inst.components.fueled:DoDelta(500)
+
+    if enchant_req then
+        enchant_req = enchant_req - 1
+        if enchant_req == 0 then
+            inst.enchant_precondition[fuel] = false
+            extra_str = STRINGS.musha.segmentation
+                .. STRINGS.musha.skill_unlocked .. ": "
+                .. STRINGS.musha.frosthammer.enchant[inst.enchant_ability[fuel]] .. "\n"
+                .. STRINGS.musha.segmentation
+            enchant_determine(inst)
+        else
+            inst.enchant_precondition[fuel] = enchant_req
+            extra_str = STRINGS.musha.enchant_skill .. " [ "
+                .. STRINGS.musha.frosthammer.enchant[inst.enchant_ability[fuel]] .. " ]\n"
+                .. STRINGS.musha.material_required .. ": "
+                .. STRINGS.NAMES[string.upper(fuel)] .. " ( " .. enchant_req .. " )"
+        end
+    end
+
     fx_addfuel(inst)
-    update_level(inst)
+    update_level(inst, extra_str)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -282,17 +363,13 @@ end
 -- On save
 local function onsave(inst, data)
     data["local_attributes"] = {
-        exp = inst.exp
+        exp = inst.exp,
+        enchant_precondition = inst.enchant_precondition
     }
 end
 
 -- On preload
 local function onpreload(inst, data)
-    -- Reserved for possible future use
-end
-
--- On load
-local function onload(inst, data)
     if data.local_attributes then
         for k, v in pairs(data.local_attributes) do
             if v then
@@ -302,7 +379,12 @@ local function onload(inst, data)
     end
 
     update_level(inst)
-    update_damage(inst)
+    enchant_determine(inst)
+end
+
+-- On load
+local function onload(inst, data)
+    -- Reserved for possible future use
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -388,13 +470,23 @@ local function fn()
 
     MakeHauntableLaunch(inst) -- Sets the entity to be hauntable
 
+    -- Don't need to be saved
+    inst.level = 0
+    inst.required_exp = 0
+    inst.boost = nil
+    inst.enchant_ability = {
+        tentaclespots = "cast_spell",
+        ice = "cooling"
+    }
+    inst.cast_spell = nil
+    inst.cooling = nil
+
     -- Saving required
     inst.exp = 0
-
-    -- Don't need to be saved
-    inst.level = 1
-    inst.required_exp = 10
-    inst.boost = false
+    inst.enchant_precondition = {
+        tentaclespots = 5,
+        ice = 15
+    }
 
     inst.OnSave = onsave
     inst.OnPreLoad = onpreload
