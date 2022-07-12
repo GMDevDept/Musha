@@ -84,8 +84,8 @@ local function fx_addfuel(inst)
         local fx = SpawnPrefab("firesplash_fx")
         fx.Transform:SetScale(0.3, 0.3, 0.3)
         fx.Transform:SetPosition(owner:GetPosition():Get())
-        inst.SoundEmitter:PlaySound("dontstarve/common/fireAddFuel")
     end
+    inst.SoundEmitter:PlaySound("dontstarve/common/fireAddFuel")
 end
 
 -- Dynamic anime when boost mode is on
@@ -129,13 +129,14 @@ local function boost_declaration(inst)
         str6 = str6 .. STRINGS.musha.frosthammer.enchant[v] .. "\n"
         if not inst[v] then
             str6 = str6 .. STRINGS.musha.material_required .. ": "
-                .. STRINGS.NAMES[string.upper(k)] .. " ( " .. inst.enchant_precondition[k] .. " )"
+                .. STRINGS.NAMES[string.upper(k)] .. " ( " .. inst.enchant_precondition[k] .. " )\n"
         end
     end
 
     return str1 .. str2 .. str3 .. str4 .. str5 .. str6
 end
 
+-- Enchant ability to cast spell
 local function SpellFn(inst, target, pos)
     local caster = inst.components.inventoryitem.owner
 
@@ -177,7 +178,7 @@ local function SpellFn(inst, target, pos)
     -- end
 end
 
--- Periodic task for aura effect (per seconds)
+-- Periodic task for aura effect
 local function task_aura(inst)
     local x, y, z = inst.Transform:GetWorldPosition()
     local must_tags = { "locomotor", "freezable" }
@@ -185,12 +186,15 @@ local function task_aura(inst)
         "musha_companion", "isdead", "nofreeze", "player" }
     local targets = TheSim:FindEntities(x, y, z, TUNING.musha.weapon.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
     if targets then
+        -- Slowdown all targets
+
+        -- Freeze one random target
         local freeze_target = #targets > 1 and math.random(#targets) or 1
         for k, v in pairs(targets) do
             if k == freeze_target then
                 if not v:HasTag("freeze_cooldown") and v.components.freezable and not v.components.freezable:IsFrozen() then
                     if v.components.health and v.components.health.currenthealth > 0 then
-                        v.components.health:DoDelta(-0.1 * inst.components.weapon.damage) -- Damage
+                        v.components.health:DoDelta(-0.2 * inst.components.weapon.damage) -- Damage
                     end
                     v.components.freezable:AddColdness(4) -- Freeze
                     v.components.freezable:SpawnShatterFX()
@@ -297,7 +301,7 @@ local function boost_on(inst, data)
             end
             inst.components.heater.equippedheat = nil
             inst.components.heater.heat = 0 -- Cooling aura, works as cold fire pit
-            inst.task_aura = inst:DoPeriodicTask(1, task_aura, 0)
+            inst.task_aura = inst:DoPeriodicTask(2, task_aura, 0)
         end
     end
 
@@ -351,7 +355,7 @@ end
 -- On fuel deplete
 local function ondepleted(inst, data)
     update_damage(inst)
-    boost_off(inst)
+    inst.components.machine:TurnOff()
 end
 
 -- On add fuel
@@ -429,9 +433,9 @@ local function ondropped(inst)
     end
 
     if inst.boost then
-        boost_on(inst)
+        inst.components.machine:TurnOn()
     else
-        boost_off(inst)
+        inst.components.machine:TurnOff()
     end
 end
 
@@ -451,9 +455,9 @@ local function onequip(inst, owner)
     end
 
     if inst.boost then
-        boost_on(inst)
+        inst.components.machine:TurnOn()
     else
-        boost_off(inst)
+        inst.components.machine:TurnOff()
     end
 
     owner.AnimState:Show("ARM_carry")

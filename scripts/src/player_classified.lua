@@ -1,6 +1,6 @@
 local function PrefabPostInitFn(inst)
     local player = ThePlayer or AllPlayers[1]
-    if not player:HasTag("musha") then
+    if player and not player:HasTag("musha") then
         return
     end
 
