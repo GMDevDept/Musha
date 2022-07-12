@@ -14,9 +14,15 @@ local assets = {
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
-    "flowerhat",
     "torch",
+    "hammer",
     "tentaclespike",
+    "minotaurhorn",
+    "ice",
+    "ice",
+    "ice",
+    "ice",
+    "ice",
 }
 
 local start_inv = {}

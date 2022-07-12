@@ -47,9 +47,11 @@ STRINGS.musha = {
     lack_of_sanity = "Musha的精神值不够了！",
     frosthammer = {
         enchant = {
-            cast_spell = "⊙ 召唤：冰霜触手",
-            cooling = "◇ 冷却体温"
-        }
+            cast_spell = "♠ 召唤：冰霜触手",
+            cooling = "◇ 冷却体温",
+            aura = "⊙ 光环：极寒领域",
+        },
+        stopcoolinginwinter = "冬季开始，降温功能已关闭"
     }
 }
 

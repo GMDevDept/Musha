@@ -13,6 +13,7 @@ AddReplicableComponent("fatigue")
 AddReplicableComponent("stamina")
 
 -- Run scripts
+modimport("scripts/src/commonfunctions.lua") -- Define global functions used in this mod
 modimport("scripts/src/tuning.lua") -- Settings, values and parameters
 modimport("scripts/src/prefabs.lua") -- Prefab list
 modimport("scripts/src/assets.lua") -- Asset list

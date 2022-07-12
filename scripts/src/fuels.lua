@@ -18,6 +18,7 @@ local fuel_list = {
     "tentaclespots",
     "tentaclespike",
     "ice",
+    "minotaurhorn",
 }
 
 local function fuelsetup(inst)
