@@ -121,6 +121,12 @@ local function onlevelup(inst, data)
 
 end
 
+-- Bonus damage
+local function bonusdamagefn(inst, target, damage, weapon)
+    -- return (target:HasTag("") and TUNING.EXTRADAMAGE) or 0
+    return 0
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- When the character is revived to human
@@ -231,9 +237,10 @@ local function master_postinit(inst)
     inst.components.hunger:SetMax(TUNING.musha.hunger)
     inst.components.sanity:SetMax(TUNING.musha.sanity)
 
-    -- Damage multiplier
-    inst.components.combat.damagemultiplier = 0.75
-    inst.components.combat.areahitdamagepercent = 0.5
+    -- Combat
+    inst.components.combat.damagemultiplier = TUNING.musha.damagemultiplier
+    inst.components.combat.areahitdamagepercent = TUNING.musha.areahitdamagepercent
+    inst.components.combat.bonusdamagefn = bonusdamagefn
 
     -- Food bonus
     inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)

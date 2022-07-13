@@ -186,15 +186,23 @@ local function task_aura(inst)
         "musha_companion", "isdead", "nofreeze", "player" }
     local targets = TheSim:FindEntities(x, y, z, TUNING.musha.weapon.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
     if targets then
-        -- Slowdown all targets
-
-        -- Freeze one random target
         local freeze_target = #targets > 1 and math.random(#targets) or 1
         for k, v in pairs(targets) do
+            -- Slowdown all targets
+            if v.components.health and v.components.health.currenthealth > 0
+                and v.components.combat ~= nil and inst.aura_owner then
+                v.components.combat:GetAttacked(inst.aura_owner, 1, inst) -- Damage has to be > 0. only to cast hit effect on targets
+            end
+            CustomSlowDown(v, v, "frosthammer_aura", TUNING.musha.weapon.auraslowdownmult, TUNING.musha.weapon.auraperiod) -- Note: CustomSlowDown = function(target, src, key, multiplier, time), src = v to forbid duplicate effect
+            -- Freeze one random target
             if k == freeze_target then
-                if not v:HasTag("freeze_cooldown") and v.components.freezable and not v.components.freezable:IsFrozen() then
-                    if v.components.health and v.components.health.currenthealth > 0 then
-                        v.components.health:DoDelta(-0.2 * inst.components.weapon.damage) -- Damage
+                if v.components.freezable and not v.components.freezable:IsFrozen() then
+                    if v.components.health and v.components.health.currenthealth > 0 then -- Take damage
+                        if v.components.combat ~= nil and inst.aura_owner then
+                            v.components.combat:GetAttacked(inst.aura_owner, 0.2 * inst.components.weapon.damage, inst) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+                        else
+                            v.components.health:DoDelta(-0.2 * inst.components.weapon.damage) -- No hit effect
+                        end
                     end
                     v.components.freezable:AddColdness(4) -- Freeze
                     v.components.freezable:SpawnShatterFX()
@@ -301,7 +309,9 @@ local function boost_on(inst, data)
             end
             inst.components.heater.equippedheat = nil
             inst.components.heater.heat = 0 -- Cooling aura, works as cold fire pit
-            inst.task_aura = inst:DoPeriodicTask(2, task_aura, 0)
+            inst.task_aura = inst:DoPeriodicTask(TUNING.musha.weapon.auraperiod, task_aura, 0)
+        else
+            inst.Light:Enable(false)
         end
     end
 
@@ -407,7 +417,9 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- On put in inventory
-local function onputininventory(inst)
+local function onputininventory(inst, owner)
+    inst.aura_owner = owner
+
     if inst.components.heater then
         inst:RemoveComponent("heater")
     end
@@ -445,6 +457,8 @@ end
 
 -- On equip
 local function onequip(inst, owner)
+    inst.aura_owner = owner
+
     if inst.boost_fx then
         inst.boost_fx:Remove()
     end
@@ -606,6 +620,7 @@ local function fn()
     inst.cast_spell = nil
     inst.cooling = nil
     inst.aura = nil
+    inst.aura_owner = nil -- For adscription of aura's attack judgment, cannot be saved due to recursive dump
 
     -- Saving required
     inst.exp = 0

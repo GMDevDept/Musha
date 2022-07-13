@@ -14,6 +14,9 @@ TUNING.musha = {
     staminarate = 1000,
     fatiguerate = -1000,
 
+    damagemultiplier = 0.75,
+    areahitdamagepercent = 0.5,
+
     maxexperience = 300,
     maxlevel = 30,
     exprate = 1,
@@ -27,8 +30,10 @@ TUNING.musha = {
         refueldelta = 200,
         fuelconsume_attack = -10,
         fuelconsume_cast = -50,
-        fuelconsume_aura = -5,
+        fuelconsume_aura = -10,
         expdelta = 5,
         auraradius = 10,
+        auraperiod = 2,
+        auraslowdownmult = 0.3,
     }
 }
