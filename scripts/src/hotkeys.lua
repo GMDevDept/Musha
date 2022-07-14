@@ -22,61 +22,30 @@ end)
 
 -- Disable hotkeys when console screen is active
 AddClassPostConstruct("screens/consolescreen", function(self)
+    local _OnBecomeActive = self.OnBecomeActive
     function self:OnBecomeActive()
         SetPause(true)
-
-        self._base.OnBecomeActive(self)
-        TheFrontEnd:ShowConsoleLog()
-
-        self.console_edit:SetFocus()
-        self.console_edit:SetEditing(true)
-
-        self:ToggleRemoteExecute(true) -- if we are admin, start in remote mode
+        return _OnBecomeActive(self)
     end
 
+    local _OnBecomeInactive = self.OnBecomeInactive
     function self:OnBecomeInactive()
         SetPause(false)
-
-        self._base.OnBecomeInactive(self)
-
-        if self.runtask ~= nil then
-            self.runtask:Cancel()
-            self.runtask = nil
-        end
+        return _OnBecomeInactive(self)
     end
 end)
 
 -- Disable hotkeys when chat screen is active
 AddClassPostConstruct("screens/chatinputscreen", function(self)
+    local _OnBecomeActive = self.OnBecomeActive
     function self:OnBecomeActive()
         SetPause(true)
-
-        self._base.OnBecomeActive(self)
-
-        self.chat_edit:SetFocus()
-        self.chat_edit:SetEditing(true)
-
-        if IsConsole() then
-            TheFrontEnd:LockFocus(true)
-        end
-
-        if ThePlayer ~= nil and ThePlayer.HUD ~= nil then
-            ThePlayer.HUD.controls.networkchatqueue:Hide()
-        end
+        return _OnBecomeActive(self)
     end
 
+    local _OnBecomeInactive = self.OnBecomeInactive
     function self:OnBecomeInactive()
         SetPause(false)
-
-        self._base.OnBecomeInactive(self)
-
-        if self.runtask ~= nil then
-            self.runtask:Cancel()
-            self.runtask = nil
-        end
-
-        if ThePlayer ~= nil and ThePlayer.HUD ~= nil then
-            ThePlayer.HUD.controls.networkchatqueue:Show()
-        end
+        return _OnBecomeInactive(self)
     end
 end)
