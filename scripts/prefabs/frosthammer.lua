@@ -265,6 +265,11 @@ end
 
 -- Boost mode on (right click)
 local function boost_on(inst, data)
+    if inst.broken then
+        inst.components.talker:Say(STRINGS.musha.weapon_broken)
+        return
+    end
+
     local owner = inst.components.inventoryitem.owner
 
     if owner then

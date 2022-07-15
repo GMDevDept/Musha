@@ -38,6 +38,7 @@ STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
 
 STRINGS.musha = {
     segmentation = "------------------------------\n",
+
     enchant_skill = "附魔技能",
     enchant_material_added = "附魔素材已添加",
     skill_unlocked = "已解锁技能",
@@ -45,6 +46,8 @@ STRINGS.musha = {
     material_required = "所需素材",
     lack_of_mana = "Musha的魔力不够了！",
     lack_of_sanity = "Musha的精神值不够了！",
+    weapon_broken = "武器已损坏",
+
     frosthammer = {
         enchant = {
             cast_spell = "♠ 召唤：冰霜触手",
@@ -52,10 +55,9 @@ STRINGS.musha = {
             aura = "⊙ 光环：极寒领域",
         },
         stopcoolinginwinter = "冬季开始，降温功能已关闭"
-    }
+    },
 }
 
-STRINGS.ACTIONS.ADDFUEL.MUSHA_ACTION_REPAIR = "修理"
 STRINGS.CHARACTERS.GENERIC.ACTIONFAIL.RUMMAGE.MUSHA_NOT_OWNER = "我想它的主人不希望我这样做。"
 
 --status

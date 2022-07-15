@@ -69,14 +69,14 @@ local function toggle_valkyrie(inst)
     if inst.valkyrie_activated then
         inst.valkyrie_activated = false
         inst.berserk_activated = false
-        SpawnPrefab("weregoose_transform_fx").Transform:SetPosition(inst:GetPosition():Get())
+        SpawnPrefab("electrichitsparks").Transform:SetPosition(inst:GetPosition():Get())
         update_mode(inst)
-    elseif not inst.berserk_activated then
+    else
         inst.valkyrie_activated = true
         inst.berserk_activated = false
         inst.musha_full = false
         inst.musha_normal = false
-        SpawnPrefab("lucy_transform_fx").Transform:SetPosition(inst:GetPosition():Get())
+        SpawnPrefab("electricchargedfx").Transform:SetPosition(inst:GetPosition():Get())
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.soundsname = "winnie"
     end
@@ -178,7 +178,6 @@ end
 local function common_postinit(inst)
     -- Tags defined by this mod
     inst:AddTag("musha")
-    inst:AddTag("levelerattached")
 
     -- Able to build and read books
     inst:AddTag("bookbuilder")

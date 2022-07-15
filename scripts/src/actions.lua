@@ -21,19 +21,8 @@ ACTIONS.USEITEM.fn = function(act)
             act.invobject.components.machine:TurnOff()
             return true
         end
-    else -- General useable items from game, keep unchanged
-        return _UseItemFn(act)
-    end
-end
-
--- Add fuel
-local _AddFuelStrFn = ACTIONS.ADDFUEL.strfn
-ACTIONS.ADDFUEL.strfn = function(act)
-    local targ = act.target or act.invobject
-    if targ and targ:HasTag("musha_equipment") then
-        return "MUSHA_ACTION_REPAIR"
     else
-        return _AddFuelStrFn(act)
+        return _UseItemFn(act)
     end
 end
 
