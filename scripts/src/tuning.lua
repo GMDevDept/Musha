@@ -24,6 +24,8 @@ TUNING.musha = {
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
 
     freezecooldowntime = 2.5,
+    debuffslowdownmult = 0.3,
+    debuffslowdownduration = 4,
 
     weapon = {
         fuellevel = 1000,
@@ -34,6 +36,5 @@ TUNING.musha = {
         expdelta = 5,
         auraradius = 10,
         auraperiod = 2,
-        auraslowdownmult = 0.3,
     }
 }

@@ -5,4 +5,7 @@ PrefabFiles = {
     "frosthammer",
 
     -- Items
+
+    -- General
+    "debuffs"
 }
