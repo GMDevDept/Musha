@@ -1,6 +1,6 @@
 -- Freeze
 local function StartFreezeCooldown(inst)
-    inst:AddDebuff("postfreezeslowdown", "debuff_slowdown")
+    inst:AddDebuff("postfreezeslowdown", "debuff_slowdown") -- Add slowdown debuff upon unfreeze
     inst:DoTaskInTime(TUNING.musha.freezecooldowntime, function()
         inst:RemoveTag("freeze_cooldown")
         inst:RemoveEventCallback("unfreeze", StartFreezeCooldown)
