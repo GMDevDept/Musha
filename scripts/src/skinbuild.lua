@@ -1,5 +1,5 @@
 ---@diagnostic disable: undefined-field
--- API source: https://steamcommunity.com/sharedfiles/filedetails/?id=2601796546
+-- Source: https://steamcommunity.com/sharedfiles/filedetails/?id=2601796546
 
 -- -- Register musha to official character list to enable skin panel
 -- AddClassPostConstruct("widgets/widget", function(self)
@@ -28,7 +28,7 @@ local characterskins = {}
 local skincharacters = {}
 --人物过滤
 local SKIN_AFFINITY_INFO = require("skin_affinity_info")
-function MakeCharacterSkin(base, skinname, data)
+GLOBAL.MakeCharacterSkin = function(base, skinname, data)
     data.type = nil
 
     --标记一下是拥有皮肤的人物
@@ -388,51 +388,3 @@ if recipe_help then
         end
     end)
 end
-function GetSkin(name)
-    return characterskins[name] or itemskins[name] or nil
-end
-
---创建皮肤
-MakeCharacterSkin("musha", "musha_none", {
-    name = "Normal",
-    des = "",
-    quotes = "",
-    build_name_override = "musha_normal",
-    rarity = "Timeless",
-    -- raritycorlor = {120/255, 120/255, 160/255,1}, -- Rarity font color
-    skins = { normal_skin = "musha_normal", ghost_skin = "ghost_musha_build" },
-    skin_tags = { "BASE", "musha", "CHARACTER" },
-})
-
-MakeCharacterSkin("musha", "musha_full", {
-    name = "Full",
-    des = "",
-    quotes = "",
-    build_name_override = "musha_full",
-    rarity = "Loyal",
-    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = { normal_skin = "musha_full", ghost_skin = "ghost_musha_build" },
-    skin_tags = { "musha" },
-})
-
-MakeCharacterSkin("musha", "musha_valkyrie", {
-    name = "Valkyrie",
-    des = "",
-    quotes = "",
-    build_name_override = "musha_valkyrie",
-    rarity = "Elegant",
-    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = { normal_skin = "musha_valkyrie", ghost_skin = "ghost_musha_build" },
-    skin_tags = { "musha" },
-})
-
-MakeCharacterSkin("musha", "musha_berserk", {
-    name = "Berserk",
-    des = "",
-    quotes = "",
-    build_name_override = "musha_berserk",
-    rarity = "Spiffy",
-    -- raritycorlor = {120/255, 220/255, 255/255,1}, -- Rarity font color
-    skins = { normal_skin = "musha_berserk", ghost_skin = "ghost_musha_build" },
-    skin_tags = { "musha" },
-})

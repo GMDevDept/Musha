@@ -1,5 +1,6 @@
 PrefabFiles = {
     "musha",
+    "musha_skins",
 
     -- Equipments
     "frosthammer",
