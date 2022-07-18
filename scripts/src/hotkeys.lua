@@ -2,7 +2,7 @@
 TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer.toggle_valkyrie(ThePlayer)
+            ThePlayer:toggle_valkyrie()
         else
             SendModRPCToServer(MOD_RPC.musha.toggle_valkyrie)
         end
@@ -13,7 +13,7 @@ end)
 TheInput:AddKeyDownHandler(TUNING.musha.hotkey_stealth, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer.toggle_stealth(ThePlayer)
+            ThePlayer:toggle_stealth()
         else
             SendModRPCToServer(MOD_RPC.musha.toggle_stealth)
         end

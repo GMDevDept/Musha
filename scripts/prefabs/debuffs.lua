@@ -36,7 +36,7 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, duration
         inst.entity:SetParent(target.entity)
         local radius = target:GetPhysicsRadius(0) + 1
         inst.Transform:SetScale(radius * 0.7, radius * 0.6, radius * 0.7)
-        inst.Transform:SetPosition(0, 0, 0) --in case of loading
+        inst.Transform:SetPosition(0, 0, 0)
         inst:ListenForEvent("death", function()
             inst.components.debuff:Stop()
         end, target)
