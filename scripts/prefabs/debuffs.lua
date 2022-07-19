@@ -29,9 +29,18 @@ local function OnTimerDone(inst, data)
     end
 end
 
+local function SetDuration(inst, duration)
+    if duration and duration > 0 then
+        inst.components.timer:StopTimer("buffover")
+        inst.components.timer:StartTimer("buffover", duration)
+    else
+        inst.components.timer:StopTimer("buffover")
+    end
+end
+
 ---------------------------------------------------------------------------------------------------------
 
-local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, duration)
+local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultduration)
     local function OnAttached(inst, target)
         inst.entity:SetParent(target.entity)
         local radius = target:GetPhysicsRadius(0) + 1
@@ -48,7 +57,7 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, duration
 
     local function OnExtended(inst, target)
         inst.components.timer:StopTimer("buffover")
-        inst.components.timer:StartTimer("buffover", duration)
+        inst.components.timer:StartTimer("buffover", defaultduration)
 
         if onextendedfn ~= nil then
             onextendedfn(inst, target)
@@ -94,8 +103,10 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, duration
         inst.components.debuff:SetExtendedFn(OnExtended)
 
         inst:AddComponent("timer")
-        inst.components.timer:StartTimer("buffover", duration)
+        inst.components.timer:StartTimer("buffover", defaultduration)
         inst:ListenForEvent("timerdone", OnTimerDone)
+
+        inst.SetDuration = SetDuration
 
         return inst
     end
