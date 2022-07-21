@@ -342,19 +342,11 @@ local function boost_off(inst, data)
         inst:RemoveComponent("spellcaster")
     end
 
-    if inst.boost_fx then
-        inst.boost_fx:Remove()
-    end
+    CustomRemoveEntity(inst.boost_fx)
 
-    if inst.task_cooling then
-        inst.task_cooling:Cancel()
-        inst.task_cooling = nil
-    end
+    CustomCancelTask(inst.task_cooling)
 
-    if inst.task_aura then
-        inst.task_aura:Cancel()
-        inst.task_aura = nil
-    end
+    CustomCancelTask(inst.task_aura)
 
     inst.Light:Enable(false)
 
@@ -430,21 +422,14 @@ local function onputininventory(inst, owner)
         inst:RemoveComponent("spellcaster")
     end
 
-    if inst.boost_fx then
-        inst.boost_fx:Remove()
-    end
+    CustomRemoveEntity(inst.boost_fx)
 
-    if inst.task_aura then
-        inst.task_aura:Cancel()
-        inst.task_aura = nil
-    end
+    CustomCancelTask(inst.task_aura)
 end
 
 -- On dropped to ground
 local function ondropped(inst)
-    if inst.boost_fx then
-        inst.boost_fx:Remove()
-    end
+    CustomRemoveEntity(inst.boost_fx)
 
     if inst.boost then
         inst.components.machine:TurnOn()
@@ -461,14 +446,9 @@ end
 local function onequip(inst, owner)
     inst.aura_owner = owner
 
-    if inst.boost_fx then
-        inst.boost_fx:Remove()
-    end
+    CustomRemoveEntity(inst.boost_fx)
 
-    if inst.task_aura then
-        inst.task_aura:Cancel()
-        inst.task_aura = nil
-    end
+    CustomCancelTask(inst.task_aura)
 
     if inst.boost then
         inst.components.machine:TurnOn()
@@ -484,10 +464,7 @@ end
 local function onunequip(inst, owner)
     owner.AnimState:Hide("ARM_carry")
     owner.AnimState:Show("ARM_normal")
-    if inst.task_cooling then
-        inst.task_cooling:Cancel()
-        inst.task_cooling = nil
-    end
+    CustomCancelTask(inst.task_cooling)
 end
 
 ---------------------------------------------------------------------------------------------------------

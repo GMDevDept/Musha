@@ -87,6 +87,7 @@ local function toggle_berserk(inst)
     end
 end
 
+-- Valkyrie trailing fx (Wormwood blooming)
 local PLANTS_RANGE = 1
 local MAX_PLANTS = 18
 local PLANTFX_TAGS = { "wormwood_plant_fx" }
@@ -125,6 +126,7 @@ local function addvalkyrietrailfx(inst)
     end
 end
 
+-- Berserk trailing fx (ancient cane)
 local function addberserktrailfx(inst)
     local owner = inst
     if not owner.entity:IsVisible() then
@@ -157,13 +159,6 @@ local function addberserktrailfx(inst)
     end
 end
 
-local function removetrailtask(inst, taskname)
-    if inst[taskname] ~= nil then
-        inst[taskname]:Cancel()
-        inst[taskname] = nil
-    end
-end
-
 -- When character mode changes
 local function onmodechange(inst)
     local previousmode = inst._mode
@@ -180,14 +175,10 @@ local function onmodechange(inst)
             CustomAttachFx(inst, "statue_transition_2")
         end
 
+        inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
 
-        removetrailtask(inst, "modetrailtask")
-
-        if inst.fx_fullmode then
-            inst.fx_fullmode:Remove()
-            inst.fx_fullmode = nil
-        end
+        CustomCancelTask(inst.modetrailtask)
     end
 
     if currentmode == 0 then
@@ -196,34 +187,30 @@ local function onmodechange(inst)
 
     if currentmode == 1 then
         inst.components.skinner:SetSkinName("musha_full")
+
+        inst.fx_fullmode = SpawnPrefab("fx_fullmode")
+        inst.fx_fullmode.entity:SetParent(inst.entity)
+        inst.fx_fullmode.Transform:SetPosition(0, -0.1, 0)
+    end
+
+    if currentmode ~= 1 then
+        CustomRemoveEntity(inst.fx_fullmode)
     end
 
     if currentmode == 2 then
         inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
         CustomAttachFx(inst, "electricchargedfx")
         inst.components.skinner:SetSkinName("musha_valkyrie")
+        inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
-
-        -- CustomAttachFx(inst, "fx_fullmode", 30, nil)
-
-        inst.fx_fullmode = SpawnPrefab("fx_fullmode")
-        inst.fx_fullmode.entity:SetParent(inst.entity)
-        inst.fx_fullmode.Transform:SetPosition(0, -0.1, 0)
-        -- inst.fx_fullmode.Follower:FollowSymbol(inst.GUID, inst.components.combat.hiteffectsymbol, -30, 40, -0.1)
-        -- if not inst.plantpool then
-        --     inst.plantpool = { 1, 2, 3, 4 }
-        --     for i = #inst.plantpool, 1, -1 do
-        --         --randomize in place
-        --         table.insert(inst.plantpool, table.remove(inst.plantpool, math.random(i)))
-        --     end
-        -- end
-        -- inst.modetrailtask = inst:DoPeriodicTask(.25, addvalkyrietrailfx)
+        inst.modetrailtask = inst:DoPeriodicTask(.25, addvalkyrietrailfx)
     end
 
     if currentmode == 3 then
         inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
+        inst.customidleanim = "idle_winona"
         inst.soundsname = "wendy"
         inst.modetrailtask = inst:DoPeriodicTask(6 * FRAMES, addberserktrailfx, 2 * FRAMES)
     end
@@ -240,6 +227,8 @@ end
 
 -- When the character turn into a ghost
 local function onbecameghost(inst)
+    inst.mode:set(0)
+    inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
 end
 
 -- When save game progress
@@ -295,7 +284,7 @@ local function common_postinit(inst)
     inst.MiniMapEntity:SetIcon("musha_mapicon.tex")
 
     -- Common attributes
-    inst.customidleanim = "idle_wathgrithr"
+    inst.customidleanim = "idle_warly"
     inst.soundsname = "willow"
 end
 
@@ -356,6 +345,12 @@ local function master_postinit(inst)
     inst.decidenormalorfull = decidenormalorfull
     inst.toggle_valkyrie = toggle_valkyrie
     inst.toggle_berserk = toggle_berserk
+
+    inst.plantpool = { 1, 2, 3, 4 }
+    for i = #inst.plantpool, 1, -1 do
+        --randomize in place
+        table.insert(inst.plantpool, table.remove(inst.plantpool, math.random(i)))
+    end
 
     -- Event handlers
     inst:ListenForEvent("levelup", onlevelup)

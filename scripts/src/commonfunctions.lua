@@ -1,3 +1,23 @@
+-- Remove entity
+GLOBAL.CustomRemoveEntity = function(inst)
+    if inst then
+        inst:Remove()
+        inst = nil
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Stop scheduled task
+GLOBAL.CustomCancelTask = function(inst)
+    if inst then
+        inst:Cancel()
+        inst = nil
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Freeze
 local function StartFreezeCooldown(inst)
     inst:AddDebuff("postfreezeslowdown", "debuff_slowdown") -- Add slowdown debuff upon unfreeze
