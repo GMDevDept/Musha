@@ -78,8 +78,10 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
     local function fn()
         local inst = CreateEntity()
 
-        inst:AddTag("CLASSIFIED")
         inst:AddTag("FX")
+        inst:AddTag("NOCLICK")
+
+        inst.persists = false
 
         inst.entity:AddTransform()
         inst.entity:AddAnimState()

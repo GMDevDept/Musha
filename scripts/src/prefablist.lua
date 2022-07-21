@@ -1,4 +1,5 @@
 PrefabFiles = {
+    -- Character
     "musha",
     "musha_skins",
 
@@ -7,6 +8,9 @@ PrefabFiles = {
 
     -- Items
 
+    -- FXs
+    "fx_fullmode",
+
     -- General
-    "debuffs"
+    "debuff_common",
 }

@@ -237,7 +237,7 @@ local function onattack(inst, attacker, target, data)
             fx.Transform:SetPosition(target:GetPosition():Get())
 
             if target.components.freezable then
-                target.components.freezable:AddColdness(1.65)
+                target.components.freezable:AddColdness(1.6)
                 target.components.freezable:SpawnShatterFX()
                 local prefab = "icespike_fx_" .. math.random(1, 4)
                 local fx_icespike = SpawnPrefab(prefab)

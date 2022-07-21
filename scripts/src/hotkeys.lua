@@ -9,13 +9,13 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
     end
 end)
 
--- Hotkey: toggle_stealth
-TheInput:AddKeyDownHandler(TUNING.musha.hotkey_stealth, function()
+-- Hotkey: toggle_berserk
+TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer:toggle_stealth()
+            ThePlayer:toggle_berserk()
         else
-            SendModRPCToServer(MOD_RPC.musha.toggle_stealth)
+            SendModRPCToServer(MOD_RPC.musha.toggle_berserk)
         end
     end
 end)

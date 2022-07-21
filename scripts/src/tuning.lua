@@ -1,7 +1,7 @@
 TUNING.musha = {
     -- Hotkeys from modinfo
     hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114, --R
-    hotkey_stealth = GetModConfigData("hotkey_stealth") or 115, --G
+    hotkey_berserk = GetModConfigData("hotkey_berserk") or 115, --G
 
     -- Stats related
     health = 200,
@@ -16,6 +16,8 @@ TUNING.musha = {
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.5,
+
+    maxpets = 100,
 
     maxexperience = 300,
     maxlevel = 30,

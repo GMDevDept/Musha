@@ -16,32 +16,36 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Attach fx to inst
-GLOBAL.CustomAttachFx = function(target, fx_list, offset --[[Vector3]] , duration)
-    ---@diagnostic disable-next-line: unbalanced-assignments
-    local x, y, z = offset or Vector3(0, 0, 0)
-    if type(fx_list) == "string" then
-        local fx = SpawnPrefab(fx_list)
-        local dur = duration or 1
+local function SpawnFx(target, fx_name, duration, offset)
+    local x, y, z
+    if offset then
+        x, y, z = offset.x, offset.y, offset.z
+    else
+        x, y, z = 0, 0, 0
+    end
 
-        fx.entity:SetParent(target.entity)
-        fx.Transform:SetPosition(x, y, z)
+    local fx = SpawnPrefab(fx_name)
+    local dur = duration or 1
 
+    fx.entity:SetParent(target.entity)
+    fx.Transform:SetPosition(x, y, z)
+
+    if dur ~= 0 then
         target:DoTaskInTime(dur, function()
             fx:Remove()
             fx = nil
         end)
+    end
+end
+
+GLOBAL.CustomAttachFx = function(target, fx_list, duration, offset) -- Set duration = 0 to make it permanent
+    if type(fx_list) == "string" then
+        SpawnFx(target, fx_list, duration, offset)
     elseif type(fx_list) == "table" then
         for i, fx_name in pairs(fx_list) do
-            local fx = SpawnPrefab(fx_name)
-            local dur = duration or 1
-
-            fx.entity:SetParent(target.entity)
-            fx.Transform:SetPosition(x, y, z)
-
-            target:DoTaskInTime(dur, function()
-                fx:Remove()
-                fx = nil
-            end)
+            SpawnFx(target, fx_name, duration, offset)
         end
     end
 end
+
+---------------------------------------------------------------------------------------------------------
