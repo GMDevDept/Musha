@@ -95,7 +95,7 @@ function Leveler:DoDelta(delta)
 
             self:SetExperience(sys_cur_exp)
             self:SetLevel(sys_cur_lvl)
-            self.inst:PushEvent("levelup", { experience = self.exp, level = self.lvl })
+            self.inst:PushEvent("levelup", { experience = self.exp, lvl = self.lvl })
         end
     end
 end

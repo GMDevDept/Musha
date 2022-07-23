@@ -124,7 +124,7 @@ local function boost_declaration(inst)
     local str6 = ""
     for k, v in pairs(inst.enchant_ability) do
         if not inst[v] then
-            str6 = str6 .. STRINGS.musha.skill_locked .. " "
+            str6 = str6 .. STRINGS.musha.locked .. " "
         end
         str6 = str6 .. STRINGS.musha.frosthammer.enchant[v] .. "\n"
         if not inst[v] then
@@ -302,6 +302,7 @@ local function boost_on(inst, data)
 
         if inst.aura then
             inst.Light:Enable(true)
+            inst.task_aura = inst:DoPeriodicTask(TUNING.musha.weapon.auraperiod, task_aura, 0)
             if TheWorld.state.iswinter then
                 return
             end
@@ -311,7 +312,6 @@ local function boost_on(inst, data)
             end
             inst.components.heater.equippedheat = nil
             inst.components.heater.heat = 0 -- Cooling aura, works as cold fire pit
-            inst.task_aura = inst:DoPeriodicTask(TUNING.musha.weapon.auraperiod, task_aura, 0)
         else
             inst.Light:Enable(false)
         end

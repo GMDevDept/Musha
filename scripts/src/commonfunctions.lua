@@ -36,7 +36,14 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Attach fx to inst
-local function SpawnFx(target, fx_name, duration, offset)
+local function SpawnFx(target, fx_name, duration, scale, offset)
+    local a, b, c
+    if scale then
+        a, b, c = scale.x, scale.y, scale.z
+    else
+        a, b, c = 1, 1, 1
+    end
+
     local x, y, z
     if offset then
         x, y, z = offset.x, offset.y, offset.z
@@ -48,6 +55,7 @@ local function SpawnFx(target, fx_name, duration, offset)
     local dur = duration or 1
 
     fx.entity:SetParent(target.entity)
+    fx.Transform:SetScale(a, b, c)
     fx.Transform:SetPosition(x, y, z)
 
     if dur ~= 0 then
@@ -58,12 +66,12 @@ local function SpawnFx(target, fx_name, duration, offset)
     end
 end
 
-GLOBAL.CustomAttachFx = function(target, fx_list, duration, offset) -- Set duration = 0 to make it permanent
+GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent
     if type(fx_list) == "string" then
-        SpawnFx(target, fx_list, duration, offset)
+        SpawnFx(target, fx_list, duration, scale, offset)
     elseif type(fx_list) == "table" then
         for i, fx_name in pairs(fx_list) do
-            SpawnFx(target, fx_name, duration, offset)
+            SpawnFx(target, fx_name, duration, scale, offset)
         end
     end
 end
