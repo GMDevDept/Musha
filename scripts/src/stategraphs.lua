@@ -1,5 +1,8 @@
 ---@diagnostic disable: need-check-nil
 -- Add customized states to SGwison and SGwilson_client
+
+---------------------------------------------------------------------------------------------------------
+
 -- Smite
 local musha_smite = State {
     name = "musha_smite",
@@ -214,6 +217,97 @@ AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ATTACK,
                 or (equip:HasTag("propweapon") and "attack_prop_pre")
                 or (equip:HasTag("attackmodule_smite") and "musha_smite_client")
                 or "attack"
+        end
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- On entering berserk mode
+local ActivateBerserkAOE = function(target, inst)
+    target.components.combat:GetAttacked(inst,
+        TUNING.musha.activateberserkbasedamage + 5 * math.floor(inst.components.leveler.lvl / 5),
+        inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+end
+
+local musha_berserk_pre = State {
+    name = "musha_berserk_pre",
+    tags = { "busy", "berserk" },
+
+    onenter = function(inst)
+        inst.SoundEmitter:PlaySound("dontstarve/charlie/warn")
+        inst.components.locomotor:Stop()
+        inst.components.health:SetInvincible(true)
+        inst.AnimState:PlayAnimation("emoteXL_angry")
+    end,
+
+    timeline =
+    {
+        TimeEvent(15 * FRAMES, function(inst)
+            CustomDoAOE(inst, 3, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield1", nil, Vector3(2, 2, 2), Vector3(0, -2, 0))
+        end),
+        TimeEvent(21 * FRAMES, function(inst)
+            CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield2", nil, Vector3(3, 3, 3), Vector3(0, -3, 0))
+        end),
+        TimeEvent(27 * FRAMES, function(inst)
+            CustomDoAOE(inst, 5, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield3", nil, Vector3(3.5, 3.5, 3.5), Vector3(0, -4, 0))
+        end),
+        TimeEvent(31 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
+            inst.mode:set(3)
+            CustomDoAOE(inst, 6, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield4", nil, Vector3(4, 4, 4), Vector3(0, -5, 0))
+        end),
+        TimeEvent(33 * FRAMES, function(inst)
+            CustomDoAOE(inst, 7, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield5", nil, Vector3(4.5, 4.5, 4.5), Vector3(0, -5.75, 0))
+        end),
+        TimeEvent(35 * FRAMES, function(inst)
+            CustomDoAOE(inst, 8, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
+            CustomAttachFx(inst, "shadow_shield6", nil, Vector3(5, 5, 5), Vector3(0, -6.5, 0))
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            inst.sg:GoToState("idle", true)
+            inst.components.health:SetInvincible(false)
+        end),
+    },
+
+    onexit = function(inst)
+        inst.components.health:SetInvincible(false)
+    end,
+}
+
+AddStategraphState("wilson", musha_berserk_pre)
+
+AddStategraphEvent("wilson", EventHandler("activateberserk",
+    function(inst, data)
+        if not inst.sg:HasStateTag("busy") then
+            inst.sg:GoToState("musha_berserk_pre")
         end
     end)
 )

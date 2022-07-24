@@ -95,3 +95,20 @@ GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Se
 end
 
 ---------------------------------------------------------------------------------------------------------
+-- Area of effect
+GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
+    local x, y, z = center.Transform:GetWorldPosition()
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
+
+    for _, v in ipairs(additional_ignore_tags) do
+        table.insert(ignore_tags, v)
+    end
+
+    local targets = TheSim:FindEntities(x, y, z, radius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
+
+    if targets then
+        for _, target in pairs(targets) do
+            fn(target)
+        end
+    end
+end

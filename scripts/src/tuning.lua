@@ -38,6 +38,7 @@ TUNING.musha = {
         instantcast        = 0,
     },
 
+    activateberserkbasedamage = 5,
     sneaksanitycost = 50,
     sneakspeedboost = 2.5,
     sneakspeedboostduration = 5,

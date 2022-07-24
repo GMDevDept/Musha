@@ -45,13 +45,11 @@ local function BackStab(inst, data)
         inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
     elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
         inst.components.talker:Say(STRINGS.musha.skills.backstab_normal)
-        target.components.combat:GetAttacked(inst, extradamage * 0.5,
-            inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+        target.components.combat:GetAttacked(inst, extradamage * 0.5, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
     else
         inst.components.talker:Say(STRINGS.musha.skills.backstab_perfect)
-        target.components.combat:GetAttacked(inst, extradamage,
-            inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+        target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
         CustomAttachFx(inst, "nightsword_curve_fx")
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
@@ -85,6 +83,7 @@ local function StartSneaking(inst)
             CustomAttachFx(inst, "statue_transition")
 
             local x, y, z = inst.Transform:GetWorldPosition()
+            local must_tags = { "_combat" }
             local ignore_tags = { "INLIMBO", "notarget", "noattack", "invisible", "isdead" }
             local targets = TheSim:FindEntities(x, y, z, 12, nil, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
             if targets then
@@ -188,9 +187,10 @@ local function toggle_berserk(inst)
 
     local previousmode = inst.mode:value()
     if previousmode == 0 or previousmode == 1 then
-        inst.mode:set(3)
+        inst:PushEvent("activateberserk")
     elseif previousmode == 3 and not inst:HasTag("sneaking") then
-        StartSneaking(inst)
+        inst:DecideNormalOrFull()
+        -- StartSneaking(inst)
     elseif previousmode == 3 and inst:HasTag("sneaking") then
         StopSneaking(inst)
     end

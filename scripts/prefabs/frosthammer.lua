@@ -181,8 +181,8 @@ end
 -- Periodic task for aura effect
 local function task_aura(inst)
     local x, y, z = inst.Transform:GetWorldPosition()
-    local must_tags = { "locomotor", "freezable" }
-    local ignore_tags = { "freeze_cooldown", "INLIMBO", "notarget", "noattack", "invisible", "companion",
+    local must_tags = { "_combat", "locomotor" }
+    local ignore_tags = { "freeze_cooldown", "INLIMBO", "notarget", "noattack", "flight", "invisible", "companion",
         "musha_companion", "isdead", "nofreeze", "player" }
     local targets = TheSim:FindEntities(x, y, z, TUNING.musha.weapon.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
     if targets then
