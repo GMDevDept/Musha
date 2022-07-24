@@ -34,9 +34,116 @@ local function bonusdamagefn(inst, target, damage, weapon)
     return 0
 end
 
--- When level up
-local function onlevelup(inst, data)
+---------------------------------------------------------------------------------------------------------
 
+local function BackStab(inst, data)
+    inst:RemoveSneakEffects()
+    inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+    local target = data.target
+    local extradamage = TUNING.musha.backstabbasedamage + 100 * math.floor(inst.components.leveler.lvl / 5)
+    if not (target.components and target.components.combat) then
+        inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
+    elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
+        inst.components.talker:Say(STRINGS.musha.skills.backstab_normal)
+        target.components.combat:GetAttacked(inst, extradamage * 0.5,
+            inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+        CustomAttachFx(target, "statue_transition")
+    else
+        inst.components.talker:Say(STRINGS.musha.skills.backstab_perfect)
+        target.components.combat:GetAttacked(inst, extradamage,
+            inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+        CustomAttachFx(target, "statue_transition")
+        CustomAttachFx(inst, "nightsword_curve_fx")
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
+            TUNING.musha.sneakspeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+        inst.task_cancelsneakspeedboost = inst:DoTaskInTime(2, function()
+            inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+            inst.task_cancelsneakspeedboost = nil
+        end)
+    end
+end
+
+local function SneakFailed(inst, data)
+    inst:RemoveSneakEffects()
+    inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_ATTACKED)
+end
+
+local function StartSneaking(inst)
+    if inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.sneaksanitycost then
+        inst:AddTag("sneaking")
+        inst:RemoveTag("scarytoprey")
+        inst.components.sanity:DoDelta(-TUNING.musha.sneaksanitycost)
+        inst.components.talker:Say(STRINGS.musha.skills.startsneaking)
+        inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
+        CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
+
+        inst.task_entersneak = inst:DoTaskInTime(4, function()
+            if not inst:HasTag("sneaking") then return end
+            inst:AddTag("notarget")
+            inst.components.talker:Say(STRINGS.musha.skills.sneaksucceed)
+            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
+            CustomAttachFx(inst, "statue_transition")
+
+            local x, y, z = inst.Transform:GetWorldPosition()
+            local ignore_tags = { "INLIMBO", "notarget", "noattack", "invisible", "isdead" }
+            local targets = TheSim:FindEntities(x, y, z, 12, nil, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
+            if targets then
+                for k, v in pairs(targets) do
+                    if v.components.combat and v.components.combat.target == inst then
+                        v.components.combat.target = nil
+                    end
+                end
+            end
+
+            if inst.components.stamina.current <= 50 then
+                inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
+                    TUNING.musha.sneakspeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+                inst.task_cancelsneakspeedboost = inst:DoTaskInTime(TUNING.musha.sneakspeedboostduration, function()
+                    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+                end)
+                inst.task_sneakspeedbooststaminacost = inst:CustomDoPeriodicTask(
+                    TUNING.musha.sneakspeedboostduration, 0.5, function()
+                        inst.components.stamina:DoDelta(5)
+                    end, 0.5)
+            end
+
+            inst:ListenForEvent("onhitother", BackStab)
+        end)
+
+        inst:ListenForEvent("attacked", SneakFailed)
+    else
+        if not inst.skills.sneak then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.sanity.current < TUNING.musha.sneaksanitycost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+        end
+
+        if inst.components.rider ~= nil and inst.components.rider:IsRiding() then
+            inst.sg:GoToState("repelled")
+        else
+            inst.sg:GoToState("mindcontrolled_pst")
+        end
+    end
+end
+
+local function StopSneaking(inst)
+    inst:RemoveSneakEffects()
+    inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+    inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
+end
+
+local function RemoveSneakEffects(inst)
+    inst:RemoveTag("sneaking")
+    inst:RemoveTag("notarget")
+    inst:AddTag("scarytoprey")
+    inst:RemoveEventCallback("onhitother", BackStab)
+    inst:RemoveEventCallback("attacked", SneakFailed)
+    CustomCancelTask(inst.task_sneakspeedbooststaminacost)
+    CustomCancelTask(inst.task_cancelsneakspeedboost)
+    CustomCancelTask(inst.task_entersneak)
+    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+    inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
+    CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2), Vector3(0, 0, 0.5))
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -44,9 +151,9 @@ end
 -- Character mode related
 
 -- Decide normal mode or full mode
-local function decidenormalorfull(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("nomorph") then
+local function DecideNormalOrFull(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or
+        inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
         return
     end
 
@@ -59,7 +166,7 @@ end
 
 -- Toggle valkyrie mode
 local function toggle_valkyrie(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("nomorph") then
         return
     end
@@ -68,13 +175,13 @@ local function toggle_valkyrie(inst)
     if previousmode == 0 or previousmode == 1 then
         inst.mode:set(2)
     elseif previousmode == 2 then
-        inst:decidenormalorfull()
+        inst:DecideNormalOrFull()
     end
 end
 
 -- Toggle berserk mode
 local function toggle_berserk(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("nomorph") then
         return
     end
@@ -82,8 +189,10 @@ local function toggle_berserk(inst)
     local previousmode = inst.mode:value()
     if previousmode == 0 or previousmode == 1 then
         inst.mode:set(3)
-    elseif previousmode == 3 then
-        inst:decidenormalorfull()
+    elseif previousmode == 3 and not inst:HasTag("sneaking") then
+        StartSneaking(inst)
+    elseif previousmode == 3 and inst:HasTag("sneaking") then
+        StopSneaking(inst)
     end
 end
 
@@ -91,7 +200,7 @@ end
 local PLANTS_RANGE = 1
 local MAX_PLANTS = 18
 local PLANTFX_TAGS = { "wormwood_plant_fx" }
-local function addvalkyrietrailfx(inst)
+local function AddValkyrieTrailFx(inst)
     if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
         return
     end
@@ -127,7 +236,7 @@ local function addvalkyrietrailfx(inst)
 end
 
 -- Berserk trailing fx (ancient cane)
-local function addberserktrailfx(inst)
+local function AddBerserkTrailFx(inst)
     local owner = inst
     if not owner.entity:IsVisible() then
         return
@@ -164,55 +273,56 @@ local function onmodechange(inst)
     local previousmode = inst._mode
     local currentmode = inst.mode:value()
 
-    if currentmode == 0 or currentmode == 1 then
-        inst:ListenForEvent("hungerdelta", decidenormalorfull)
-
-        if previousmode == 0 or previousmode == 1 then
-            CustomAttachFx(inst, "chester_transform_fx")
-        elseif previousmode == 2 then
-            CustomAttachFx(inst, "electrichitsparks")
-        elseif previousmode == 3 then
-            CustomAttachFx(inst, "statue_transition_2")
-        end
-
-        inst.customidleanim = "idle_warly"
-        inst.soundsname = "willow"
-
-        CustomCancelTask(inst.modetrailtask)
+    -- Remove attributes obtained from previous mode
+    if previousmode == 1 and currentmode ~= 1 then
+        CustomRemoveEntity(inst.fx_fullmode)
     end
 
+    if previousmode == 2 and currentmode ~= 2 then
+        CustomAttachFx(inst, "electrichitsparks")
+        CustomCancelTask(inst.modetrailtask)
+        inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
+    end
+
+    if previousmode == 3 and currentmode ~= 3 then
+        CustomAttachFx(inst, "statue_transition_2")
+        CustomCancelTask(inst.modetrailtask)
+        inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
+    end
+
+    -- Set new attributes for new mode
     if currentmode == 0 then
         inst.components.skinner:SetSkinName("musha_none")
+        inst.customidleanim = "idle_warly"
+        inst.soundsname = "willow"
     end
 
     if currentmode == 1 then
         inst.components.skinner:SetSkinName("musha_full")
+        inst.customidleanim = "idle_warly"
+        inst.soundsname = "willow"
 
         inst.fx_fullmode = SpawnPrefab("fx_fullmode")
         inst.fx_fullmode.entity:SetParent(inst.entity)
         inst.fx_fullmode.Transform:SetPosition(0, -0.1, 0)
     end
 
-    if currentmode ~= 1 then
-        CustomRemoveEntity(inst.fx_fullmode)
-    end
-
     if currentmode == 2 then
-        inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
+        inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
         CustomAttachFx(inst, "electricchargedfx")
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
-        inst.modetrailtask = inst:DoPeriodicTask(.25, addvalkyrietrailfx)
+        inst.modetrailtask = inst:DoPeriodicTask(.25, AddValkyrieTrailFx)
     end
 
     if currentmode == 3 then
-        inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
+        inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
         inst.customidleanim = "idle_winona"
         inst.soundsname = "wendy"
-        inst.modetrailtask = inst:DoPeriodicTask(6 * FRAMES, addberserktrailfx, 2 * FRAMES)
+        inst.modetrailtask = inst:DoPeriodicTask(6 * FRAMES, AddBerserkTrailFx, 2 * FRAMES)
     end
 
     inst._mode = currentmode -- Update previous mode
@@ -220,15 +330,32 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- When level up
+local function onlevelup(inst, data)
+    inst.skills.freezingspell      = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
+    inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
+    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil
+    inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
+    inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
+    inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
+    inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
+    inst.skills.sporebomb          = data.lvl >= TUNING.musha.leveltounlockskill.sporebomb and true or nil
+    inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
+    inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- When the character is revived to human
 local function onbecamehuman(inst)
-    inst:decidenormalorfull()
+    inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
+    inst:DecideNormalOrFull()
 end
 
 -- When the character turn into a ghost
 local function onbecameghost(inst)
+    inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst.mode:set(0)
-    inst:RemoveEventCallback("hungerdelta", decidenormalorfull)
 end
 
 -- When save game progress
@@ -249,6 +376,8 @@ local function onload(inst)
     else
         onbecamehuman(inst)
     end
+
+    onlevelup(inst, inst.components.leveler)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -342,15 +471,17 @@ local function master_postinit(inst)
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst._mode = 0 -- Store previous mode
-    inst.decidenormalorfull = decidenormalorfull
+    inst.skills = {}
+    inst.DecideNormalOrFull = DecideNormalOrFull
     inst.toggle_valkyrie = toggle_valkyrie
     inst.toggle_berserk = toggle_berserk
+    inst.RemoveSneakEffects = RemoveSneakEffects
 
     inst.plantpool = { 1, 2, 3, 4 }
-    for i = #inst.plantpool, 1, -1 do
-        --randomize in place
-        table.insert(inst.plantpool, table.remove(inst.plantpool, math.random(i)))
-    end
+    -- for i = #inst.plantpool, 1, -1 do
+    --     --randomize in place
+    --     table.insert(inst.plantpool, table.remove(inst.plantpool, math.random(i)))
+    -- end
 
     -- Event handlers
     inst:ListenForEvent("levelup", onlevelup)

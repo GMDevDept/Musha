@@ -89,6 +89,86 @@ AddClassPostConstruct("widgets/statusdisplays", ManaBadgeDisplay)
 
 --------------------------------------------------------------------------
 
+-- Fatigue
+local function FatigueBadgeDisplay(self)
+    if self.owner:HasTag("musha") then
+        local FatigueBadge = require "widgets/fatiguebadge"
+
+        self.fatiguebadge = self:AddChild(FatigueBadge(self.owner))
+        self.owner.fatiguebadge = self.fatiguebadge
+        self._custombadge = self.fatiguebadge
+        self.onfatiguedelta = nil
+
+        local isghost =
+        (self.inst.player_classified ~= nil and self.inst.player_classified.isghostmode:value()) or
+            (self.inst.player_classified == nil and self.inst:HasTag("playerghost"))
+
+        local AlwaysOnStatus = nil
+        for k, v in ipairs(KnownModIndex:GetModsToLoad()) do
+            local Mod = KnownModIndex:GetModInfo(v).name
+            if Mod == "Combined Status" then
+                AlwaysOnStatus = true
+                break
+            end
+        end
+
+        if AlwaysOnStatus then
+            self.fatiguebadge:SetPosition(-120, -15, 0)
+        else
+            self.fatiguebadge:SetPosition(-100, -15, 0)
+        end
+
+        function self:SetFatiguePercent(pct)
+            self.fatiguebadge:SetPercent(pct, self.owner.replica.fatigue:Max())
+        end
+
+        function self:FatigueDelta(data)
+            self:SetFatiguePercent(data.newpercent)
+        end
+
+        local function OnSetPlayerMode(inst, self)
+            self.modetask = nil
+
+            if self.onfatiguedelta == nil then
+                self.onfatiguedelta = function(owner, data) self:FatigueDelta(data) end
+                self.inst:ListenForEvent("fatiguedelta", self.onfatiguedelta, self.owner)
+                self:SetFatiguePercent(self.owner.replica.fatigue:GetPercent())
+            end
+        end
+
+        local function OnSetGhostMode(inst, self)
+            self.modetask = nil
+
+            if self.onfatiguedelta ~= nil then
+                self.inst:RemoveEventCallback("fatiguedelta", self.onfatiguedelta, self.owner)
+                self.onfatiguedelta = nil
+            end
+        end
+
+        local _SetGhostMode = self.SetGhostMode
+        function self:SetGhostMode(ghostmode)
+            if not self.isghostmode == not ghostmode then
+                return
+            elseif ghostmode then
+                self.fatiguebadge:Hide()
+            else
+                self.fatiguebadge:Show()
+            end
+
+            self.inst:DoStaticTaskInTime(0, ghostmode and OnSetGhostMode or OnSetPlayerMode, self)
+
+            return _SetGhostMode(self, ghostmode)
+        end
+
+        self.inst:DoStaticTaskInTime(0, isghost and OnSetGhostMode or OnSetPlayerMode, self)
+
+    end
+end
+
+AddClassPostConstruct("widgets/statusdisplays", FatigueBadgeDisplay)
+
+--------------------------------------------------------------------------
+
 -- Stamina
 local function StaminaBadgeDisplay(self)
     if self.owner:HasTag("musha") then
@@ -173,83 +253,3 @@ local function StaminaBadgeDisplay(self)
 end
 
 AddClassPostConstruct("widgets/statusdisplays", StaminaBadgeDisplay)
-
---------------------------------------------------------------------------
-
--- Fatigue
-local function FatigueBadgeDisplay(self)
-    if self.owner:HasTag("musha") then
-        local FatigueBadge = require "widgets/fatiguebadge"
-
-        self.fatiguebadge = self:AddChild(FatigueBadge(self.owner))
-        self.owner.fatiguebadge = self.fatiguebadge
-        self._custombadge = self.fatiguebadge
-        self.onfatiguedelta = nil
-
-        local isghost =
-        (self.inst.player_classified ~= nil and self.inst.player_classified.isghostmode:value()) or
-            (self.inst.player_classified == nil and self.inst:HasTag("playerghost"))
-
-        local AlwaysOnStatus = nil
-        for k, v in ipairs(KnownModIndex:GetModsToLoad()) do
-            local Mod = KnownModIndex:GetModInfo(v).name
-            if Mod == "Combined Status" then
-                AlwaysOnStatus = true
-                break
-            end
-        end
-
-        if AlwaysOnStatus then
-            self.fatiguebadge:SetPosition(-120, -15, 0)
-        else
-            self.fatiguebadge:SetPosition(-100, -15, 0)
-        end
-
-        function self:SetFatiguePercent(pct)
-            self.fatiguebadge:SetPercent(pct, self.owner.replica.fatigue:Max())
-        end
-
-        function self:FatigueDelta(data)
-            self:SetFatiguePercent(data.newpercent)
-        end
-
-        local function OnSetPlayerMode(inst, self)
-            self.modetask = nil
-
-            if self.onfatiguedelta == nil then
-                self.onfatiguedelta = function(owner, data) self:FatigueDelta(data) end
-                self.inst:ListenForEvent("fatiguedelta", self.onfatiguedelta, self.owner)
-                self:SetFatiguePercent(self.owner.replica.fatigue:GetPercent())
-            end
-        end
-
-        local function OnSetGhostMode(inst, self)
-            self.modetask = nil
-
-            if self.onfatiguedelta ~= nil then
-                self.inst:RemoveEventCallback("fatiguedelta", self.onfatiguedelta, self.owner)
-                self.onfatiguedelta = nil
-            end
-        end
-
-        local _SetGhostMode = self.SetGhostMode
-        function self:SetGhostMode(ghostmode)
-            if not self.isghostmode == not ghostmode then
-                return
-            elseif ghostmode then
-                self.fatiguebadge:Hide()
-            else
-                self.fatiguebadge:Show()
-            end
-
-            self.inst:DoStaticTaskInTime(0, ghostmode and OnSetGhostMode or OnSetPlayerMode, self)
-
-            return _SetGhostMode(self, ghostmode)
-        end
-
-        self.inst:DoStaticTaskInTime(0, isghost and OnSetGhostMode or OnSetPlayerMode, self)
-
-    end
-end
-
-AddClassPostConstruct("widgets/statusdisplays", FatigueBadgeDisplay)

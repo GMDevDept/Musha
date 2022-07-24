@@ -11,8 +11,8 @@ TUNING.musha = {
     maxmana = 50,
     manaregenspeed = 333, -- net_ushortint limit
 
-    staminarate = 1000,
-    fatiguerate = -1000,
+    staminarate = -1000,
+    fatiguerate = 0,
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.5,
@@ -24,6 +24,24 @@ TUNING.musha = {
     exprate = 1,
     exp_to_level = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
+
+    leveltounlockskill = {
+        freezingspell      = 0,
+        manashield         = 0,
+        valkyrie           = 0,
+        manashield_passive = 0,
+        berserk            = 0,
+        thunderspell       = 0,
+        sneak              = 0,
+        sporebomb          = 0,
+        shadowshield       = 0,
+        instantcast        = 0,
+    },
+
+    sneaksanitycost = 50,
+    sneakspeedboost = 2.5,
+    sneakspeedboostduration = 5,
+    backstabbasedamage = 200,
 
     freezecooldowntime = 2.5,
     debuffslowdownmult = 0.3,

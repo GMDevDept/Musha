@@ -19,11 +19,12 @@ modimport("scripts/src/prefablist.lua") -- Prefab list
 modimport("scripts/src/assetlist.lua") -- Asset list
 modimport("scripts/src/skinbuild.lua") -- Redefine skin register functions
 modimport("scripts/src/recipes.lua") -- Recipe list
+modimport("scripts/src/entityscript.lua") -- AddClassPostConstruct
 modimport("scripts/src/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
 modimport("scripts/src/hotkeys.lua") -- Add key handlers
 modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,etc.)
 modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
-modimport("scripts/src/statusdisplays.lua") -- Settings for mana/stamina/fatigue badges display
+modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/stamina/fatigue badges display
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
 

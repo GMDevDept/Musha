@@ -37,15 +37,29 @@ STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
 }
 
 STRINGS.musha = {
+    skills = {
+        valkyrie = "女武神模式",
+        berserk = "狂暴模式",
+        manashield = "魔法护盾",
+        manashield_passive = "被动护盾",
+        sneak = "潜影突袭",
+        startsneaking = "潜行开始...",
+        sneaksucceed = "融于暗影之中...",
+        backstab_normal = "成功的背刺！",
+        backstab_perfect = "完美的背刺！",
+    },
+
+    lack_of_exp = "Musha需要更多经验值！",
+    lack_of_mana = "Musha的魔力不够了！",
+    lack_of_sanity = "Musha的精神值不够了！",
+
     segmentation = "------------------------------\n",
 
     enchant_skill = "附魔技能",
     enchant_material_added = "附魔素材已添加",
     skill_unlocked = "已解锁技能",
-    skill_locked = "[未解锁]",
+    locked = "[未解锁]",
     material_required = "所需素材",
-    lack_of_mana = "Musha的魔力不够了！",
-    lack_of_sanity = "Musha的精神值不够了！",
     weapon_broken = "武器已损坏",
 
     frosthammer = {

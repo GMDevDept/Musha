@@ -1,18 +1,36 @@
 -- Remove entity
-GLOBAL.CustomRemoveEntity = function(inst)
-    if inst then
-        inst:Remove()
-        inst = nil
+GLOBAL.CustomRemoveEntity = function(inst, delay)
+    if delay then
+        TheWorld:DoTaskInTime(delay, function()
+            if inst then
+                inst:Remove()
+                inst = nil
+            end
+        end)
+    else
+        if inst then
+            inst:Remove()
+            inst = nil
+        end
     end
 end
 
 ---------------------------------------------------------------------------------------------------------
 
 -- Stop scheduled task
-GLOBAL.CustomCancelTask = function(inst)
-    if inst then
-        inst:Cancel()
-        inst = nil
+GLOBAL.CustomCancelTask = function(inst, delay)
+    if delay then
+        TheWorld:DoTaskInTime(delay, function()
+            if inst then
+                inst:Cancel()
+                inst = nil
+            end
+        end)
+    else
+        if inst then
+            inst:Cancel()
+            inst = nil
+        end
     end
 end
 

@@ -9,12 +9,12 @@ local assets =
 local function slowdown_attach(inst, target)
     if target.components and target.components.locomotor then
         target.components.locomotor:SetExternalSpeedMultiplier(inst, inst.GUID, TUNING.musha.debuffslowdownmult) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier) set source as self to avoid duplicate effect
-        SpawnPrefab("weaponsparks").Transform:SetPosition(target.Transform:GetWorldPosition())
+        SpawnPrefab("splash").Transform:SetPosition(target.Transform:GetWorldPosition())
     end
 end
 
 local function slowdown_extend(inst, target)
-    SpawnPrefab("weaponsparks").Transform:SetPosition(target.Transform:GetWorldPosition())
+    SpawnPrefab("splash").Transform:SetPosition(target.Transform:GetWorldPosition())
 end
 
 local function slowdown_detach(inst, target)
