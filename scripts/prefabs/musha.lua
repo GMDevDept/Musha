@@ -94,7 +94,7 @@ local function StartSneaking(inst)
                 end
             end
 
-            if inst.components.stamina.current <= 50 then
+            if inst.components.stamina.current >= 50 then
                 inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
                     TUNING.musha.sneakspeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
                 inst.task_cancelsneakspeedboost = inst:DoTaskInTime(TUNING.musha.sneakspeedboostduration, function()
@@ -102,7 +102,7 @@ local function StartSneaking(inst)
                 end)
                 inst.task_sneakspeedbooststaminacost = inst:CustomDoPeriodicTask(
                     TUNING.musha.sneakspeedboostduration, 0.5, function()
-                        inst.components.stamina:DoDelta(5)
+                        inst.components.stamina:DoDelta(-5)
                     end, 0.5)
             end
 
@@ -142,7 +142,7 @@ local function RemoveSneakEffects(inst)
     CustomCancelTask(inst.task_entersneak)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
-    CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2), Vector3(0, 0, 0.5))
+    CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -189,8 +189,7 @@ local function toggle_berserk(inst)
     if previousmode == 0 or previousmode == 1 then
         inst:PushEvent("activateberserk")
     elseif previousmode == 3 and not inst:HasTag("sneaking") then
-        inst:DecideNormalOrFull()
-        -- StartSneaking(inst)
+        StartSneaking(inst)
     elseif previousmode == 3 and inst:HasTag("sneaking") then
         StopSneaking(inst)
     end
@@ -436,13 +435,13 @@ local function master_postinit(inst)
     inst.components.mana:SetMax(TUNING.musha.maxmana)
     inst.components.mana:SetRate(TUNING.musha.manaregenspeed)
 
-    -- Stamina
-    inst:AddComponent("stamina")
-    inst.components.stamina:SetRate(TUNING.musha.staminarate)
-
     -- Fatigue
     inst:AddComponent("fatigue")
     inst.components.fatigue:SetRate(TUNING.musha.fatiguerate)
+
+    -- Stamina
+    inst:AddComponent("stamina")
+    inst.components.stamina:SetRate(TUNING.musha.staminarate)
 
     -- Read books
     inst:AddComponent("reader")

@@ -15,7 +15,7 @@ local FatigueBadge = Class(Badge, function(self, owner)
     self.fatiguearrow:GetAnimState():AnimateWhilePaused(false)
 
     local fatigue_arrow_pos = self.fatiguearrow:GetPosition()
-    self.fatiguearrow:SetPosition(fatigue_arrow_pos.x - 11, fatigue_arrow_pos.y, fatigue_arrow_pos.z)
+    self.fatiguearrow:SetPosition(fatigue_arrow_pos.x + 11, fatigue_arrow_pos.y, fatigue_arrow_pos.z)
 
     self:StartUpdating()
 end)

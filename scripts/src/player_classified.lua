@@ -61,46 +61,6 @@ local function PrefabPostInitFn(inst)
         end
     end
 
-    local function OnFatigueDelta(parent, data)
-        if data.newpercent > data.oldpercent then
-            --Force dirty, we just want to trigger an event on the client
-            SetDirty(parent.player_classified.isfatigueup, true)
-        elseif data.newpercent < data.oldpercent then
-            --Force dirty, we just want to trigger an event on the client
-            SetDirty(parent.player_classified.isfatiguedown, true)
-        end
-    end
-
-    local function OnFatigueDirty(inst)
-        if inst._parent ~= nil then
-            local oldpercent = inst._oldfatiguepercent
-            local percent = inst.currentfatigue:value() / inst.maxfatigue:value()
-            local data =
-            {
-                oldpercent = oldpercent,
-                newpercent = percent,
-                overtime =
-                not (inst.isfatigueup:value() and percent > oldpercent) and
-                    not (inst.isfatiguedown:value() and percent < oldpercent),
-            }
-            inst._oldfatiguepercent = percent
-            inst.isfatigueup:set_local(false)
-            inst.isfatiguedown:set_local(false)
-            inst._parent:PushEvent("fatiguedelta", data)
-            if oldpercent > 0 then
-                if percent <= 0 then
-                    inst._parent:PushEvent("startfatiguedepleted")
-                end
-            elseif percent > 0 then
-                inst._parent:PushEvent("stopfatiguedepleted")
-            end
-        else
-            inst._oldfatiguepercent = 1
-            inst.isfatigueup:set_local(false)
-            inst.isfatiguedown:set_local(false)
-        end
-    end
-
     local function OnStaminaDelta(parent, data)
         if data.newpercent > data.oldpercent then
             --Force dirty, we just want to trigger an event on the client
@@ -141,6 +101,46 @@ local function PrefabPostInitFn(inst)
         end
     end
 
+    local function OnFatigueDelta(parent, data)
+        if data.newpercent > data.oldpercent then
+            --Force dirty, we just want to trigger an event on the client
+            SetDirty(parent.player_classified.isfatigueup, true)
+        elseif data.newpercent < data.oldpercent then
+            --Force dirty, we just want to trigger an event on the client
+            SetDirty(parent.player_classified.isfatiguedown, true)
+        end
+    end
+
+    local function OnFatigueDirty(inst)
+        if inst._parent ~= nil then
+            local oldpercent = inst._oldfatiguepercent
+            local percent = inst.currentfatigue:value() / inst.maxfatigue:value()
+            local data =
+            {
+                oldpercent = oldpercent,
+                newpercent = percent,
+                overtime =
+                not (inst.isfatigueup:value() and percent > oldpercent) and
+                    not (inst.isfatiguedown:value() and percent < oldpercent),
+            }
+            inst._oldfatiguepercent = percent
+            inst.isfatigueup:set_local(false)
+            inst.isfatiguedown:set_local(false)
+            inst._parent:PushEvent("fatiguedelta", data)
+            if oldpercent > 0 then
+                if percent <= 0 then
+                    inst._parent:PushEvent("startfatiguedepleted")
+                end
+            elseif percent > 0 then
+                inst._parent:PushEvent("stopfatiguedepleted")
+            end
+        else
+            inst._oldfatiguepercent = 1
+            inst.isfatigueup:set_local(false)
+            inst.isfatiguedown:set_local(false)
+        end
+    end
+
     _OnEntityReplicated = inst.OnEntityReplicated
     local function OnEntityReplicated(inst)
         inst._parent = inst.entity:GetParent()
@@ -152,11 +152,11 @@ local function PrefabPostInitFn(inst)
             if inst._parent.replica.mana ~= nil then
                 inst._parent.replica.mana:AttachClassified(inst)
             end
-            if inst._parent.replica.fatigue ~= nil then
-                inst._parent.replica.fatigue:AttachClassified(inst)
-            end
             if inst._parent.replica.stamina ~= nil then
                 inst._parent.replica.stamina:AttachClassified(inst)
+            end
+            if inst._parent.replica.fatigue ~= nil then
+                inst._parent.replica.fatigue:AttachClassified(inst)
             end
         end
         return _OnEntityReplicated(inst)
@@ -169,15 +169,15 @@ local function PrefabPostInitFn(inst)
             inst._parent = inst.entity:GetParent()
             inst:ListenForEvent("manadelta", OnManaDelta, inst._parent)
             inst:ListenForEvent("levelerdelta", OnLevelerDelta, inst._parent)
-            inst:ListenForEvent("fatiguedelta", OnFatigueDelta, inst._parent)
             inst:ListenForEvent("staminadelta", OnStaminaDelta, inst._parent)
+            inst:ListenForEvent("fatiguedelta", OnFatigueDelta, inst._parent)
         else
             inst.ismanapulseup:set_local(false)
             inst.ismanapulsedown:set_local(false)
             inst:ListenForEvent("manadirty", OnManaDirty)
             inst:ListenForEvent("levelerdirty", OnLevelerDirty)
-            inst:ListenForEvent("fatiguedirty", OnFatigueDirty)
             inst:ListenForEvent("staminadirty", OnStaminaDirty)
+            inst:ListenForEvent("fatiguedirty", OnFatigueDirty)
 
             if inst._parent ~= nil then
                 inst._oldmanapercent = inst.maxmana:value() > 0 and inst.currentmana:value() / inst.maxmana:value()
@@ -209,17 +209,6 @@ local function PrefabPostInitFn(inst)
     inst.maxmana:set(0)
     inst.manaregenspeed:set(0)
 
-    --Net variables for stamina
-    inst._oldstaminapercent = 1
-    inst.currentstamina = net_ushortint(inst.GUID, "stamina.current", "staminadirty")
-    inst.maxstamina = net_ushortint(inst.GUID, "stamina.max", "staminadirty")
-    inst.staminarate = net_shortint(inst.GUID, "stamina.rate", "staminadirty")
-    inst.isstaminaup = net_bool(inst.GUID, "stamina.dodeltaovertime(up)", "staminadirty")
-    inst.isstaminadown = net_bool(inst.GUID, "stamina.dodeltaovertime(down)", "staminadirty")
-    inst.currentstamina:set(100)
-    inst.maxstamina:set(100)
-    inst.staminarate:set(0)
-
     --Net variables for fatigue
     inst._oldfatiguepercent = 1
     inst.currentfatigue = net_ushortint(inst.GUID, "fatigue.current", "fatiguedirty")
@@ -230,6 +219,17 @@ local function PrefabPostInitFn(inst)
     inst.currentfatigue:set(100)
     inst.maxfatigue:set(100)
     inst.fatiguerate:set(0)
+
+    --Net variables for stamina
+    inst._oldstaminapercent = 1
+    inst.currentstamina = net_ushortint(inst.GUID, "stamina.current", "staminadirty")
+    inst.maxstamina = net_ushortint(inst.GUID, "stamina.max", "staminadirty")
+    inst.staminarate = net_shortint(inst.GUID, "stamina.rate", "staminadirty")
+    inst.isstaminaup = net_bool(inst.GUID, "stamina.dodeltaovertime(up)", "staminadirty")
+    inst.isstaminadown = net_bool(inst.GUID, "stamina.dodeltaovertime(down)", "staminadirty")
+    inst.currentstamina:set(100)
+    inst.maxstamina:set(100)
+    inst.staminarate:set(0)
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)

@@ -9,8 +9,8 @@ local modlanguage = GetModConfigData("modlanguage")
 -- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
 AddReplicableComponent("leveler")
-AddReplicableComponent("fatigue")
 AddReplicableComponent("stamina")
+AddReplicableComponent("fatigue")
 
 -- Run scripts
 modimport("scripts/src/tuning.lua") -- Settings, values and parameters
@@ -23,8 +23,8 @@ modimport("scripts/src/entityscript.lua") -- AddClassPostConstruct
 modimport("scripts/src/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
 modimport("scripts/src/hotkeys.lua") -- Add key handlers
 modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,etc.)
-modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, stamina, fatigue, etc.)
-modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/stamina/fatigue badges display
+modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, fatigue, stamina, etc.)
+modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
 

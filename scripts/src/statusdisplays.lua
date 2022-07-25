@@ -120,6 +120,12 @@ local function FatigueBadgeDisplay(self)
 
         function self:SetFatiguePercent(pct)
             self.fatiguebadge:SetPercent(pct, self.owner.replica.fatigue:Max())
+
+            if pct >= 1 then
+                self.fatiguebadge:StartWarning()
+            else
+                self.fatiguebadge:StopWarning()
+            end
         end
 
         function self:FatigueDelta(data)
@@ -151,6 +157,7 @@ local function FatigueBadgeDisplay(self)
                 return
             elseif ghostmode then
                 self.fatiguebadge:Hide()
+                self.fatiguebadge:StopWarning()
             else
                 self.fatiguebadge:Show()
             end
@@ -200,12 +207,6 @@ local function StaminaBadgeDisplay(self)
 
         function self:SetStaminaPercent(pct)
             self.staminabadge:SetPercent(pct, self.owner.replica.stamina:Max())
-
-            if pct >= 1 then
-                self.staminabadge:StartWarning()
-            else
-                self.staminabadge:StopWarning()
-            end
         end
 
         function self:StaminaDelta(data)
@@ -237,7 +238,6 @@ local function StaminaBadgeDisplay(self)
                 return
             elseif ghostmode then
                 self.staminabadge:Hide()
-                self.staminabadge:StopWarning()
             else
                 self.staminabadge:Show()
             end

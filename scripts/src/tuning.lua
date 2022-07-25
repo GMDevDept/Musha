@@ -11,8 +11,8 @@ TUNING.musha = {
     maxmana = 50,
     manaregenspeed = 333, -- net_ushortint limit
 
-    staminarate = -1000,
     fatiguerate = 0,
+    staminarate = 1000,
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.5,

@@ -15,7 +15,7 @@ local StaminaBadge = Class(Badge, function(self, owner)
     self.staminaarrow:GetAnimState():AnimateWhilePaused(false)
 
     local stamina_arrow_pos = self.staminaarrow:GetPosition()
-    self.staminaarrow:SetPosition(stamina_arrow_pos.x + 11, stamina_arrow_pos.y, stamina_arrow_pos.z)
+    self.staminaarrow:SetPosition(stamina_arrow_pos.x - 11, stamina_arrow_pos.y, stamina_arrow_pos.z)
 
     self:StartUpdating()
 end)

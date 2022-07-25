@@ -14,7 +14,7 @@ end
 local Stamina = Class(function(self, inst)
     self.inst = inst
     self.max = 100
-    self.current = 0
+    self.current = self.max
 
     self.ispalsed = false
     self.rate = 0
@@ -30,7 +30,7 @@ end,
 
 
 function Stamina:OnSave()
-    return self.current ~= 0 and { stamina = self.current } or nil
+    return self.current ~= self.max and { stamina = self.current } or nil
 end
 
 function Stamina:OnLoad(data)
@@ -82,7 +82,7 @@ end
 
 function Stamina:SetMax(amount)
     self.max = amount
-    self.current = 0
+    self.current = amount
 end
 
 function Stamina:SetRate(rate)

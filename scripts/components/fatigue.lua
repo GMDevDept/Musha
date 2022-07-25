@@ -14,7 +14,7 @@ end
 local Fatigue = Class(function(self, inst)
     self.inst = inst
     self.max = 100
-    self.current = self.max
+    self.current = 0
 
     self.ispalsed = false
     self.rate = 0
@@ -30,7 +30,7 @@ end,
 
 
 function Fatigue:OnSave()
-    return self.current ~= self.max and { fatigue = self.current } or nil
+    return self.current ~= 0 and { fatigue = self.current } or nil
 end
 
 function Fatigue:OnLoad(data)
@@ -53,7 +53,7 @@ function Fatigue:Resume()
 end
 
 function Fatigue:IsPaused()
-    return not self.ispalsed
+    return self.ispalsed
 end
 
 function Fatigue:IsEmpty()
@@ -82,7 +82,7 @@ end
 
 function Fatigue:SetMax(amount)
     self.max = amount
-    self.current = amount
+    self.current = 0
 end
 
 function Fatigue:SetRate(rate)
