@@ -36,6 +36,8 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Sneak
+
 local function BackStab(inst, data)
     inst:RemoveSneakEffects()
     inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
@@ -84,8 +86,8 @@ local function StartSneaking(inst)
 
             local x, y, z = inst.Transform:GetWorldPosition()
             local must_tags = { "_combat" }
-            local ignore_tags = { "INLIMBO", "notarget", "noattack", "invisible", "isdead" }
-            local targets = TheSim:FindEntities(x, y, z, 12, nil, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
+            local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
+            local targets = TheSim:FindEntities(x, y, z, 12, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
             if targets then
                 for k, v in pairs(targets) do
                     if v.components.combat and v.components.combat.target == inst then
@@ -406,7 +408,6 @@ local function common_postinit(inst)
 
     -- Additional animes
     inst.AnimState:AddOverrideBuild("player_idles_warly")
-    inst.AnimState:AddOverrideBuild("player_idles_wes")
 
     -- Minimap icon
     inst.MiniMapEntity:SetIcon("musha_mapicon.tex")

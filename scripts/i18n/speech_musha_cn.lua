@@ -2,145 +2,145 @@
 return {
 
     --adds action start
-    ACTIONFAIL =
-    {
-        REPAIR =
-        {
-            WRONGPIECE = "Musha thinks that was wrong.",
-        },
-        BUILD =
-        {
-            MOUNTED = "Musha can't place that from way up here.",
-            HASPET = "Musha already has a pet.",
-        },
-        SHAVE =
-        {
-            AWAKEBEEFALO = "Musha thinks it is dangerous to do that while he is awake",
-            GENERIC = "Musha can't shave that!",
-            NOBITS = "There isn't even any stubble left!",
-        },
-        STORE =
-        {
-            GENERIC = "It's full.",
-            NOTALLOWED = "That can't go in there.",
-            INUSE = "Musha should wait for Musha's turn.",
-        },
-        RUMMAGE =
-        {
-            GENERIC = "Musha can't do that.",
-            INUSE = "They are searching for something.",
-        },
-        USEKLAUSSACKKEY =
-        {
-            WRONGKEY = "Whoops! That wasn't right.",
-            KLAUS = "Musha is a little busy here!!",
-            QUAGMIRE_WRONGKEY = "Musha needs to find another key.",
-        },
-        ACTIVATE =
-        {
-            LOCKED_GATE = "The gate is locked.",
-        },
-        COOK =
-        {
-            GENERIC = "Musha can't cook her food now.",
-            INUSE = "Looks like You and Musha had the same idea.",
-            TOOFAR = "It's too far away for Musha to reach!",
-        },
-        GIVE =
-        {
-            GENERIC = "That doesn't go there.",
-            DEAD = "Maybe Musha is just gonna keep these.",
-            SLEEPING = "He is sleeping.",
-            BUSY = "Musha shloud try again in a second.",
-            ABIGAILHEART = "It was worth a shot.",
-            GHOSTHEART = "Musha thinks this is a bad idea.",
-            NOTGEM = "Musha is not putting that in there!",
-            WRONGGEM = "Musha thinks this gem won't work here.",
-            NOTSTAFF = "Musha thinks it's not the right shape.",
-            MUSHROOMFARM_NEEDSSHROOM = "A mushroom would probably be of more use.",
-            MUSHROOMFARM_NEEDSLOG = "A living log would probably be of more use.",
-            SLOTFULL = "Musha already put something there.",
-            FOODFULL = "There's already a meal there.",
-            NOTDISH = "It won't want to eat that.",
-            DUPLICATE = "We already know that one.",
-            NOTSCULPTABLE = "Not even science could make that into a sculpture.",
-            NOTATRIUMKEY = "Musha thinks it's not the right shape.",
-            CANTSHADOWREVIVE = "It won't resurrect.",
-            WRONGSHADOWFORM = "It's not put together right.",
-        },
-        GIVETOPLAYER =
-        {
-            FULL = "Hey! Your pockets are too full!",
-            DEAD = "Maybe Musha is just gonna keep these.",
-            SLEEPING = "Too unconscious to care.",
-            BUSY = "I'll try again in a second.",
-        },
-        GIVEALLTOPLAYER =
-        {
-            FULL = "Your pockets are too full!",
-            DEAD = "Maybe I'll just hold on to this.",
-            SLEEPING = "He is sleeping.",
-            BUSY = "Musha shloud try again in a second.",
-        },
-        WRITE =
-        {
-            GENERIC = "Musha thinks it's fine.",
-            INUSE = "There's only room for one scribbler.",
-        },
-        DRAW =
-        {
-            NOIMAGE = "This'd be easier if Musha had the item in front of Musha.",
-        },
-        CHANGEIN =
-        {
-            GENERIC = "Musha doesn't want to change right now.",
-            BURNING = "It's too dangerous right now!",
-            INUSE = "It can only handle one style change at a time.",
-        },
-        ATTUNE =
-        {
-            NOHEALTH = "Musha doesn't feel well enough.",
-        },
-        MOUNT =
-        {
-            TARGETINCOMBAT = "Musha knows better than to bother an angry beefalo!",
-            INUSE = "Someone beat Musha to the saddle!",
-        },
-        SADDLE =
-        {
-            TARGETINCOMBAT = "It won't let Musha do that while it's angry.",
-        },
-        TEACH =
-        {
-            --Recipes/Teacher
-            KNOWN = "Musha already knows that one.",
-            CANTLEARN = "Musha can't learn that one.",
+    -- ACTIONFAIL =
+    -- {
+    --     REPAIR =
+    --     {
+    --         WRONGPIECE = "Musha thinks that was wrong.",
+    --     },
+    --     BUILD =
+    --     {
+    --         MOUNTED = "Musha can't place that from way up here.",
+    --         HASPET = "Musha already has a pet.",
+    --     },
+    --     SHAVE =
+    --     {
+    --         AWAKEBEEFALO = "Musha thinks it is dangerous to do that while he is awake",
+    --         GENERIC = "Musha can't shave that!",
+    --         NOBITS = "There isn't even any stubble left!",
+    --     },
+    --     STORE =
+    --     {
+    --         GENERIC = "It's full.",
+    --         NOTALLOWED = "That can't go in there.",
+    --         INUSE = "Musha should wait for Musha's turn.",
+    --     },
+    --     RUMMAGE =
+    --     {
+    --         GENERIC = "Musha can't do that.",
+    --         INUSE = "They are searching for something.",
+    --     },
+    --     USEKLAUSSACKKEY =
+    --     {
+    --         WRONGKEY = "Whoops! That wasn't right.",
+    --         KLAUS = "Musha is a little busy here!!",
+    --         QUAGMIRE_WRONGKEY = "Musha needs to find another key.",
+    --     },
+    --     ACTIVATE =
+    --     {
+    --         LOCKED_GATE = "The gate is locked.",
+    --     },
+    --     COOK =
+    --     {
+    --         GENERIC = "Musha can't cook her food now.",
+    --         INUSE = "Looks like You and Musha had the same idea.",
+    --         TOOFAR = "It's too far away for Musha to reach!",
+    --     },
+    --     GIVE =
+    --     {
+    --         GENERIC = "That doesn't go there.",
+    --         DEAD = "Maybe Musha is just gonna keep these.",
+    --         SLEEPING = "He is sleeping.",
+    --         BUSY = "Musha shloud try again in a second.",
+    --         ABIGAILHEART = "It was worth a shot.",
+    --         GHOSTHEART = "Musha thinks this is a bad idea.",
+    --         NOTGEM = "Musha is not putting that in there!",
+    --         WRONGGEM = "Musha thinks this gem won't work here.",
+    --         NOTSTAFF = "Musha thinks it's not the right shape.",
+    --         MUSHROOMFARM_NEEDSSHROOM = "A mushroom would probably be of more use.",
+    --         MUSHROOMFARM_NEEDSLOG = "A living log would probably be of more use.",
+    --         SLOTFULL = "Musha already put something there.",
+    --         FOODFULL = "There's already a meal there.",
+    --         NOTDISH = "It won't want to eat that.",
+    --         DUPLICATE = "We already know that one.",
+    --         NOTSCULPTABLE = "Not even science could make that into a sculpture.",
+    --         NOTATRIUMKEY = "Musha thinks it's not the right shape.",
+    --         CANTSHADOWREVIVE = "It won't resurrect.",
+    --         WRONGSHADOWFORM = "It's not put together right.",
+    --     },
+    --     GIVETOPLAYER =
+    --     {
+    --         FULL = "Hey! Your pockets are too full!",
+    --         DEAD = "Maybe Musha is just gonna keep these.",
+    --         SLEEPING = "Too unconscious to care.",
+    --         BUSY = "I'll try again in a second.",
+    --     },
+    --     GIVEALLTOPLAYER =
+    --     {
+    --         FULL = "Your pockets are too full!",
+    --         DEAD = "Maybe I'll just hold on to this.",
+    --         SLEEPING = "He is sleeping.",
+    --         BUSY = "Musha shloud try again in a second.",
+    --     },
+    --     WRITE =
+    --     {
+    --         GENERIC = "Musha thinks it's fine.",
+    --         INUSE = "There's only room for one scribbler.",
+    --     },
+    --     DRAW =
+    --     {
+    --         NOIMAGE = "This'd be easier if Musha had the item in front of Musha.",
+    --     },
+    --     CHANGEIN =
+    --     {
+    --         GENERIC = "Musha doesn't want to change right now.",
+    --         BURNING = "It's too dangerous right now!",
+    --         INUSE = "It can only handle one style change at a time.",
+    --     },
+    --     ATTUNE =
+    --     {
+    --         NOHEALTH = "Musha doesn't feel well enough.",
+    --     },
+    --     MOUNT =
+    --     {
+    --         TARGETINCOMBAT = "Musha knows better than to bother an angry beefalo!",
+    --         INUSE = "Someone beat Musha to the saddle!",
+    --     },
+    --     SADDLE =
+    --     {
+    --         TARGETINCOMBAT = "It won't let Musha do that while it's angry.",
+    --     },
+    --     TEACH =
+    --     {
+    --         --Recipes/Teacher
+    --         KNOWN = "Musha already knows that one.",
+    --         CANTLEARN = "Musha can't learn that one.",
 
-            --MapRecorder/MapExplorer
-            WRONGWORLD = "This map was made for some other place.",
-        },
-        WRAPBUNDLE =
-        {
-            EMPTY = "Musha needs to have something to wrap.",
-        },
-        PICKUP =
-        {
-            RESTRICTION = "Musha is not skilled enough to use that.",
-            INUSE = "Science says Musha has to wait for Musha's turn.",
-        },
-        SLAUGHTER =
-        {
-            TOOFAR = "It got away.",
-        },
-        REPLATE =
-        {
-            MISMATCH = "It needs another type of dish.",
-            SAMEDISH = "Musha only needed to use one dish.",
-        },
-    },
-    ACTIONFAIL_GENERIC = "Musha can't do that.",
-    ANNOUNCE_DIG_DISEASE_WARNING = "It looks better already.",
-    ANNOUNCE_PICK_DISEASE_WARNING = "Uh, Musha doesn't likes that smell.",
+    --         --MapRecorder/MapExplorer
+    --         WRONGWORLD = "This map was made for some other place.",
+    --     },
+    --     WRAPBUNDLE =
+    --     {
+    --         EMPTY = "Musha needs to have something to wrap.",
+    --     },
+    --     PICKUP =
+    --     {
+    --         RESTRICTION = "Musha is not skilled enough to use that.",
+    --         INUSE = "Science says Musha has to wait for Musha's turn.",
+    --     },
+    --     SLAUGHTER =
+    --     {
+    --         TOOFAR = "It got away.",
+    --     },
+    --     REPLATE =
+    --     {
+    --         MISMATCH = "It needs another type of dish.",
+    --         SAMEDISH = "Musha only needed to use one dish.",
+    --     },
+    -- },
+    -- ACTIONFAIL_GENERIC = "Musha can't do that.",
+    -- ANNOUNCE_DIG_DISEASE_WARNING = "It looks better already.",
+    -- ANNOUNCE_PICK_DISEASE_WARNING = "Uh, Musha doesn't likes that smell.",
     --adds action end
 
     ANNOUNCE_HATEFOOD = "呕！",
@@ -231,199 +231,195 @@ return {
     --adds 4 start
     --ANNOUNCE_TOOL_SLIP = "Whoa! It's slippery!",
     --ANNOUNCE_LIGHTNING_DAMAGE_AVOIDED = "Musha is safe from that scary lightning!",
-    ANNOUNCE_TOADESCAPING = "The toad is losing interest.",
-    ANNOUNCE_TOADESCAPED = "The toad got away.",
+    -- ANNOUNCE_TOADESCAPING = "The toad is losing interest.",
+    -- ANNOUNCE_TOADESCAPED = "The toad got away.",
 
-    ANNOUNCE_BECOMEGHOST = "oOooOooo!!",
-    ANNOUNCE_GHOSTDRAIN = "Musha is losing Musha's humanity...",
-    ANNOUNCE_PETRIFED_TREES = "Did Musha just hear trees screaming?",
-    ANNOUNCE_KLAUS_ENRAGE = "There's no way to beat it now!!",
-    ANNOUNCE_KLAUS_UNCHAINED = "It's chains came off!",
-    ANNOUNCE_KLAUS_CALLFORHELP = "It called for help!",
+    -- ANNOUNCE_BECOMEGHOST = "oOooOooo!!",
+    -- ANNOUNCE_GHOSTDRAIN = "Musha is losing Musha's humanity...",
+    -- ANNOUNCE_PETRIFED_TREES = "Did Musha just hear trees screaming?",
+    -- ANNOUNCE_KLAUS_ENRAGE = "There's no way to beat it now!!",
+    -- ANNOUNCE_KLAUS_UNCHAINED = "It's chains came off!",
+    -- ANNOUNCE_KLAUS_CALLFORHELP = "It called for help!",
 
-    --lavaarena event
-    ANNOUNCE_REVIVING_CORPSE = "Let Musha help You out!",
-    ANNOUNCE_REVIVED_OTHER_CORPSE = "Good as new!",
-    ANNOUNCE_REVIVED_FROM_CORPSE = "Much better, thank-you.",
-    --quagmire event
-    QUAGMIRE_ANNOUNCE_NOTRECIPE = "Those ingredients didn't make anything.",
-    QUAGMIRE_ANNOUNCE_MEALBURNT = "Musha left it on too long.",
-    QUAGMIRE_ANNOUNCE_LOSE = "Musha has a bad feeling about this.",
-    QUAGMIRE_ANNOUNCE_WIN = "Time to go!",
+    -- --lavaarena event
+    -- ANNOUNCE_REVIVING_CORPSE = "Let Musha help You out!",
+    -- ANNOUNCE_REVIVED_OTHER_CORPSE = "Good as new!",
+    -- ANNOUNCE_REVIVED_FROM_CORPSE = "Much better, thank-you.",
+    -- --quagmire event
+    -- QUAGMIRE_ANNOUNCE_NOTRECIPE = "Those ingredients didn't make anything.",
+    -- QUAGMIRE_ANNOUNCE_MEALBURNT = "Musha left it on too long.",
+    -- QUAGMIRE_ANNOUNCE_LOSE = "Musha has a bad feeling about this.",
+    -- QUAGMIRE_ANNOUNCE_WIN = "Time to go!",
 
-    ANNOUNCE_ROYALTY =
-    {
-        "Your majesty.",
-        "Your highness.",
-        "Musha's liege!",
-    },
-
+    -- ANNOUNCE_ROYALTY =
+    -- {
+    --     "Your majesty.",
+    --     "Your highness.",
+    --     "Musha's liege!",
+    -- },
     --adds 4 end
 
     DESCRIBE =
     {
-
         --adds 5 start (DESCRIBE)
         --MULTIPLAYER_PORTAL = "This ought to be a scientific impossibility.",
-        ANTLION =
-        {
-            GENERIC = "It wants something from Musha.",
-            VERYHAPPY = "Musha thinks Musha is on good terms with him.",
-            UNHAPPY = "It looks scary! Musha is scared!",
-        },
-        ANTLIONTRINKET = "Someone might be interested in this.",
-        SANDSPIKE = "Musha could've been skewered!",
-        SANDBLOCK = "It's so gritty!",
-        GLASSSPIKE = "Memories of the time Musha wasn't skewered.",
-        GLASSBLOCK = "That's science for you.",
-        ABIGAIL_FLOWER =
-        {
-            GENERIC = "It's hauntingly beautiful.",
-            LONG = "It hurts Musha's soul to look at that thing.",
-            MEDIUM = "It's giving Musha the creeps.",
-            SOON = "Something is up with that flower!",
-            HAUNTED_POCKET = "Musha doesn't think Musha should hang on to this.",
-            HAUNTED_GROUND = "Musha would die to find out what it does.",
-        },
+        -- ANTLION =
+        -- {
+        --     GENERIC = "It wants something from Musha.",
+        --     VERYHAPPY = "Musha thinks Musha is on good terms with him.",
+        --     UNHAPPY = "It looks scary! Musha is scared!",
+        -- },
+        -- ANTLIONTRINKET = "Someone might be interested in this.",
+        -- SANDSPIKE = "Musha could've been skewered!",
+        -- SANDBLOCK = "It's so gritty!",
+        -- GLASSSPIKE = "Memories of the time Musha wasn't skewered.",
+        -- GLASSBLOCK = "That's science for you.",
+        -- ABIGAIL_FLOWER =
+        -- {
+        --     GENERIC = "It's hauntingly beautiful.",
+        --     LONG = "It hurts Musha's soul to look at that thing.",
+        --     MEDIUM = "It's giving Musha the creeps.",
+        --     SOON = "Something is up with that flower!",
+        --     HAUNTED_POCKET = "Musha doesn't think Musha should hang on to this.",
+        --     HAUNTED_GROUND = "Musha would die to find out what it does.",
+        -- },
 
-        BALLOONS_EMPTY = "It looks like clown currency.",
-        BALLOON = "How are they floating?",
+        -- BALLOONS_EMPTY = "It looks like clown currency.",
+        -- BALLOON = "How are they floating?",
 
-        BERNIE_INACTIVE =
-        {
-            BROKEN = "It finally fell apart.",
-            GENERIC = "It's all scorched.",
-        },
+        -- BERNIE_INACTIVE =
+        -- {
+        --     BROKEN = "It finally fell apart.",
+        --     GENERIC = "It's all scorched.",
+        -- },
 
-        BERNIE_ACTIVE = "That teddy bear is moving around. Interesting.",
+        -- BERNIE_ACTIVE = "That teddy bear is moving around. Interesting.",
 
-        PLAYER =
-        {
-            GENERIC = "Oh! Hey there, %s!",
-            ATTACKER = "%s looks shifty...",
-            MURDERER = "Murderer!",
-            REVIVER = "%s, friend of ghosts.",
-            GHOST = "%s could use a heart.",
-            FIRESTARTER = "Burning that wasn't very scientific, %s.",
-        },
-        WILSON =
-        {
-            GENERIC = "Stars and atoms! Are you Musha's doppelganger, %s?",
-            ATTACKER = "Yeesh. Does Musha always look that creepy?",
-            MURDERER = "Your existence is an affront to the laws of science, %s!",
-            REVIVER = "%s has expertly put our theories into practice.",
-            GHOST = "Better concoct a revival device. Can't leave another man of science floating.",
-            FIRESTARTER = "Burning that wasn't very scientific, %s.",
-        },
-        WOLFGANG =
-        {
-            GENERIC = "It's good to see you, %s!",
-            ATTACKER = "Musha should not start a fight with the strongman...",
-            MURDERER = "Murderer! Musha can take you down!",
-            REVIVER = "%s is just a big teddy bear.",
-            GHOST = "Musha told you you couldn't deadlift that boulder, %s. The numbers were all wrong.",
-            FIRESTARTER = "You can't actually \"fight\" fire, %s!",
-        },
-        WAXWELL =
-        {
-            GENERIC = "Decent day to you, %s!",
-            ATTACKER = "Seems you've gone from \"dapper\" to \"slapper\".",
-            MURDERER = "Musha will show you Logic and Reason... those're Musha's fists!",
-            REVIVER = "%s is using his powers for good.",
-            GHOST = "Don't look at Musha like that, %s! Musha is working on it!",
-            FIRESTARTER = "%s's just asking to get roasted.",
-        },
-        WX78 =
-        {
-            GENERIC = "Good day to you, %s!",
-            ATTACKER = "Musha thinks Musha needs to tweak your primary directive, %s...",
-            MURDERER = "%s! You've violated the first law!",
-            REVIVER = "Musha guesses %s got that empathy module up and running.",
-            GHOST = "Musha always thought %s could use a heart. Now Musha is certain!",
-            FIRESTARTER = "You look like you're gonna melt, %s. What happened?",
-        },
-        WILLOW =
-        {
-            GENERIC = "Good day to you, %s!",
-            ATTACKER = "%s is holding that lighter pretty tightly...",
-            MURDERER = "Murderer! Arsonist!",
-            REVIVER = "%s, friend of ghosts.",
-            GHOST = "Musha bets you're just burning for a heart, %s.",
-            FIRESTARTER = "Again?",
-        },
-        WENDY =
-        {
-            GENERIC = "Greetings, %s!",
-            ATTACKER = "%s doesn't have any sharp objects, does she?",
-            MURDERER = "Murderer!",
-            REVIVER = "%s treats ghosts like family.",
-            GHOST = "Musha is seeing double! I'd better concoct a heart for %s.",
-            FIRESTARTER = "Musha knows you set those flames, %s.",
-        },
-        WOODIE =
-        {
-            GENERIC = "Greetings, %s!",
-            ATTACKER = "%s has been a bit of a sap lately...",
-            MURDERER = "Murder! Bring Musha an axe and we'll get in the swing of things!",
-            REVIVER = "%s saved everyone's backbacon.",
-            GHOST = "Does \"universal\" coverage include the void, %s?",
-            BEAVER = "%s's gone on a wood chucking rampage!",
-            BEAVERGHOST = "Will you bea-very mad if Musha doesn't revive you, %s?",
-            FIRESTARTER = "Don't burn yourself out, %s.",
-        },
-        WICKERBOTTOM =
-        {
-            GENERIC = "Good day, %s!",
-            ATTACKER = "Musha thinks %s's planning to throw the book at Musha.",
-            MURDERER = "Here comes Musha's peer review!",
-            REVIVER = "Musha has deep respect for %s's practical theorems.",
-            GHOST = "This doesn't seem very scientific, does it, %s?",
-            FIRESTARTER = "Musha is sure you had a very clever reason for that fire.",
-        },
-        WES =
-        {
-            GENERIC = "Greetings, %s!",
-            ATTACKER = "%s is silent, but deadly...",
-            MURDERER = "Mime this!",
-            REVIVER = "%s thinks outside the invisible box.",
-            GHOST = "How do you say \"I'll concoct a revival device\" in mime?",
-            FIRESTARTER = "Wait, don't tell Musha. You lit a fire.",
-        },
-        WEBBER =
-        {
-            GENERIC = "Good day, %s!",
-            ATTACKER = "Musha is gonna roll up a piece of papyrus newspaper, just in case.",
-            MURDERER = "Murderer! Musha will squash you, %s!",
-            REVIVER = "%s is playing well with others.",
-            GHOST = "%s is really buggin' me for a heart.",
-            FIRESTARTER = "We need to have a group meeting about fire safety.",
-        },
-        WATHGRITHR =
-        {
-            GENERIC = "Good day, %s!",
-            ATTACKER = "Musha doesn't want a punch from %s, if possible.",
-            MURDERER = "%s's gone berserk!",
-            REVIVER = "%s has full command of spirits.",
-            GHOST = "Nice try. You're not escaping to Valhalla yet, %s.",
-            FIRESTARTER = "%s is really heating things up today.",
-        },
-        WINONA =
-        {
-            GENERIC = "Good day to you, %s!",
-            ATTACKER = "%s is a safety hazard.",
-            MURDERER = "It ends here, %s!",
-            REVIVER = "You're pretty handy to have around, %s.",
-            GHOST = "Looks like someone threw a wrench into your plans.",
-            FIRESTARTER = "Things are burning up at the factory.",
-        },
-        MIGRATION_PORTAL =
-        {
-            GENERIC = "If Musha had any friends, this could take me to them.",
-            OPEN = "If Musha would step through, will Musha still be Musha?",
-            FULL = "It seems to be popular over there.",
-        },
-
-
+        -- PLAYER =
+        -- {
+        --     GENERIC = "Oh! Hey there, %s!",
+        --     ATTACKER = "%s looks shifty...",
+        --     MURDERER = "Murderer!",
+        --     REVIVER = "%s, friend of ghosts.",
+        --     GHOST = "%s could use a heart.",
+        --     FIRESTARTER = "Burning that wasn't very scientific, %s.",
+        -- },
+        -- WILSON =
+        -- {
+        --     GENERIC = "Stars and atoms! Are you Musha's doppelganger, %s?",
+        --     ATTACKER = "Yeesh. Does Musha always look that creepy?",
+        --     MURDERER = "Your existence is an affront to the laws of science, %s!",
+        --     REVIVER = "%s has expertly put our theories into practice.",
+        --     GHOST = "Better concoct a revival device. Can't leave another man of science floating.",
+        --     FIRESTARTER = "Burning that wasn't very scientific, %s.",
+        -- },
+        -- WOLFGANG =
+        -- {
+        --     GENERIC = "It's good to see you, %s!",
+        --     ATTACKER = "Musha should not start a fight with the strongman...",
+        --     MURDERER = "Murderer! Musha can take you down!",
+        --     REVIVER = "%s is just a big teddy bear.",
+        --     GHOST = "Musha told you you couldn't deadlift that boulder, %s. The numbers were all wrong.",
+        --     FIRESTARTER = "You can't actually \"fight\" fire, %s!",
+        -- },
+        -- WAXWELL =
+        -- {
+        --     GENERIC = "Decent day to you, %s!",
+        --     ATTACKER = "Seems you've gone from \"dapper\" to \"slapper\".",
+        --     MURDERER = "Musha will show you Logic and Reason... those're Musha's fists!",
+        --     REVIVER = "%s is using his powers for good.",
+        --     GHOST = "Don't look at Musha like that, %s! Musha is working on it!",
+        --     FIRESTARTER = "%s's just asking to get roasted.",
+        -- },
+        -- WX78 =
+        -- {
+        --     GENERIC = "Good day to you, %s!",
+        --     ATTACKER = "Musha thinks Musha needs to tweak your primary directive, %s...",
+        --     MURDERER = "%s! You've violated the first law!",
+        --     REVIVER = "Musha guesses %s got that empathy module up and running.",
+        --     GHOST = "Musha always thought %s could use a heart. Now Musha is certain!",
+        --     FIRESTARTER = "You look like you're gonna melt, %s. What happened?",
+        -- },
+        -- WILLOW =
+        -- {
+        --     GENERIC = "Good day to you, %s!",
+        --     ATTACKER = "%s is holding that lighter pretty tightly...",
+        --     MURDERER = "Murderer! Arsonist!",
+        --     REVIVER = "%s, friend of ghosts.",
+        --     GHOST = "Musha bets you're just burning for a heart, %s.",
+        --     FIRESTARTER = "Again?",
+        -- },
+        -- WENDY =
+        -- {
+        --     GENERIC = "Greetings, %s!",
+        --     ATTACKER = "%s doesn't have any sharp objects, does she?",
+        --     MURDERER = "Murderer!",
+        --     REVIVER = "%s treats ghosts like family.",
+        --     GHOST = "Musha is seeing double! I'd better concoct a heart for %s.",
+        --     FIRESTARTER = "Musha knows you set those flames, %s.",
+        -- },
+        -- WOODIE =
+        -- {
+        --     GENERIC = "Greetings, %s!",
+        --     ATTACKER = "%s has been a bit of a sap lately...",
+        --     MURDERER = "Murder! Bring Musha an axe and we'll get in the swing of things!",
+        --     REVIVER = "%s saved everyone's backbacon.",
+        --     GHOST = "Does \"universal\" coverage include the void, %s?",
+        --     BEAVER = "%s's gone on a wood chucking rampage!",
+        --     BEAVERGHOST = "Will you bea-very mad if Musha doesn't revive you, %s?",
+        --     FIRESTARTER = "Don't burn yourself out, %s.",
+        -- },
+        -- WICKERBOTTOM =
+        -- {
+        --     GENERIC = "Good day, %s!",
+        --     ATTACKER = "Musha thinks %s's planning to throw the book at Musha.",
+        --     MURDERER = "Here comes Musha's peer review!",
+        --     REVIVER = "Musha has deep respect for %s's practical theorems.",
+        --     GHOST = "This doesn't seem very scientific, does it, %s?",
+        --     FIRESTARTER = "Musha is sure you had a very clever reason for that fire.",
+        -- },
+        -- WES =
+        -- {
+        --     GENERIC = "Greetings, %s!",
+        --     ATTACKER = "%s is silent, but deadly...",
+        --     MURDERER = "Mime this!",
+        --     REVIVER = "%s thinks outside the invisible box.",
+        --     GHOST = "How do you say \"I'll concoct a revival device\" in mime?",
+        --     FIRESTARTER = "Wait, don't tell Musha. You lit a fire.",
+        -- },
+        -- WEBBER =
+        -- {
+        --     GENERIC = "Good day, %s!",
+        --     ATTACKER = "Musha is gonna roll up a piece of papyrus newspaper, just in case.",
+        --     MURDERER = "Murderer! Musha will squash you, %s!",
+        --     REVIVER = "%s is playing well with others.",
+        --     GHOST = "%s is really buggin' me for a heart.",
+        --     FIRESTARTER = "We need to have a group meeting about fire safety.",
+        -- },
+        -- WATHGRITHR =
+        -- {
+        --     GENERIC = "Good day, %s!",
+        --     ATTACKER = "Musha doesn't want a punch from %s, if possible.",
+        --     MURDERER = "%s's gone berserk!",
+        --     REVIVER = "%s has full command of spirits.",
+        --     GHOST = "Nice try. You're not escaping to Valhalla yet, %s.",
+        --     FIRESTARTER = "%s is really heating things up today.",
+        -- },
+        -- WINONA =
+        -- {
+        --     GENERIC = "Good day to you, %s!",
+        --     ATTACKER = "%s is a safety hazard.",
+        --     MURDERER = "It ends here, %s!",
+        --     REVIVER = "You're pretty handy to have around, %s.",
+        --     GHOST = "Looks like someone threw a wrench into your plans.",
+        --     FIRESTARTER = "Things are burning up at the factory.",
+        -- },
+        -- MIGRATION_PORTAL =
+        -- {
+        --     GENERIC = "If Musha had any friends, this could take me to them.",
+        --     OPEN = "If Musha would step through, will Musha still be Musha?",
+        --     FULL = "It seems to be popular over there.",
+        -- },
         --adds 5 end (DESCRIBE)
 
         MUSHA_EGG = "一颗小小的花蕾。",
@@ -556,179 +552,178 @@ return {
         NIGHTSTICK = "这个有用吗？",
 
         --adds 6 start
-        MUSHROOMHAT = "Makes the wearer look like a fun guy.",
-        MUSHROOM_LIGHT2 =
-        {
-            ON = "Blue is obviously the most scientific color.",
-            OFF = "We could make a prime light source with some primary colors.",
-            BURNT = "Musha didn't mildew it, Musha swears.",
-        },
-        MUSHROOM_LIGHT =
-        {
-            ON = "Science makes it light up.",
-            OFF = "It's a big, science-y 'shroom.",
-            BURNT = "Comboletely burnt.",
-        },
-        SLEEPBOMB = "It makes snooze circles when Musha throws it.",
-        MUSHROOMBOMB = "A mushroom cloud in the making!",
-        SHROOM_SKIN = "Warts and all!",
-        TOADSTOOL_CAP =
-        {
-            EMPTY = "Just a hole in the ground.",
-            INGROUND = "There's something poking out.",
-            GENERIC = "That toadstool's just asking to be cut down.",
-        },
-        TOADSTOOL =
-        {
-            GENERIC = "Yeesh! Musha is not kissing that!",
-            RAGE = "He's hopping mad now!",
-        },
-        MUSHROOMSPROUT =
-        {
-            GENERIC = "How scientific!",
-            BURNT = "How im-morel!",
-        },
-        MUSHTREE_TALL =
-        {
-            GENERIC = "蓝色的常绿植物。",
-            BLOOM = "You can't tell from far away, but it's quite smelly.",
-        },
-        MUSHTREE_MEDIUM =
-        {
-            GENERIC = "双头蘑菇！",
-            BLOOM = "Musha is mildly offended by this.",
-        },
-        MUSHTREE_SMALL =
-        {
-            GENERIC = "丑陋的，大头，绿蘑菇。",
-            BLOOM = "It's trying to reproduce.",
-        },
-        MUSHTREE_TALL_WEBBED = "The spiders thought this one was important.",
-        SPORE_TALL =
-        {
-            GENERIC = "It's just drifting around.",
-            HELD = "Musha will keep a little light in Musha's pocket.",
-        },
-        SPORE_MEDIUM =
-        {
-            GENERIC = "Hasn't a care in the world.",
-            HELD = "Musha will keep a little light in Musha's pocket.",
-        },
-        SPORE_SMALL =
-        {
-            GENERIC = "That's a sight for spore eyes.",
-            HELD = "Musha will keep a little light in Musha's pocket.",
-        },
+        -- MUSHROOMHAT = "Makes the wearer look like a fun guy.",
+        -- MUSHROOM_LIGHT2 =
+        -- {
+        --     ON = "Blue is obviously the most scientific color.",
+        --     OFF = "We could make a prime light source with some primary colors.",
+        --     BURNT = "Musha didn't mildew it, Musha swears.",
+        -- },
+        -- MUSHROOM_LIGHT =
+        -- {
+        --     ON = "Science makes it light up.",
+        --     OFF = "It's a big, science-y 'shroom.",
+        --     BURNT = "Comboletely burnt.",
+        -- },
+        -- SLEEPBOMB = "It makes snooze circles when Musha throws it.",
+        -- MUSHROOMBOMB = "A mushroom cloud in the making!",
+        -- SHROOM_SKIN = "Warts and all!",
+        -- TOADSTOOL_CAP =
+        -- {
+        --     EMPTY = "Just a hole in the ground.",
+        --     INGROUND = "There's something poking out.",
+        --     GENERIC = "That toadstool's just asking to be cut down.",
+        -- },
+        -- TOADSTOOL =
+        -- {
+        --     GENERIC = "Yeesh! Musha is not kissing that!",
+        --     RAGE = "He's hopping mad now!",
+        -- },
+        -- MUSHROOMSPROUT =
+        -- {
+        --     GENERIC = "How scientific!",
+        --     BURNT = "How im-morel!",
+        -- },
+        -- MUSHTREE_TALL =
+        -- {
+        --     GENERIC = "蓝色的常绿植物。",
+        --     BLOOM = "You can't tell from far away, but it's quite smelly.",
+        -- },
+        -- MUSHTREE_MEDIUM =
+        -- {
+        --     GENERIC = "双头蘑菇！",
+        --     BLOOM = "Musha is mildly offended by this.",
+        -- },
+        -- MUSHTREE_SMALL =
+        -- {
+        --     GENERIC = "丑陋的，大头，绿蘑菇。",
+        --     BLOOM = "It's trying to reproduce.",
+        -- },
+        -- MUSHTREE_TALL_WEBBED = "The spiders thought this one was important.",
+        -- SPORE_TALL =
+        -- {
+        --     GENERIC = "It's just drifting around.",
+        --     HELD = "Musha will keep a little light in Musha's pocket.",
+        -- },
+        -- SPORE_MEDIUM =
+        -- {
+        --     GENERIC = "Hasn't a care in the world.",
+        --     HELD = "Musha will keep a little light in Musha's pocket.",
+        -- },
+        -- SPORE_SMALL =
+        -- {
+        --     GENERIC = "That's a sight for spore eyes.",
+        --     HELD = "Musha will keep a little light in Musha's pocket.",
+        -- },
 
-        BEEQUEEN = "Keep that stinger away from Musha!",
-        BEEQUEENHIVE =
-        {
-            GENERIC = "It's too sticky to walk on.",
-            GROWING = "Was that there before?",
-        },
-        BEEQUEENHIVEGROWN = "How in science did it get so big?!",
-        BEEGUARD = "It's guarding the queen.",
-        HIVEHAT = "The world seems less a little crazy when Musha wears it.",
-        MINISIGN =
-        {
-            GENERIC = "Musha could draw better than that!",
-            UNDRAWN = "We should draw something on there.",
-        },
-        MINISIGN_ITEM = "It's not much use like this. We should place it.",
+        -- BEEQUEEN = "Keep that stinger away from Musha!",
+        -- BEEQUEENHIVE =
+        -- {
+        --     GENERIC = "It's too sticky to walk on.",
+        --     GROWING = "Was that there before?",
+        -- },
+        -- BEEQUEENHIVEGROWN = "How in science did it get so big?!",
+        -- BEEGUARD = "It's guarding the queen.",
+        -- HIVEHAT = "The world seems less a little crazy when Musha wears it.",
+        -- MINISIGN =
+        -- {
+        --     GENERIC = "Musha could draw better than that!",
+        --     UNDRAWN = "We should draw something on there.",
+        -- },
+        -- MINISIGN_ITEM = "It's not much use like this. We should place it.",
 
-        BERRYBUSH_JUICY =
-        {
-            BARREN = "It won't make any berries in this state.",
-            WITHERED = "The heat even dehydrated the juicy berries!",
-            GENERIC = "Musha should leave them there until it's time to eat.",
-            PICKED = "The bush is working hard on the next batch.",
-            DISEASED = "It looks pretty sick.",
-            DISEASING = "Err, something's not right.",
-            BURNING = "It's very much on fire.",
-        },
+        -- BERRYBUSH_JUICY =
+        -- {
+        --     BARREN = "It won't make any berries in this state.",
+        --     WITHERED = "The heat even dehydrated the juicy berries!",
+        --     GENERIC = "Musha should leave them there until it's time to eat.",
+        --     PICKED = "The bush is working hard on the next batch.",
+        --     DISEASED = "It looks pretty sick.",
+        --     DISEASING = "Err, something's not right.",
+        --     BURNING = "It's very much on fire.",
+        -- },
 
-        CANARY =
-        {
-            GENERIC = "Some sort of yellow creature made of science.",
-            HELD = "Musha is not squishing you... Right?",
-        },
-        CANARY_POISONED = "It's probably fine.",
+        -- CANARY =
+        -- {
+        --     GENERIC = "Some sort of yellow creature made of science.",
+        --     HELD = "Musha is not squishing you... Right?",
+        -- },
+        -- CANARY_POISONED = "It's probably fine.",
 
-        CRITTERLAB = "Is there something in there?",
-        CRITTER_GLOMLING = "What an aerodynamical creature!",
-        CRITTER_DRAGONLING = "It's wyrmed its way into Musha's heart.",
-        CRITTER_LAMB = "Much less mucusy than its momma.",
-        CRITTER_PUPPY = "Pretty cute for a lil monster!",
-        CRITTER_KITTEN = "You'd make a good lab assistant for Musha.",
-        CRITTER_PERDLING = "My feathered friend.",
+        -- CRITTERLAB = "Is there something in there?",
+        -- CRITTER_GLOMLING = "What an aerodynamical creature!",
+        -- CRITTER_DRAGONLING = "It's wyrmed its way into Musha's heart.",
+        -- CRITTER_LAMB = "Much less mucusy than its momma.",
+        -- CRITTER_PUPPY = "Pretty cute for a lil monster!",
+        -- CRITTER_KITTEN = "You'd make a good lab assistant for Musha.",
+        -- CRITTER_PERDLING = "My feathered friend.",
 
-        LAVA_POND = "Magmificent!",
-        -- LAVAE = "Too hot to handle.",
-        LAVAE_COCOON = "Cooled off and chilled out.",
-        LAVAE_PET =
-        {
-            STARVING = "Poor thing must be starving.",
-            HUNGRY = "Musha hears a tiny stomach grumbling.",
-            CONTENT = "It seems happy.",
-            GENERIC = "Aww. Who's a good monster?",
-        },
-        LAVAE_EGG =
-        {
-            GENERIC = "There's a faint warmth coming from inside.",
-        },
-        LAVAE_EGG_CRACKED =
-        {
-            COLD = "Musha doesn't think that egg is warm enough.",
-            COMFY = "Musha never thought Musha would see a happy egg.",
-        },
-        LAVAE_TOOTH = "It's an egg tooth!",
+        -- LAVA_POND = "Magmificent!",
+        -- -- LAVAE = "Too hot to handle.",
+        -- LAVAE_COCOON = "Cooled off and chilled out.",
+        -- LAVAE_PET =
+        -- {
+        --     STARVING = "Poor thing must be starving.",
+        --     HUNGRY = "Musha hears a tiny stomach grumbling.",
+        --     CONTENT = "It seems happy.",
+        --     GENERIC = "Aww. Who's a good monster?",
+        -- },
+        -- LAVAE_EGG =
+        -- {
+        --     GENERIC = "There's a faint warmth coming from inside.",
+        -- },
+        -- LAVAE_EGG_CRACKED =
+        -- {
+        --     COLD = "Musha doesn't think that egg is warm enough.",
+        --     COMFY = "Musha never thought Musha would see a happy egg.",
+        -- },
+        -- LAVAE_TOOTH = "It's an egg tooth!",
 
-        ENDTABLE =
-        {
-            BURNT = "A burnt vase on a burnt table.",
-            GENERIC = "A flower in a vase on a table.",
-            EMPTY = "Musha should put something in there.",
-            WILTED = "Not looking too fresh.",
-            FRESHLIGHT = "It's nice to have a little light.",
-            OLDLIGHT = "Did we remember to pick up new bulbs?", -- will be wilted soon, light radius will be very small at this point
-        },
+        -- ENDTABLE =
+        -- {
+        --     BURNT = "A burnt vase on a burnt table.",
+        --     GENERIC = "A flower in a vase on a table.",
+        --     EMPTY = "Musha should put something in there.",
+        --     WILTED = "Not looking too fresh.",
+        --     FRESHLIGHT = "It's nice to have a little light.",
+        --     OLDLIGHT = "Did we remember to pick up new bulbs?", -- will be wilted soon, light radius will be very small at this point
+        -- },
 
-        TWIGGYTREE =
-        {
-            BURNING = "What a waste of wood.",
-            BURNT = "Musha feel like Musha could have prevented that.",
-            CHOPPED = "Take that, nature!",
-            GENERIC = "It's all stick-y.",
-            DISEASED = "It looks sick. More so than usual.",
-        },
-        TWIGGY_NUT_SAPLING = "It doesn't need any help to grow.",
-        TWIGGY_OLD = "That tree looks pretty wimpy.",
-        TWIGGY_NUT = "There's a stick-y tree inside it that wants to get out.",
+        -- TWIGGYTREE =
+        -- {
+        --     BURNING = "What a waste of wood.",
+        --     BURNT = "Musha feel like Musha could have prevented that.",
+        --     CHOPPED = "Take that, nature!",
+        --     GENERIC = "It's all stick-y.",
+        --     DISEASED = "It looks sick. More so than usual.",
+        -- },
+        -- TWIGGY_NUT_SAPLING = "It doesn't need any help to grow.",
+        -- TWIGGY_OLD = "That tree looks pretty wimpy.",
+        -- TWIGGY_NUT = "There's a stick-y tree inside it that wants to get out.",
 
-        FLOWER_WITHERED = "Musha doesn't think it got enough sun.",
+        -- FLOWER_WITHERED = "Musha doesn't think it got enough sun.",
 
-        FOSSIL_PIECE = "Science bones! We should put them back together.",
-        FOSSIL_STALKER =
-        {
-            GENERIC = "Still missing some pieces.",
-            FUNNY = "My scientific instincts say this isn't quite right.",
-            COMPLETE = "It's alive! Oh wait, no, it's not.",
-        },
-        STALKER = "The skeleton fused with the shadows!",
-        STALKER_ATRIUM = "Why'd it have to be so big?",
-        STALKER_MINION = "Anklebiters!",
-        THURIBLE = "It smells like chemicals.",
-        ATRIUM_OVERGROWTH = "Musha don't recognize any of these symbols.",
+        -- FOSSIL_PIECE = "Science bones! We should put them back together.",
+        -- FOSSIL_STALKER =
+        -- {
+        --     GENERIC = "Still missing some pieces.",
+        --     FUNNY = "My scientific instincts say this isn't quite right.",
+        --     COMPLETE = "It's alive! Oh wait, no, it's not.",
+        -- },
+        -- STALKER = "The skeleton fused with the shadows!",
+        -- STALKER_ATRIUM = "Why'd it have to be so big?",
+        -- STALKER_MINION = "Anklebiters!",
+        -- THURIBLE = "It smells like chemicals.",
+        -- ATRIUM_OVERGROWTH = "Musha don't recognize any of these symbols.",
 
-        LUCY = "That's a prettier axe than Musha is used to.",
+        -- LUCY = "That's a prettier axe than Musha is used to.",
 
-        MINIFAN = "Somehow the breeze comes out the back twice as fast.",
+        -- MINIFAN = "Somehow the breeze comes out the back twice as fast.",
 
-        OASISLAKE = "Is that a mirage?",
+        -- OASISLAKE = "Is that a mirage?",
 
-        PINECONE_SAPLING = "It'll be a tree soon!",
-        LUMPY_SAPLING = "How did this tree even reproduce?",
-
+        -- PINECONE_SAPLING = "It'll be a tree soon!",
+        -- LUMPY_SAPLING = "How did this tree even reproduce?",
         --adds 6 end
 
         RABBITHOUSE =
@@ -900,15 +895,15 @@ return {
             BURNT = "Musha觉得她听到了惊呼。",
         },
         --adds 1 start
-        CAVEIN_BOULDER =
-        {
-            GENERIC = "Musha thinks, Musha can lift this one.",
-            RAISED = "Musha can't reach it!",
-        },
-        ROCK = "It wouldn't fit in Musha's pocket.",
-        PETRIFIED_TREE = "It looks scared stiff.",
-        ROCK_PETRIFIED_TREE = "It looks scared stiff.",
-        ROCK_PETRIFIED_TREE_OLD = "It looks scared stiff.",
+        -- CAVEIN_BOULDER =
+        -- {
+        --     GENERIC = "Musha thinks, Musha can lift this one.",
+        --     RAISED = "Musha can't reach it!",
+        -- },
+        -- ROCK = "It wouldn't fit in Musha's pocket.",
+        -- PETRIFIED_TREE = "It looks scared stiff.",
+        -- ROCK_PETRIFIED_TREE = "It looks scared stiff.",
+        -- ROCK_PETRIFIED_TREE_OLD = "It looks scared stiff.",
         --adds 1 end
         ROCK_ICE =
         {
@@ -1082,9 +1077,9 @@ return {
         LANTERN = "灯笼只会发光。Musha不能用它来打架。",
         LIGHTBULB = "发光的蔬菜！",
         MANRABBIT_TAIL = "小白尾！",
-        -- MUSHTREE_TALL="蓝色的常绿植物。",
-        -- MUSHTREE_MEDIUM = "双头蘑菇！",
-        -- MUSHTREE_SMALL = "丑陋的，大头，绿蘑菇。",
+        MUSHTREE_TALL = "蓝色的常绿植物。",
+        MUSHTREE_MEDIUM = "双头蘑菇！",
+        MUSHTREE_SMALL = "丑陋的，大头，绿蘑菇。",
         SLURTLE = "这些能做出适合Musha脑袋的东西。",
         SLURTLE_SHELLPIECES = "Musha知道它坏了。",
         SLURTLEHAT = "看着Musha！这是坚硬的头盔！",
@@ -1619,45 +1614,45 @@ return {
             INACTIVE = "它打开了。",
         },
         --adds 2 start
-        SCARECROW =
-        {
-            GENERIC = "All dressed up and no where to crow.",
-            BURNING = "Someone made that strawman eat crow.",
-            BURNT = "Someone MURDERed that scarecrow!",
-        },
-        SCULPTINGTABLE =
-        {
-            EMPTY = "We can make stone sculptures with this.",
-            BLOCK = "Ready for sculpting.",
-            SCULPTURE = "A masterpiece!",
-            BURNT = "Burnt right down.",
-        },
-        SCULPTURE_KNIGHTHEAD = "Where's the rest of it?",
-        SCULPTURE_KNIGHTBODY =
-        {
-            COVERED = "It's an odd marble statue.",
-            UNCOVERED = "Musha guesses he cracked under the pressure.",
-            FINISHED = "At least it's back in one piece now.",
-            READY = "Something's moving inside.",
-        },
-        SCULPTURE_BISHOPHEAD = "Is that a head?",
-        SCULPTURE_BISHOPBODY =
-        {
-            COVERED = "It looks old, but it feels new.",
-            UNCOVERED = "There's a big piece missing.",
-            FINISHED = "Now what?",
-            READY = "Something's moving inside.",
-        },
-        SCULPTURE_ROOKNOSE = "Where did this come from?",
-        SCULPTURE_ROOKBODY =
-        {
-            COVERED = "It's some sort of marble statue.",
-            UNCOVERED = "It's not in the best shape.",
-            FINISHED = "All patched up.",
-            READY = "Something's moving inside.",
-        },
-        GARGOYLE_HOUND = "Musha doesn't like how it's looking at Musha.",
-        GARGOYLE_WEREPIG = "It looks very lifelike.",
+        -- SCARECROW =
+        -- {
+        --     GENERIC = "All dressed up and no where to crow.",
+        --     BURNING = "Someone made that strawman eat crow.",
+        --     BURNT = "Someone MURDERed that scarecrow!",
+        -- },
+        -- SCULPTINGTABLE =
+        -- {
+        --     EMPTY = "We can make stone sculptures with this.",
+        --     BLOCK = "Ready for sculpting.",
+        --     SCULPTURE = "A masterpiece!",
+        --     BURNT = "Burnt right down.",
+        -- },
+        -- SCULPTURE_KNIGHTHEAD = "Where's the rest of it?",
+        -- SCULPTURE_KNIGHTBODY =
+        -- {
+        --     COVERED = "It's an odd marble statue.",
+        --     UNCOVERED = "Musha guesses he cracked under the pressure.",
+        --     FINISHED = "At least it's back in one piece now.",
+        --     READY = "Something's moving inside.",
+        -- },
+        -- SCULPTURE_BISHOPHEAD = "Is that a head?",
+        -- SCULPTURE_BISHOPBODY =
+        -- {
+        --     COVERED = "It looks old, but it feels new.",
+        --     UNCOVERED = "There's a big piece missing.",
+        --     FINISHED = "Now what?",
+        --     READY = "Something's moving inside.",
+        -- },
+        -- SCULPTURE_ROOKNOSE = "Where did this come from?",
+        -- SCULPTURE_ROOKBODY =
+        -- {
+        --     COVERED = "It's some sort of marble statue.",
+        --     UNCOVERED = "It's not in the best shape.",
+        --     FINISHED = "All patched up.",
+        --     READY = "Something's moving inside.",
+        -- },
+        -- GARGOYLE_HOUND = "Musha doesn't like how it's looking at Musha.",
+        -- GARGOYLE_WEREPIG = "It looks very lifelike.",
         --adds 2 end
 
         SAPLING =
@@ -1782,91 +1777,91 @@ return {
         -- TRINKET_11 = "Hal whispers beautiful lies to Musha.", --Lying Robot
         -- TRINKET_12 = "That's just asking to be experimented on.", --Dessicated Tentacle
         -- TRINKET_13 = "It must be some kind of religious artifact.", --Gnomette
-        TRINKET_14 = "Now if Musha only had some tea...", --Leaky Teacup
-        TRINKET_15 = "...Maxwell left his stuff out again.", --Pawn
-        TRINKET_16 = "...Maxwell left his stuff out again.", --Pawn
-        TRINKET_17 = "A horrifying utensil fusion. Maybe science *can* go too far.", --Bent Spork
-        TRINKET_18 = "Musha wonders what it's hiding?", --Trojan Horse
-        TRINKET_19 = "It doesn't spin very well.", --Unbalanced Top
-        TRINKET_20 = "Wigfrid keeps jumping out and hitting Musha with it?!", --Backscratcher
-        TRINKET_21 = "This egg beater is all bent out of shape.", --Egg Beater
-        TRINKET_22 = "Musha has a few theories about this string.", --Frayed Yarn
-        TRINKET_23 = "Musha can put Musha's shoes on without help, thanks.", --Shoehorn
-        TRINKET_24 = "Musha thinks Wickerbottom had a cat.", --Lucky Cat Jar
-        TRINKET_25 = "It smells kind of stale.", --Air Unfreshener
-        TRINKET_26 = "Food and a cup! The ultimate survival container.", --Potato Cup
-        TRINKET_27 = "If you unwound it you could poke someone from really far away.", --Coat Hanger
-        TRINKET_28 = "How Machiavellian.", --Rook
-        TRINKET_29 = "How Machiavellian.", --Rook
-        TRINKET_30 = "Honestly, he just leaves them out wherever.", --Knight
-        TRINKET_31 = "Honestly, he just leaves them out wherever.", --Knight
-        TRINKET_32 = "Musha knows someone who'd have a ball with this!", --Cubic Zirconia Ball
-        TRINKET_33 = "Musha hopes this doesn't attract spiders.", --Spider Ring
-        TRINKET_34 = "Let's make a wish. For science.", --Monkey Paw
-        TRINKET_35 = "Hard to find a good flask around here.", --Empty Elixir
-        TRINKET_36 = "Musha might need these after all that candy.", --Faux fangs
-        TRINKET_37 = "Musha doesn't believe in the supernatural.", --Broken Stake
-        TRINKET_38 = "Musha thinks it came from another world. One with grifts.", -- Binoculars Griftlands trinket
-        TRINKET_39 = "Musha wonders where the other one is?", -- Lone Glove Griftlands trinket
-        TRINKET_40 = "Holding it makes me feel like bartering.", -- Snail Scale Griftlands trinket
-        TRINKET_41 = "It's a little warm to the touch.", -- Goop Canister Hot Lava trinket
-        TRINKET_42 = "It's full of someone's childhood memories.", -- Toy Cobra Hot Lava trinket
-        TRINKET_43 = "It's not very good at jumping.", -- Crocodile Toy Hot Lava trinket
-        TRINKET_44 = "It's some sort of plant specimen.", -- Broken Terrarium ONI trinket
-        TRINKET_45 = "It's picking up frequencies from another world.", -- Odd Radio ONI trinket
-        TRINKET_46 = "Maybe a tool for testing aerodynamics?", -- Hairdryer ONI trinket
+        -- TRINKET_14 = "Now if Musha only had some tea...", --Leaky Teacup
+        -- TRINKET_15 = "...Maxwell left his stuff out again.", --Pawn
+        -- TRINKET_16 = "...Maxwell left his stuff out again.", --Pawn
+        -- TRINKET_17 = "A horrifying utensil fusion. Maybe science *can* go too far.", --Bent Spork
+        -- TRINKET_18 = "Musha wonders what it's hiding?", --Trojan Horse
+        -- TRINKET_19 = "It doesn't spin very well.", --Unbalanced Top
+        -- TRINKET_20 = "Wigfrid keeps jumping out and hitting Musha with it?!", --Backscratcher
+        -- TRINKET_21 = "This egg beater is all bent out of shape.", --Egg Beater
+        -- TRINKET_22 = "Musha has a few theories about this string.", --Frayed Yarn
+        -- TRINKET_23 = "Musha can put Musha's shoes on without help, thanks.", --Shoehorn
+        -- TRINKET_24 = "Musha thinks Wickerbottom had a cat.", --Lucky Cat Jar
+        -- TRINKET_25 = "It smells kind of stale.", --Air Unfreshener
+        -- TRINKET_26 = "Food and a cup! The ultimate survival container.", --Potato Cup
+        -- TRINKET_27 = "If you unwound it you could poke someone from really far away.", --Coat Hanger
+        -- TRINKET_28 = "How Machiavellian.", --Rook
+        -- TRINKET_29 = "How Machiavellian.", --Rook
+        -- TRINKET_30 = "Honestly, he just leaves them out wherever.", --Knight
+        -- TRINKET_31 = "Honestly, he just leaves them out wherever.", --Knight
+        -- TRINKET_32 = "Musha knows someone who'd have a ball with this!", --Cubic Zirconia Ball
+        -- TRINKET_33 = "Musha hopes this doesn't attract spiders.", --Spider Ring
+        -- TRINKET_34 = "Let's make a wish. For science.", --Monkey Paw
+        -- TRINKET_35 = "Hard to find a good flask around here.", --Empty Elixir
+        -- TRINKET_36 = "Musha might need these after all that candy.", --Faux fangs
+        -- TRINKET_37 = "Musha doesn't believe in the supernatural.", --Broken Stake
+        -- TRINKET_38 = "Musha thinks it came from another world. One with grifts.", -- Binoculars Griftlands trinket
+        -- TRINKET_39 = "Musha wonders where the other one is?", -- Lone Glove Griftlands trinket
+        -- TRINKET_40 = "Holding it makes me feel like bartering.", -- Snail Scale Griftlands trinket
+        -- TRINKET_41 = "It's a little warm to the touch.", -- Goop Canister Hot Lava trinket
+        -- TRINKET_42 = "It's full of someone's childhood memories.", -- Toy Cobra Hot Lava trinket
+        -- TRINKET_43 = "It's not very good at jumping.", -- Crocodile Toy Hot Lava trinket
+        -- TRINKET_44 = "It's some sort of plant specimen.", -- Broken Terrarium ONI trinket
+        -- TRINKET_45 = "It's picking up frequencies from another world.", -- Odd Radio ONI trinket
+        -- TRINKET_46 = "Maybe a tool for testing aerodynamics?", -- Hairdryer ONI trinket
 
-        HALLOWEENCANDY_1 = "The cavities are probably worth it, right?",
-        HALLOWEENCANDY_2 = "What corruption of science grew these?",
-        HALLOWEENCANDY_3 = "It's... corn.",
-        HALLOWEENCANDY_4 = "They wriggle on the way down.",
-        HALLOWEENCANDY_5 = "Musha's teeth are going to have something to say about this tomorrow.",
-        HALLOWEENCANDY_6 = "Musha... doesn't think Musha will be eating those.",
-        HALLOWEENCANDY_7 = "Everyone'll be raisin' a fuss over these.",
-        HALLOWEENCANDY_8 = "Only a sucker wouldn't love this.",
-        HALLOWEENCANDY_9 = "Sticks to Musha's teeth.",
-        HALLOWEENCANDY_10 = "Only a sucker wouldn't love this.",
-        HALLOWEENCANDY_11 = "Much better tasting than the real thing.",
-        HALLOWEENCANDY_12 = "Did that candy just move?", --ONI meal lice candy
-        HALLOWEENCANDY_13 = "Oh, Musha's poor jaw.", --Griftlands themed candy
-        HALLOWEENCANDY_14 = "Musha doesn't do well with spice.", --Hot Lava pepper candy
-        CANDYBAG = "It's some sort of delicious pocket dimension for sugary treats.",
+        -- HALLOWEENCANDY_1 = "The cavities are probably worth it, right?",
+        -- HALLOWEENCANDY_2 = "What corruption of science grew these?",
+        -- HALLOWEENCANDY_3 = "It's... corn.",
+        -- HALLOWEENCANDY_4 = "They wriggle on the way down.",
+        -- HALLOWEENCANDY_5 = "Musha's teeth are going to have something to say about this tomorrow.",
+        -- HALLOWEENCANDY_6 = "Musha... doesn't think Musha will be eating those.",
+        -- HALLOWEENCANDY_7 = "Everyone'll be raisin' a fuss over these.",
+        -- HALLOWEENCANDY_8 = "Only a sucker wouldn't love this.",
+        -- HALLOWEENCANDY_9 = "Sticks to Musha's teeth.",
+        -- HALLOWEENCANDY_10 = "Only a sucker wouldn't love this.",
+        -- HALLOWEENCANDY_11 = "Much better tasting than the real thing.",
+        -- HALLOWEENCANDY_12 = "Did that candy just move?", --ONI meal lice candy
+        -- HALLOWEENCANDY_13 = "Oh, Musha's poor jaw.", --Griftlands themed candy
+        -- HALLOWEENCANDY_14 = "Musha doesn't do well with spice.", --Hot Lava pepper candy
+        -- CANDYBAG = "It's some sort of delicious pocket dimension for sugary treats.",
 
-        DRAGONHEADHAT = "So who gets to be the head?",
-        DRAGONBODYHAT = "Musha is middling on this middle piece.",
-        DRAGONTAILHAT = "Someone has to bring up the rear.",
-        PERDSHRINE =
-        {
-            GENERIC = "Musha feels like it wants something.",
-            EMPTY = "Musha needs to plant something there.",
-            BURNT = "That won't do at all.",
-        },
-        REDLANTERN = "This lantern feels more special than the others.",
-        LUCKY_GOLDNUGGET = "What a lucky find!",
-        FIRECRACKERS = "Filled with explosion science!",
-        PERDFAN = "It's inordinately large.",
-        REDPOUCH = "Is there something inside?",
-        WARGSHRINE =
-        {
-            GENERIC = "Musha should make something fun.",
-            EMPTY = "Musha needs to put a torch in it.",
-            BURNT = "It burned down.",
-        },
-        CLAYWARG =
-        {
-            GENERIC = "A terror cotta monster!",
-            STATUE = "Did it just move?",
-        },
-        CLAYHOUND =
-        {
-            GENERIC = "It's been unleashed!",
-            STATUE = "It looks so real.",
-        },
-        HOUNDWHISTLE = "This'd stop a dog in its tracks.",
-        CHESSPIECE_CLAYHOUND = "That thing's the leashed of my worries.",
-        CHESSPIECE_CLAYWARG = "And Musha didn't even get eaten!",
+        -- DRAGONHEADHAT = "So who gets to be the head?",
+        -- DRAGONBODYHAT = "Musha is middling on this middle piece.",
+        -- DRAGONTAILHAT = "Someone has to bring up the rear.",
+        -- PERDSHRINE =
+        -- {
+        --     GENERIC = "Musha feels like it wants something.",
+        --     EMPTY = "Musha needs to plant something there.",
+        --     BURNT = "That won't do at all.",
+        -- },
+        -- REDLANTERN = "This lantern feels more special than the others.",
+        -- LUCKY_GOLDNUGGET = "What a lucky find!",
+        -- FIRECRACKERS = "Filled with explosion science!",
+        -- PERDFAN = "It's inordinately large.",
+        -- REDPOUCH = "Is there something inside?",
+        -- WARGSHRINE =
+        -- {
+        --     GENERIC = "Musha should make something fun.",
+        --     EMPTY = "Musha needs to put a torch in it.",
+        --     BURNT = "It burned down.",
+        -- },
+        -- CLAYWARG =
+        -- {
+        --     GENERIC = "A terror cotta monster!",
+        --     STATUE = "Did it just move?",
+        -- },
+        -- CLAYHOUND =
+        -- {
+        --     GENERIC = "It's been unleashed!",
+        --     STATUE = "It looks so real.",
+        -- },
+        -- HOUNDWHISTLE = "This'd stop a dog in its tracks.",
+        -- CHESSPIECE_CLAYHOUND = "That thing's the leashed of my worries.",
+        -- CHESSPIECE_CLAYWARG = "And Musha didn't even get eaten!",
 
-        BISHOP_CHARGE_HIT = "Ow!",
+        -- BISHOP_CHARGE_HIT = "Ow!",
         --adds 3 end
         TRUNKVEST_SUMMER = "真是温暖的防水背心！",
         TRUNKVEST_WINTER = "有人说背心的材料很难弄到，\n 但是Musha拿到了。",

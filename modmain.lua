@@ -3,8 +3,22 @@ GLOBAL.setmetatable(env, { __index = function(t, k)
     return GLOBAL.rawget(GLOBAL, k)
 end })
 
--- Configuration options from modinfo
+-- Custom strings (i18n)
 local modlanguage = GetModConfigData("modlanguage")
+
+if modlanguage == "chinese" then
+    modimport("scripts/i18n/strings_musha_cn.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_cn")
+elseif modlanguage == "english" then
+    modimport("scripts/i18n/strings_musha_en.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_en")
+elseif modlanguage == "korean" then
+    modimport("scripts/i18n/strings_musha_ko.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_ko")
+elseif modlanguage == "russian" then
+    modimport("scripts/i18n/strings_musha_ru.lua")
+    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_ru")
+end
 
 -- Replicable components (sync between server and client)
 AddReplicableComponent("mana")
@@ -27,15 +41,6 @@ modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classi
 modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
-
--- Custom strings (i18n)
-if modlanguage == "english" then
-    modimport("scripts/i18n/strings_musha_en.lua")
-    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_en")
-elseif modlanguage == "chinese" then
-    modimport("scripts/i18n/strings_musha_cn.lua")
-    STRINGS.CHARACTERS.MUSHA = require("i18n/speech_musha_cn")
-end
 
 -- The skins shown in the cycle view window on the character select screen.
 -- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
