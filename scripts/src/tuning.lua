@@ -38,6 +38,9 @@ TUNING.musha = {
         instantcast        = 0,
     },
 
+    valkyrieattackboost = 1.2,
+    valkyriedefenseboost = 0.2,
+
     activateberserkbasedamage = 5,
     sneaksanitycost = 50,
     sneakspeedboost = 2.5,

@@ -197,6 +197,11 @@ local function toggle_berserk(inst)
     end
 end
 
+-- Resist freeze
+local function UnfreezeOnFreeze(inst)
+    inst.components.freezable:Unfreeze()
+end
+
 -- Valkyrie trailing fx (Wormwood blooming)
 local PLANTS_RANGE = 1
 local MAX_PLANTS = 18
@@ -280,14 +285,19 @@ local function onmodechange(inst)
     end
 
     if previousmode == 2 and currentmode ~= 2 then
-        CustomAttachFx(inst, "electrichitsparks")
+        inst:RemoveTag("stronggrip")
         CustomCancelTask(inst.modetrailtask)
+        inst.components.combat.externaldamagemultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
+        inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "valkyriebuff")
+        inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
+        inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
+        CustomAttachFx(inst, "electrichitsparks")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
 
     if previousmode == 3 and currentmode ~= 3 then
-        CustomAttachFx(inst, "statue_transition_2")
         CustomCancelTask(inst.modetrailtask)
+        CustomAttachFx(inst, "statue_transition_2")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
 
@@ -310,6 +320,13 @@ local function onmodechange(inst)
 
     if currentmode == 2 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+        inst:AddTag("stronggrip")
+        inst.components.combat.externaldamagemultipliers:SetModifier(inst, TUNING.musha.valkyrieattackboost,
+            "valkyriebuff")
+        inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.musha.valkyriedefenseboost,
+            "valkyriebuff")
+        inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)     
+        inst:ListenForEvent("freeze", UnfreezeOnFreeze)
         CustomAttachFx(inst, "electricchargedfx")
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
