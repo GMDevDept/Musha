@@ -36,7 +36,7 @@ end
 
 --------------------------------------------------------------------------
 
-function Stamina:Max()
+function Stamina:GetMax()
     if self.inst.components.stamina ~= nil then
         return self.inst.components.stamina.max
     elseif self.classified ~= nil then

@@ -16,6 +16,10 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
             ThePlayer:toggle_berserk()
         else
             SendModRPCToServer(MOD_RPC.musha.toggle_berserk)
+            local previousmode = inst.mode:value()
+            if previousmode == 0 or previousmode == 1 then
+                inst:PushEvent("activateberserk")
+            end
         end
     end
 end)

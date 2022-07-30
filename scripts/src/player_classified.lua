@@ -1,9 +1,4 @@
 local function PrefabPostInitFn(inst)
-    local player = ThePlayer or AllPlayers[1]
-    if player and not player:HasTag("musha") then
-        return
-    end
-
     local function SetDirty(netvar, val)
         --Forces a netvar to be dirty regardless of value
         netvar:set_local(val)

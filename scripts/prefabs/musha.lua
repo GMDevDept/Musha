@@ -432,6 +432,10 @@ local function common_postinit(inst)
     -- Common attributes
     inst.customidleanim = "idle_warly"
     inst.soundsname = "willow"
+
+    -- Character specific attributes
+    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
+    inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -453,11 +457,9 @@ local function master_postinit(inst)
 
     -- Fatigue
     inst:AddComponent("fatigue")
-    inst.components.fatigue:SetRate(TUNING.musha.fatiguerate)
 
     -- Stamina
     inst:AddComponent("stamina")
-    inst.components.stamina:SetRate(TUNING.musha.staminarate)
 
     -- Read books
     inst:AddComponent("reader")
@@ -483,8 +485,6 @@ local function master_postinit(inst)
     -- Common attributes
 
     -- Character specific attributes
-    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
-    inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst._mode = 0 -- Store previous mode
     inst.skills = {}
     inst.DecideNormalOrFull = DecideNormalOrFull

@@ -36,7 +36,7 @@ end
 
 --------------------------------------------------------------------------
 
-function Fatigue:Max()
+function Fatigue:GetMax()
     if self.inst.components.fatigue ~= nil then
         return self.inst.components.fatigue.max
     elseif self.classified ~= nil then
