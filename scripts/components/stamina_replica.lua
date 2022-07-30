@@ -42,7 +42,7 @@ function Stamina:Max()
     elseif self.classified ~= nil then
         return self.classified.maxstamina:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -52,7 +52,7 @@ function Stamina:GetCurrent()
     elseif self.classified ~= nil then
         return self.classified.currentstamina:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -62,35 +62,35 @@ function Stamina:GetPercent()
     elseif self.classified ~= nil then
         return self.classified.currentstamina:value() / self.classified.maxstamina:value()
     else
-        return 1
+        return 0
     end
 end
 
-function Stamina:GetCurrentRate()
+function Stamina:GetRateLevel()
     if self.inst.components.stamina ~= nil then
-        return self.inst.components.stamina.rate
+        return self.inst.components.stamina.ratelevel
     elseif self.classified ~= nil then
-        return self.classified.staminarate:value()
+        return self.classified.staminaratelevel:value()
     else
         return 0
     end
 end
 
+function Stamina:SetRateLevel(ratelevel)
+    if self.classified ~= nil then
+        self.classified:SetValue("staminaratelevel", ratelevel)
+    end
+end
+
 function Stamina:SetMax(max)
     if self.classified ~= nil then
-        self.classified.maxstamina:set(max)
+        self.classified:SetValue("maxstamina", max)
     end
 end
 
 function Stamina:SetCurrent(current)
     if self.classified ~= nil then
-        self.classified.currentstamina:set(current)
-    end
-end
-
-function Stamina:SetRate(rate)
-    if self.classified ~= nil then
-        self.classified.staminarate:set(rate) -- value below 0 cannot use player_classified:SetValue()
+        self.classified:SetValue("currentstamina", current)
     end
 end
 

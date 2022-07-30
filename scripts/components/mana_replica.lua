@@ -36,13 +36,13 @@ end
 
 --------------------------------------------------------------------------
 
-function Mana:Max()
+function Mana:GetMax()
     if self.inst.components.mana ~= nil then
         return self.inst.components.mana.max
     elseif self.classified ~= nil then
         return self.classified.maxmana:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -52,7 +52,7 @@ function Mana:GetCurrent()
     elseif self.classified ~= nil then
         return self.classified.currentmana:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -62,35 +62,35 @@ function Mana:GetPercent()
     elseif self.classified ~= nil then
         return self.classified.currentmana:value() / self.classified.maxmana:value()
     else
-        return 1
+        return 0
     end
 end
 
-function Mana:GetCurrentRate()
+function Mana:GetRateLevel()
     if self.inst.components.mana ~= nil then
-        return self.inst.components.mana.regenspeed
+        return self.inst.components.mana.ratelevel
     elseif self.classified ~= nil then
-        return self.classified.manaregenspeed:value()
+        return self.classified.manaratelevel:value()
     else
         return 0
     end
 end
 
+function Mana:SetRateLevel(ratelevel)
+    if self.classified ~= nil then
+        self.classified:SetValue("manaratelevel", ratelevel)
+    end
+end
+
 function Mana:SetMax(max)
     if self.classified ~= nil then
-        self.classified.maxmana:set(max)
+        self.classified:SetValue("maxmana", max)
     end
 end
 
 function Mana:SetCurrent(current)
     if self.classified ~= nil then
-        self.classified.currentmana:set(current)
-    end
-end
-
-function Mana:SetRate(rate)
-    if self.classified ~= nil then
-        self.classified.manaregenspeed:set(rate) -- value below 0 cannot use player_classified:SetValue()
+        self.classified:SetValue("currentmana", current)
     end
 end
 

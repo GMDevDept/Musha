@@ -450,8 +450,6 @@ local function master_postinit(inst)
 
     -- Mana
     inst:AddComponent("mana")
-    inst.components.mana:SetMax(TUNING.musha.maxmana)
-    inst.components.mana:SetRate(TUNING.musha.manaregenspeed)
 
     -- Fatigue
     inst:AddComponent("fatigue")

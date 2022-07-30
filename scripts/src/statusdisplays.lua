@@ -32,7 +32,7 @@ local function ManaBadgeDisplay(self)
         end
 
         function self:SetManaPercent(pct)
-            self.manabadge:SetPercent(pct, self.owner.replica.mana:Max())
+            self.manabadge:SetPercent(pct, self.owner.replica.mana:GetMax())
 
             if pct <= 0 then
                 self.manabadge:StartWarning()
@@ -119,7 +119,7 @@ local function FatigueBadgeDisplay(self)
         end
 
         function self:SetFatiguePercent(pct)
-            self.fatiguebadge:SetPercent(pct, self.owner.replica.fatigue:Max())
+            self.fatiguebadge:SetPercent(pct, self.owner.replica.fatigue:GetMax())
 
             if pct >= 1 then
                 self.fatiguebadge:StartWarning()
@@ -206,7 +206,7 @@ local function StaminaBadgeDisplay(self)
         end
 
         function self:SetStaminaPercent(pct)
-            self.staminabadge:SetPercent(pct, self.owner.replica.stamina:Max())
+            self.staminabadge:SetPercent(pct, self.owner.replica.stamina:GetMax())
         end
 
         function self:StaminaDelta(data)

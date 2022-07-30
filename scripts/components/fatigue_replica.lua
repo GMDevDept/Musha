@@ -42,7 +42,7 @@ function Fatigue:Max()
     elseif self.classified ~= nil then
         return self.classified.maxfatigue:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -52,7 +52,7 @@ function Fatigue:GetCurrent()
     elseif self.classified ~= nil then
         return self.classified.currentfatigue:value()
     else
-        return 100
+        return 0
     end
 end
 
@@ -62,35 +62,35 @@ function Fatigue:GetPercent()
     elseif self.classified ~= nil then
         return self.classified.currentfatigue:value() / self.classified.maxfatigue:value()
     else
-        return 1
+        return 0
     end
 end
 
-function Fatigue:GetCurrentRate()
+function Fatigue:GetRateLevel()
     if self.inst.components.fatigue ~= nil then
-        return self.inst.components.fatigue.rate
+        return self.inst.components.fatigue.ratelevel
     elseif self.classified ~= nil then
-        return self.classified.fatiguerate:value()
+        return self.classified.fatigueratelevel:value()
     else
         return 0
     end
 end
 
+function Fatigue:SetRateLevel(ratelevel)
+    if self.classified ~= nil then
+        self.classified:SetValue("fatigueratelevel", ratelevel)
+    end
+end
+
 function Fatigue:SetMax(max)
     if self.classified ~= nil then
-        self.classified.maxfatigue:set(max)
+        self.classified:SetValue("maxfatigue", max)
     end
 end
 
 function Fatigue:SetCurrent(current)
     if self.classified ~= nil then
-        self.classified.currentfatigue:set(current)
-    end
-end
-
-function Fatigue:SetRate(rate)
-    if self.classified ~= nil then
-        self.classified.fatiguerate:set(rate) -- value below 0 cannot use player_classified:SetValue()
+        self.classified:SetValue("currentfatigue", current)
     end
 end
 

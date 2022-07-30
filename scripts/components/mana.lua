@@ -7,17 +7,24 @@ local function oncurrent(self, current)
     self.inst.replica.mana:SetCurrent(current)
 end
 
+local function onratelevel(self, ratelevel)
+    self.inst.replica.mana:SetRateLevel(ratelevel)
+end
+
 local function OnTaskTick(inst, self, period)
-    self:DoRegen(period)
+    self:Recalc(period)
 end
 
 local Mana = Class(function(self, inst)
     self.inst = inst
-    self.max = 0
+    self.max = TUNING.musha.maxmana
     self.current = self.max
 
-    self.regen = true
-    self.regenspeed = 0
+    self.ispaused = false
+    self.baserate = TUNING.musha.manaregenspeed
+    self.modifiers = SourceModifierList(inst, 0, SourceModifierList.additive)
+    self.rate = 0 -- Dynamic, delta per second
+    self.ratelevel = RATE_SCALE.NEUTRAL -- 0: neutral, 1-3: upwards, 4-6: downwards
 
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
@@ -26,8 +33,9 @@ end,
     {
         max = onmax,
         current = oncurrent,
-    })
-
+        ratelevel = onratelevel,
+    }
+)
 
 function Mana:OnSave()
     return self.current ~= self.max and { mana = self.current } or nil
@@ -40,24 +48,16 @@ function Mana:OnLoad(data)
     end
 end
 
-function Mana:LongUpdate(dt)
-    self:DoRegen(dt)
+function Mana:IsPaused()
+    return self.ispaused
 end
 
 function Mana:Pause()
-    self.regen = false
+    self.ispaused = true
 end
 
 function Mana:Resume()
-    self.regen = true
-end
-
-function Mana:IsPaused()
-    return not self.regen
-end
-
-function Mana:IsEmpty()
-    return self.current <= 0
+    self.ispaused = false
 end
 
 function Mana:GetPercent()
@@ -85,22 +85,29 @@ function Mana:SetMax(amount)
     self.current = amount
 end
 
-function Mana:SetRate(rate)
-    self.regenspeed = rate
-    self.inst.replica.mana:SetRate(rate)
+function Mana:SetRateLevel(ratelevel)
+    self.ratelevel = ratelevel
+    self.inst.replica.mana:SetRateLevel(ratelevel)
 end
 
-function Mana:DoDeltaToRate(delta)
-    local old = self.regenspeed
-    self.regenspeed = self.regenspeed + delta
-end
-
-function Mana:DoRegen(dt)
-    local old = self.current
-
-    if self.regen then
-        self:DoDelta(dt * self.regenspeed / 1000, true)
+function Mana:Recalc(dt)
+    if self.ispaused then
+        return
     end
+
+    local baserate = math.abs(self.baserate)
+
+    self.rate = self.baserate + self.modifiers:Get()
+
+    self.ratelevel = (self.rate > 3 * baserate and RATE_SCALE.INCREASE_HIGH) or
+        (self.rate > 2 * baserate and RATE_SCALE.INCREASE_MED) or
+        (self.rate > 1 * baserate and RATE_SCALE.INCREASE_LOW) or
+        (self.rate < -2 * baserate and RATE_SCALE.DECREASE_HIGH) or
+        (self.rate < -1 * baserate and RATE_SCALE.DECREASE_MED) or
+        (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
+        RATE_SCALE.NEUTRAL
+
+    self:DoDelta(dt * self.rate, true)
 end
 
 function Mana:DoDelta(delta, overtime, ignore_invincible)
@@ -128,7 +135,7 @@ function Mana:DoDelta(delta, overtime, ignore_invincible)
 end
 
 function Mana:GetDebugString()
-    return string.format("%2.2f / %2.2f, rate: (%2.2f * %2.2f)", self.current, self.max, self.regenspeed)
+    return string.format("%2.2f / %2.2f, rate: %2.2f", self.current, self.max, self.rate)
 end
 
 return Mana

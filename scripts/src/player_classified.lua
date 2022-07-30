@@ -135,7 +135,7 @@ local function PrefabPostInitFn(inst)
                 inst._parent:PushEvent("stopfatiguedepleted")
             end
         else
-            inst._oldfatiguepercent = 1
+            inst._oldfatiguepercent = 0
             inst.isfatigueup:set_local(false)
             inst.isfatiguedown:set_local(false)
         end
@@ -202,34 +202,31 @@ local function PrefabPostInitFn(inst)
     inst._oldmanapercent = 1
     inst.currentmana = net_ushortint(inst.GUID, "mana.current", "manadirty")
     inst.maxmana = net_ushortint(inst.GUID, "mana.max", "manadirty")
-    inst.manaregenspeed = net_shortint(inst.GUID, "mana.regenspeed", "manadirty")
+    inst.manaratelevel = net_tinybyte(inst.GUID, "mana.ratelevel")
     inst.ismanapulseup = net_bool(inst.GUID, "mana.dodeltaovertime(up)", "manadirty")
     inst.ismanapulsedown = net_bool(inst.GUID, "mana.dodeltaovertime(down)", "manadirty")
-    inst.currentmana:set(0)
-    inst.maxmana:set(0)
-    inst.manaregenspeed:set(0)
+    inst.currentmana:set(50)
+    inst.maxmana:set(50)
 
     --Net variables for fatigue
-    inst._oldfatiguepercent = 1
+    inst._oldfatiguepercent = 0
     inst.currentfatigue = net_ushortint(inst.GUID, "fatigue.current", "fatiguedirty")
     inst.maxfatigue = net_ushortint(inst.GUID, "fatigue.max", "fatiguedirty")
-    inst.fatiguerate = net_shortint(inst.GUID, "fatigue.rate", "fatiguedirty")
+    inst.fatigueratelevel = net_tinybyte(inst.GUID, "fatigue.ratelevel")
     inst.isfatigueup = net_bool(inst.GUID, "fatigue.dodeltaovertime(up)", "fatiguedirty")
     inst.isfatiguedown = net_bool(inst.GUID, "fatigue.dodeltaovertime(down)", "fatiguedirty")
-    inst.currentfatigue:set(100)
+    inst.currentfatigue:set(0)
     inst.maxfatigue:set(100)
-    inst.fatiguerate:set(0)
 
     --Net variables for stamina
     inst._oldstaminapercent = 1
     inst.currentstamina = net_ushortint(inst.GUID, "stamina.current", "staminadirty")
     inst.maxstamina = net_ushortint(inst.GUID, "stamina.max", "staminadirty")
-    inst.staminarate = net_shortint(inst.GUID, "stamina.rate", "staminadirty")
+    inst.staminaratelevel = net_tinybyte(inst.GUID, "stamina.ratelevel")
     inst.isstaminaup = net_bool(inst.GUID, "stamina.dodeltaovertime(up)", "staminadirty")
     inst.isstaminadown = net_bool(inst.GUID, "stamina.dodeltaovertime(down)", "staminadirty")
     inst.currentstamina:set(100)
     inst.maxstamina:set(100)
-    inst.staminarate:set(0)
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)
