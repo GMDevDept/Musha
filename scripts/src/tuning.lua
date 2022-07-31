@@ -1,7 +1,8 @@
 TUNING.musha = {
     -- Hotkeys from modinfo
     hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114, --R
-    hotkey_berserk = GetModConfigData("hotkey_berserk") or 115, --G
+    hotkey_berserk = GetModConfigData("hotkey_berserk") or 103, --G
+    hotkey_sleep = GetModConfigData("hotkey_sleep") or 116, --T
 
     -- Stats related
     health = 200,
@@ -9,7 +10,7 @@ TUNING.musha = {
     sanity = 200,
 
     maxmana = 50,
-    manaregenspeed = -1,
+    manaregenspeed = 1,
 
     maxfatigue = 100,
     fatiguerate = 0,

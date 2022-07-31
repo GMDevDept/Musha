@@ -38,7 +38,7 @@ local musha_smite = State {
             else
                 inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
             end
-            cooldown = math.max(cooldown, 999 * FRAMES)
+            cooldown = math.max(cooldown, 24 * FRAMES)
         end
 
         inst.sg:SetTimeout(cooldown)
@@ -87,7 +87,7 @@ local musha_smite = State {
     end,
 }
 
--- Smite_client
+-- Smite client
 local musha_smite_client = State {
     name = "musha_smite_client",
     tags = { "attack", "notalking", "abouttoattack" },
@@ -127,7 +127,7 @@ local musha_smite_client = State {
                 inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
             end
             if cooldown > 0 then
-                cooldown = math.max(cooldown, 999 * FRAMES)
+                cooldown = math.max(cooldown, 24 * FRAMES)
             end
         end
 
@@ -148,7 +148,7 @@ local musha_smite_client = State {
 
     timeline =
     {
-        TimeEvent(20 * FRAMES, function(inst)
+        TimeEvent(18 * FRAMES, function(inst)
             inst:ClearBufferedAction()
             inst.sg:RemoveStateTag("abouttoattack")
         end),
@@ -175,7 +175,6 @@ local musha_smite_client = State {
         end
     end,
 }
-
 
 AddStategraphState("wilson", musha_smite)
 AddStategraphState("wilson_client", musha_smite_client)
@@ -308,33 +307,9 @@ local musha_berserk_pre_client = State {
     tags = { "busy", "berserk" },
 
     onenter = function(inst)
-        inst.SoundEmitter:PlaySound("dontstarve/charlie/warn")
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("emoteXL_angry")
     end,
-
-    timeline =
-    {
-        TimeEvent(15 * FRAMES, function(inst)
-            CustomAttachFx(inst, "shadow_shield1", nil, Vector3(2, 2, 2), Vector3(0, -2, 0))
-        end),
-        TimeEvent(21 * FRAMES, function(inst)
-            CustomAttachFx(inst, "shadow_shield2", nil, Vector3(3, 3, 3), Vector3(0, -3, 0))
-        end),
-        TimeEvent(27 * FRAMES, function(inst)
-            CustomAttachFx(inst, "shadow_shield3", nil, Vector3(3.5, 3.5, 3.5), Vector3(0, -4, 0))
-        end),
-        TimeEvent(31 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
-            CustomAttachFx(inst, "shadow_shield4", nil, Vector3(4, 4, 4), Vector3(0, -5, 0))
-        end),
-        TimeEvent(33 * FRAMES, function(inst)
-            CustomAttachFx(inst, "shadow_shield5", nil, Vector3(4.5, 4.5, 4.5), Vector3(0, -5.75, 0))
-        end),
-        TimeEvent(35 * FRAMES, function(inst)
-            CustomAttachFx(inst, "shadow_shield6", nil, Vector3(5, 5, 5), Vector3(0, -6.5, 0))
-        end),
-    },
 
     events =
     {

@@ -36,6 +36,18 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Sleep
+
+local function toggle_sleep(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+        return
+    end
+
+    inst:DecideNormalOrFull()
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sneak
 
 local function BackStab(inst, data)
@@ -102,10 +114,8 @@ local function StartSneaking(inst)
                 inst.task_cancelsneakspeedboost = inst:DoTaskInTime(TUNING.musha.sneakspeedboostduration, function()
                     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
                 end)
-                inst.task_sneakspeedbooststaminacost = inst:CustomDoPeriodicTask(
-                    TUNING.musha.sneakspeedboostduration, 0.5, function()
-                        inst.components.stamina:DoDelta(-5)
-                    end, 0.5)
+                inst.task_sneakspeedbooststaminacost = CustomSetModifier(inst.components.stamina.modifiers, inst,
+                    -(10 + inst.components.stamina.baserate), "sneakspeedboost", TUNING.musha.sneakspeedboostduration)
             end
 
             inst:ListenForEvent("onhitother", BackStab)
@@ -296,6 +306,10 @@ local function onmodechange(inst)
     end
 
     if previousmode == 3 and currentmode ~= 3 then
+        if inst:HasTag("sneaking") then
+            inst:RemoveSneakEffects()
+            inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+        end
         CustomCancelTask(inst.modetrailtask)
         CustomAttachFx(inst, "statue_transition_2")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
@@ -435,7 +449,6 @@ local function common_postinit(inst)
 
     -- Character specific attributes
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
-    inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -485,18 +498,15 @@ local function master_postinit(inst)
     -- Common attributes
 
     -- Character specific attributes
+    inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst._mode = 0 -- Store previous mode
     inst.skills = {}
+    inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
+    inst.RemoveSneakEffects = RemoveSneakEffects
     inst.toggle_valkyrie = toggle_valkyrie
     inst.toggle_berserk = toggle_berserk
-    inst.RemoveSneakEffects = RemoveSneakEffects
-
-    inst.plantpool = { 1, 2, 3, 4 }
-    -- for i = #inst.plantpool, 1, -1 do
-    --     --randomize in place
-    --     table.insert(inst.plantpool, table.remove(inst.plantpool, math.random(i)))
-    -- end
+    inst.toggle_sleep = toggle_sleep
 
     -- Event handlers
     inst:ListenForEvent("levelup", onlevelup)
@@ -516,6 +526,7 @@ end
 -- Set up remote procedure calls for client side
 AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie)
 AddModRPCHandler("musha", "toggle_berserk", toggle_berserk)
+AddModRPCHandler("musha", "toggle_sleep", toggle_sleep)
 
 ---------------------------------------------------------------------------------------------------------
 

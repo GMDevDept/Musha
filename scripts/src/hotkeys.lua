@@ -16,10 +16,21 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
             ThePlayer:toggle_berserk()
         else
             SendModRPCToServer(MOD_RPC.musha.toggle_berserk)
-            local previousmode = inst.mode:value()
+            local previousmode = ThePlayer.mode:value()
             if previousmode == 0 or previousmode == 1 then
-                inst:PushEvent("activateberserk")
+                ThePlayer:PushEvent("activateberserk")
             end
+        end
+    end
+end)
+
+-- Hotkey: toggle_sleep
+TheInput:AddKeyDownHandler(TUNING.musha.hotkey_sleep, function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        if TheWorld.ismastersim then
+            ThePlayer:toggle_sleep()
+        else
+            SendModRPCToServer(MOD_RPC.musha.toggle_sleep)
         end
     end
 end)

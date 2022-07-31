@@ -1,16 +1,16 @@
 -- Remove entity
-GLOBAL.CustomRemoveEntity = function(inst, delay)
+GLOBAL.CustomRemoveEntity = function(entity, delay)
     if delay then
         TheWorld:DoTaskInTime(delay, function()
-            if inst then
-                inst:Remove()
-                inst = nil
+            if entity then
+                entity:Remove()
+                entity = nil
             end
         end)
     else
-        if inst then
-            inst:Remove()
-            inst = nil
+        if entity then
+            entity:Remove()
+            entity = nil
         end
     end
 end
@@ -18,18 +18,18 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Stop scheduled task
-GLOBAL.CustomCancelTask = function(inst, delay)
+GLOBAL.CustomCancelTask = function(task, delay)
     if delay then
         TheWorld:DoTaskInTime(delay, function()
-            if inst then
-                inst:Cancel()
-                inst = nil
+            if task then
+                task:Cancel()
+                task = nil
             end
         end)
     else
-        if inst then
-            inst:Cancel()
-            inst = nil
+        if task then
+            task:Cancel()
+            task = nil
         end
     end
 end
@@ -95,6 +95,7 @@ GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Se
 end
 
 ---------------------------------------------------------------------------------------------------------
+
 -- Area of effect
 GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
     local x, y, z = center.Transform:GetWorldPosition()
@@ -110,5 +111,33 @@ GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags,
         for _, target in pairs(targets) do
             fn(target)
         end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Add modifier to SourceModifierList
+
+-- Copied from scheduler.lua
+local function task_finish(task, success, inst)
+    task:fn() -- Execute fn on cancel
+    --print ("TASK DONE", task, success, inst)
+    if inst and inst.pendingtasks and inst.pendingtasks[task] then
+        inst.pendingtasks[task] = nil
+    else
+        print("   NOT FOUND")
+    end
+end
+
+-- Source can be an object or a name. If it is an object, then it will handle removing the multiplier if the object is forcefully removed from the game.
+-- Key is optional if you are only going to have one multiplier from a source.
+GLOBAL.CustomSetModifier = function(SourceModifierList, source, m, key, duration)
+    SourceModifierList:SetModifier(source, m, key)
+    if duration then
+        local task = TheWorld:DoTaskInTime(duration, function()
+            SourceModifierList:RemoveModifier(source, key)
+        end)
+        task.onfinish = task_finish
+        return task
     end
 end
