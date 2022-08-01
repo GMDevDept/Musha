@@ -39,7 +39,9 @@ function ManaBadge:OnUpdate(dt)
     if mana ~= nil then
         local ratelevel = mana:GetRateLevel()
         if ratelevel ~= 0 then
-            anim = RATE_SCALE_ANIM[ratelevel]
+            if (ratelevel <= 3 and mana:GetPercent() ~= 1) or (ratelevel >= 4 and mana:GetPercent() ~= 0) then
+                anim = RATE_SCALE_ANIM[ratelevel]
+            end
         end
     end
 

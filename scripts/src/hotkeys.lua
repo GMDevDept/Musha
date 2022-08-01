@@ -1,21 +1,21 @@
--- Hotkey: toggle_valkyrie
+-- Hotkey: ToggleValkyrie
 TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer:toggle_valkyrie()
+            ThePlayer:ToggleValkyrie()
         else
-            SendModRPCToServer(MOD_RPC.musha.toggle_valkyrie)
+            SendModRPCToServer(MOD_RPC.musha.ToggleValkyrie)
         end
     end
 end)
 
--- Hotkey: toggle_berserk
+-- Hotkey: ToggleBerserk
 TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer:toggle_berserk()
+            ThePlayer:ToggleBerserk()
         else
-            SendModRPCToServer(MOD_RPC.musha.toggle_berserk)
+            SendModRPCToServer(MOD_RPC.musha.ToggleBerserk)
             local previousmode = ThePlayer.mode:value()
             if previousmode == 0 or previousmode == 1 then
                 ThePlayer:PushEvent("activateberserk")
@@ -24,13 +24,13 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
     end
 end)
 
--- Hotkey: toggle_sleep
+-- Hotkey: ToggleSleep
 TheInput:AddKeyDownHandler(TUNING.musha.hotkey_sleep, function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
-            ThePlayer:toggle_sleep()
+            ThePlayer:ToggleSleep()
         else
-            SendModRPCToServer(MOD_RPC.musha.toggle_sleep)
+            SendModRPCToServer(MOD_RPC.musha.ToggleSleep)
         end
     end
 end)

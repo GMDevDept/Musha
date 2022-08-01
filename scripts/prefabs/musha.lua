@@ -38,7 +38,7 @@ end
 
 -- Sleep
 
-local function toggle_sleep(inst)
+local function ToggleSleep(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
         return
     end
@@ -114,8 +114,8 @@ local function StartSneaking(inst)
                 inst.task_cancelsneakspeedboost = inst:DoTaskInTime(TUNING.musha.sneakspeedboostduration, function()
                     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
                 end)
-                inst.task_sneakspeedbooststaminacost = CustomSetModifier(inst.components.stamina.modifiers, inst,
-                    -(10 + inst.components.stamina.baserate), "sneakspeedboost", TUNING.musha.sneakspeedboostduration)
+                inst.task_sneakspeedbooststaminacost = CustomSetModifier(inst.components.stamina.modifiers, inst, -10,
+                    "sneakspeedboost", TUNING.musha.sneakspeedboostduration)
             end
 
             inst:ListenForEvent("onhitother", BackStab)
@@ -176,7 +176,7 @@ local function DecideNormalOrFull(inst)
 end
 
 -- Toggle valkyrie mode
-local function toggle_valkyrie(inst)
+local function ToggleValkyrie(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("nomorph") then
         return
@@ -191,7 +191,7 @@ local function toggle_valkyrie(inst)
 end
 
 -- Toggle berserk mode
-local function toggle_berserk(inst)
+local function ToggleBerserk(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("nomorph") then
         return
@@ -285,22 +285,40 @@ local function AddBerserkTrailFx(inst)
 end
 
 -- When character mode changes
-local function onmodechange(inst)
+local function OnModeChange(inst)
     local previousmode = inst._mode
     local currentmode = inst.mode:value()
 
+    if previousmode == 1 and currentmode ~= 1 then
+        inst:PushEvent("stopsmallhealthregen", inst) -- Health badge arrow
+    end
+
+    if currentmode == 1 then
+        inst:PushEvent("startsmallhealthregen", inst) -- Health badge arrow
+    end
+
+    if not TheWorld.ismastersim then
+        inst._mode = currentmode -- Update previous mode on client side
+        return
+    end
+
     -- Remove attributes obtained from previous mode
     if previousmode == 1 and currentmode ~= 1 then
+        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fullmodebuff")
+        inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
+        inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
+        CustomCancelTask(inst.task_fullmodehealthregen)
         CustomRemoveEntity(inst.fx_fullmode)
     end
 
     if previousmode == 2 and currentmode ~= 2 then
         inst:RemoveTag("stronggrip")
-        CustomCancelTask(inst.modetrailtask)
         inst.components.combat.externaldamagemultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
         inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
+        CustomCancelTask(inst.modetrailtask)
+
         CustomAttachFx(inst, "electrichitsparks")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
@@ -311,6 +329,7 @@ local function onmodechange(inst)
             inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
         end
         CustomCancelTask(inst.modetrailtask)
+
         CustomAttachFx(inst, "statue_transition_2")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
@@ -323,6 +342,16 @@ local function onmodechange(inst)
     end
 
     if currentmode == 1 then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fullmodebuff",
+            TUNING.musha.fullmodespeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+        inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.fullmodesanityregen, "fullmodebuff")
+        inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.fullmodehungerdrain, "fullmodebuff")
+        inst.task_fullmodehealthregen = inst:DoPeriodicTask(1, function()
+            if not inst.components.health:IsDead() then
+                inst.components.health:DoDelta(TUNING.musha.fullmodehealthregen, true, "regen")
+            end
+        end, nil, inst.components.health)
+
         inst.components.skinner:SetSkinName("musha_full")
         inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
@@ -341,6 +370,7 @@ local function onmodechange(inst)
             "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)     
         inst:ListenForEvent("freeze", UnfreezeOnFreeze)
+
         CustomAttachFx(inst, "electricchargedfx")
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
@@ -350,6 +380,7 @@ local function onmodechange(inst)
 
     if currentmode == 3 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
         inst.customidleanim = "idle_winona"
@@ -363,7 +394,7 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- When level up
-local function onlevelup(inst, data)
+local function OnLevelUp(inst, data)
     inst.skills.freezingspell      = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
     inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil
@@ -379,37 +410,37 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- When the character is revived to human
-local function onbecamehuman(inst)
+local function OnBecameHuman(inst)
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     inst:DecideNormalOrFull()
 end
 
 -- When the character turn into a ghost
-local function onbecameghost(inst)
+local function OnBecameGhost(inst)
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst.mode:set(0)
 end
 
 -- When save game progress
-local function onsave(inst, data)
+local function OnSave(inst, data)
 end
 
 -- When preload (before loading components)
-local function onpreload(inst, data)
+local function OnPreload(inst, data)
 end
 
 -- When loading or spawning the character
-local function onload(inst)
-    inst:ListenForEvent("ms_respawnedfromghost", onbecamehuman)
-    inst:ListenForEvent("ms_becameghost", onbecameghost)
+local function OnLoad(inst)
+    inst:ListenForEvent("ms_respawnedfromghost", OnBecameHuman)
+    inst:ListenForEvent("ms_becameghost", OnBecameGhost)
 
     if inst:HasTag("playerghost") then
-        onbecameghost(inst)
+        OnBecameGhost(inst)
     else
-        onbecamehuman(inst)
+        OnBecameHuman(inst)
     end
 
-    onlevelup(inst, inst.components.leveler)
+    OnLevelUp(inst, inst.components.leveler)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -449,6 +480,10 @@ local function common_postinit(inst)
 
     -- Character specific attributes
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
+    inst._mode = 0 -- Store previous mode
+
+    -- Event handlers
+    inst:ListenForEvent("modechange", OnModeChange)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -495,38 +530,32 @@ local function master_postinit(inst)
     -- Food bonus
     inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
 
-    -- Common attributes
+    -- Event handlers
+    inst:ListenForEvent("levelup", OnLevelUp)
 
     -- Character specific attributes
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
-    inst._mode = 0 -- Store previous mode
     inst.skills = {}
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.RemoveSneakEffects = RemoveSneakEffects
-    inst.toggle_valkyrie = toggle_valkyrie
-    inst.toggle_berserk = toggle_berserk
-    inst.toggle_sleep = toggle_sleep
+    inst.ToggleValkyrie = ToggleValkyrie
+    inst.ToggleBerserk = ToggleBerserk
+    inst.ToggleSleep = ToggleSleep
 
-    -- Event handlers
-    inst:ListenForEvent("levelup", onlevelup)
-    inst:ListenForEvent("modechange", onmodechange)
-
-    -- FIRST, the entity runs its PreLoad method.
-    -- SECOND, the entity runs the OnLoad function of its components.
-    -- THIRD, the entity runs its OnLoad method.
-    inst.OnLoad = onload
-    inst.OnNewSpawn = onload
-    inst.OnSave = onsave
-    inst.OnPreLoad = onpreload
+    -- Common attributes
+    inst.OnPreLoad = OnPreload -- FIRST, the entity runs its PreLoad method.
+    inst.OnLoad = OnLoad -- SECOND, the entity runs the OnLoad function of its components. THIRD, the entity runs its own OnLoad method.
+    inst.OnSave = OnSave
+    inst.OnNewSpawn = OnLoad
 end
 
 ---------------------------------------------------------------------------------------------------------
 
 -- Set up remote procedure calls for client side
-AddModRPCHandler("musha", "toggle_valkyrie", toggle_valkyrie)
-AddModRPCHandler("musha", "toggle_berserk", toggle_berserk)
-AddModRPCHandler("musha", "toggle_sleep", toggle_sleep)
+AddModRPCHandler("musha", "ToggleValkyrie", ToggleValkyrie)
+AddModRPCHandler("musha", "ToggleBerserk", ToggleBerserk)
+AddModRPCHandler("musha", "ToggleSleep", ToggleSleep)
 
 ---------------------------------------------------------------------------------------------------------
 

@@ -95,16 +95,28 @@ function Stamina:Recalc(dt)
         return
     end
 
-    local baserate = math.abs(self.baserate)
+    local inst = self.inst
+    local baserate = self.baserate
+
+    local m = inst.sg:HasStateTag("sleeping") and 15 - baserate
+        or inst.sg:HasStateTag("working") and -5 - baserate
+        or (inst.sg:HasStateTag("attacking") or inst.sg:HasStateTag("abouttoattack")) and -5 - baserate
+        or (inst.sg:HasStateTag("doing") or inst.sg:HasStateTag("fishing")) and -1 - baserate
+        or inst.sg:HasStateTag("busy") and 0 - baserate
+        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 1 - baserate
+        or inst.sg:HasStateTag("idle") and 0
+        or 0 - baserate
+
+    self.modifiers:SetModifier(inst, m, "stategraph")
 
     self.rate = self.baserate + self.modifiers:Get()
 
-    self.ratelevel = (self.rate > 3 * baserate and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate > 2 * baserate and RATE_SCALE.INCREASE_MED) or
-        (self.rate > 1 * baserate and RATE_SCALE.INCREASE_LOW) or
-        (self.rate < -2 * baserate and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate < -1 * baserate and RATE_SCALE.DECREASE_MED) or
-        (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
+    self.ratelevel = (self.rate >= 5 and RATE_SCALE.INCREASE_HIGH) or
+        (self.rate > 1 and RATE_SCALE.INCREASE_MED) or
+        (self.rate > 0.05 and RATE_SCALE.INCREASE_LOW) or
+        (self.rate <= -5 and RATE_SCALE.DECREASE_HIGH) or
+        (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
+        (self.rate < 0.05 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 
     self:DoDelta(dt * self.rate, true)

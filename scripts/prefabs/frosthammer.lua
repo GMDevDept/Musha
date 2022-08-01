@@ -191,7 +191,7 @@ local function task_aura(inst)
             -- Slowdown all targets
             if v.components.health and v.components.health.currenthealth > 0
                 and v.components.combat ~= nil and inst.aura_owner then
-                v.components.combat:GetAttacked(inst.aura_owner, 1, inst) -- Damage has to be > 0. only to cast hit effect on targets
+                v.components.combat:GetAttacked(inst.aura_owner, 5, inst) -- Damage has to be > 0. only to cast hit effect on targets
             end
             v:AddDebuff("frosthammer_aura_slowdown", "debuff_slowdown") -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
             -- Freeze one random target
@@ -199,9 +199,9 @@ local function task_aura(inst)
                 if v.components.freezable and not v.components.freezable:IsFrozen() then
                     if v.components.health and v.components.health.currenthealth > 0 then -- Take damage
                         if v.components.combat ~= nil and inst.aura_owner then
-                            v.components.combat:GetAttacked(inst.aura_owner, 0.2 * inst.components.weapon.damage, inst) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+                            v.components.combat:GetAttacked(inst.aura_owner, 0.4 * inst.components.weapon.damage, inst) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
                         else
-                            v.components.health:DoDelta(-0.2 * inst.components.weapon.damage) -- No hit effect
+                            v.components.health:DoDelta(-0.4 * inst.components.weapon.damage) -- No hit effect
                         end
                     end
                     v.components.freezable:AddColdness(4) -- Freeze
@@ -237,12 +237,17 @@ local function onattack(inst, attacker, target, data)
             fx.Transform:SetPosition(target:GetPosition():Get())
 
             if target.components.freezable then
-                target.components.freezable:AddColdness(1.6)
-                target.components.freezable:SpawnShatterFX()
-                local prefab = "icespike_fx_" .. math.random(1, 4)
-                local fx_icespike = SpawnPrefab(prefab)
-                fx_icespike.Transform:SetScale(1, 1.5, 1)
-                fx_icespike.Transform:SetPosition(target:GetPosition():Get())
+                if not target:HasTag("freeze_cooldown") then
+                    target.components.freezable:AddColdness(1.6)
+                    target.components.freezable:SpawnShatterFX()
+                    local prefab = "icespike_fx_" .. math.random(1, 4)
+                    local fx_icespike = SpawnPrefab(prefab)
+                    fx_icespike.Transform:SetScale(1, 1.5, 1)
+                    fx_icespike.Transform:SetPosition(target:GetPosition():Get())
+                    if target.components.freezable:IsFrozen() then
+                        CustomOnFreeze(target)
+                    end
+                end
             end
 
             local range = 2

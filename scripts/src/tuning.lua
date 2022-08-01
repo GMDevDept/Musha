@@ -13,10 +13,10 @@ TUNING.musha = {
     manaregenspeed = 1,
 
     maxfatigue = 100,
-    fatiguerate = 0,
+    fatiguerate = 1 / 96, -- 5/day
 
     maxstamina = 100,
-    staminarate = 1,
+    staminarate = 5,
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.5,
@@ -41,6 +41,11 @@ TUNING.musha = {
         shadowshield       = 0,
         instantcast        = 0,
     },
+
+    fullmodespeedboost = 1.1,
+    fullmodehealthregen = 0.1,
+    fullmodesanityregen = 1 / 6, -- 10/min
+    fullmodehungerdrain = 1.3,
 
     valkyrieattackboost = 1.2,
     valkyriedefenseboost = 0.2,

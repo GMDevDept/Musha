@@ -95,15 +95,27 @@ function Fatigue:Recalc(dt)
         return
     end
 
-    local baserate = math.abs(self.baserate)
+    local inst = self.inst
+    local baserate = self.baserate
+    local stamina = inst.components.stamina:GetPercent()
+
+    local m = inst.sg:HasStateTag("sleeping") and -2
+        or stamina == 0 and 0.25
+        or stamina < 0.2 and 0.1
+        or stamina < 0.4 and 0.05
+        or stamina < 0.6 and 0.02
+        or stamina < 0.8 and 0.01
+        or 0
+
+    self.modifiers:SetModifier(inst, m, "stamina")
 
     self.rate = self.baserate + self.modifiers:Get()
 
-    self.ratelevel = (self.rate > 3 * baserate and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate > 2 * baserate and RATE_SCALE.INCREASE_MED) or
-        (self.rate > 1 * baserate and RATE_SCALE.INCREASE_LOW) or
-        (self.rate < -2 * baserate and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate < -1 * baserate and RATE_SCALE.DECREASE_MED) or
+    self.ratelevel = (self.rate >= 0.25 and RATE_SCALE.INCREASE_HIGH) or
+        (self.rate >= 0.05 and RATE_SCALE.INCREASE_MED) or
+        (self.rate > baserate and RATE_SCALE.INCREASE_LOW) or
+        (self.rate <= -3 and RATE_SCALE.DECREASE_HIGH) or
+        (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 

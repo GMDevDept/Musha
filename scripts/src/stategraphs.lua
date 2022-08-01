@@ -248,6 +248,7 @@ local musha_berserk_pre = State {
                     ActivateBerserkAOE(target, inst)
                 end)
             CustomAttachFx(inst, "shadow_shield1", nil, Vector3(2, 2, 2), Vector3(0, -2, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(21 * FRAMES, function(inst)
             CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" },
@@ -255,6 +256,7 @@ local musha_berserk_pre = State {
                     ActivateBerserkAOE(target, inst)
                 end)
             CustomAttachFx(inst, "shadow_shield2", nil, Vector3(3, 3, 3), Vector3(0, -3, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(27 * FRAMES, function(inst)
             CustomDoAOE(inst, 5, { "_combat" }, { "player", "companion", "musha_companion" },
@@ -262,6 +264,7 @@ local musha_berserk_pre = State {
                     ActivateBerserkAOE(target, inst)
                 end)
             CustomAttachFx(inst, "shadow_shield3", nil, Vector3(3.5, 3.5, 3.5), Vector3(0, -4, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(31 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
@@ -271,20 +274,23 @@ local musha_berserk_pre = State {
                     ActivateBerserkAOE(target, inst)
                 end)
             CustomAttachFx(inst, "shadow_shield4", nil, Vector3(4, 4, 4), Vector3(0, -5, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(33 * FRAMES, function(inst)
-            CustomDoAOE(inst, 7, { "_combat" }, { "player", "companion", "musha_companion" },
-                function(target)
-                    ActivateBerserkAOE(target, inst)
-                end)
-            CustomAttachFx(inst, "shadow_shield5", nil, Vector3(4.5, 4.5, 4.5), Vector3(0, -5.75, 0))
-        end),
-        TimeEvent(35 * FRAMES, function(inst)
             CustomDoAOE(inst, 8, { "_combat" }, { "player", "companion", "musha_companion" },
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
+            CustomAttachFx(inst, "shadow_shield5", nil, Vector3(4.5, 4.5, 4.5), Vector3(0, -5.75, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+        end),
+        TimeEvent(35 * FRAMES, function(inst)
+            CustomDoAOE(inst, 10, { "_combat" }, { "player", "companion", "musha_companion" },
+                function(target)
+                    ActivateBerserkAOE(target, inst)
+                end)
             CustomAttachFx(inst, "shadow_shield6", nil, Vector3(5, 5, 5), Vector3(0, -6.5, 0))
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
     },
 

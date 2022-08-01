@@ -42,7 +42,9 @@ function FatigueBadge:OnUpdate(dt)
     if fatigue ~= nil then
         local ratelevel = fatigue:GetRateLevel()
         if ratelevel ~= 0 then
-            anim = RATE_SCALE_ANIM[ratelevel]
+            if (ratelevel <= 3 and fatigue:GetPercent() ~= 1) or (ratelevel >= 4 and fatigue:GetPercent() ~= 0) then
+                anim = RATE_SCALE_ANIM[ratelevel]
+            end
         end
     end
 

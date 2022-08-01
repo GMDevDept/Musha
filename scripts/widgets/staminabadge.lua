@@ -42,7 +42,9 @@ function StaminaBadge:OnUpdate(dt)
     if stamina ~= nil then
         local ratelevel = stamina:GetRateLevel()
         if ratelevel ~= 0 then
-            anim = RATE_SCALE_ANIM[ratelevel]
+            if (ratelevel <= 3 and stamina:GetPercent() ~= 1) or (ratelevel >= 4 and stamina:GetPercent() ~= 0) then
+                anim = RATE_SCALE_ANIM[ratelevel]
+            end
         end
     end
 
