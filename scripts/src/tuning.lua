@@ -20,6 +20,7 @@ TUNING.musha = {
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.5,
+    areaattackrange = 3,
 
     maxpets = 100,
 
@@ -42,9 +43,10 @@ TUNING.musha = {
         instantcast        = 0,
     },
 
-    fullmodespeedboost = 1.1,
+    fullmodespeedboost = 1.15,
     fullmodehealthregen = 0.1,
-    fullmodesanityregen = 1 / 6, -- 10/min
+    fullmodesanityregen = 0.1,
+    fullmodestaminaregen = 0.5,
     fullmodehungerdrain = 1.3,
 
     valkyrieattackboost = 1.2,
@@ -60,7 +62,7 @@ TUNING.musha = {
     debuffslowdownmult = 0.3,
     debuffslowdownduration = 4,
 
-    weapon = {
+    equipment = {
         fuellevel = 1000,
         refueldelta = 200,
         fuelconsume_attack = -10,
@@ -69,5 +71,6 @@ TUNING.musha = {
         expdelta = 5,
         auraradius = 10,
         auraperiod = 2,
+        areaattackrange = 3,
     }
 }

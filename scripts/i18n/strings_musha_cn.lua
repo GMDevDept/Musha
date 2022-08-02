@@ -51,7 +51,7 @@ STRINGS.musha = {
 
     lack_of_exp = "Musha需要更多经验值！",
     lack_of_mana = "Musha的魔力不够了！",
-    lack_of_sanity = "Musha的精神值不够了！",
+    lack_of_sanity = "Musha的理智值不够了！",
 
     segmentation = "------------------------------\n",
 

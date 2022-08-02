@@ -84,7 +84,7 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     end
 end
 
-GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent
+GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent, scale/offset: Vector3
     if type(fx_list) == "string" then
         SpawnFx(target, fx_list, duration, scale, offset)
     elseif type(fx_list) == "table" then
@@ -99,7 +99,7 @@ end
 -- Area of effect
 GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
     local x, y, z = center.Transform:GetWorldPosition()
-    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost" }
 
     for _, v in ipairs(additional_ignore_tags) do
         table.insert(ignore_tags, v)

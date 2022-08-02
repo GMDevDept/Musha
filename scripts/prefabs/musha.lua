@@ -84,6 +84,7 @@ local function StartSneaking(inst)
     if inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.sneaksanitycost then
         inst:AddTag("sneaking")
         inst:RemoveTag("scarytoprey")
+        inst:RemoveTag("areaattack")
         inst.components.sanity:DoDelta(-TUNING.musha.sneaksanitycost)
         inst.components.talker:Say(STRINGS.musha.skills.startsneaking)
         inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
@@ -118,7 +119,7 @@ local function StartSneaking(inst)
                     "sneakspeedboost", TUNING.musha.sneakspeedboostduration)
             end
 
-            inst:ListenForEvent("onhitother", BackStab)
+            inst:ListenForEvent("onattackother", BackStab)
         end)
 
         inst:ListenForEvent("attacked", SneakFailed)
@@ -147,7 +148,8 @@ local function RemoveSneakEffects(inst)
     inst:RemoveTag("sneaking")
     inst:RemoveTag("notarget")
     inst:AddTag("scarytoprey")
-    inst:RemoveEventCallback("onhitother", BackStab)
+    inst:AddTag("areaattack")
+    inst:RemoveEventCallback("onattackother", BackStab)
     inst:RemoveEventCallback("attacked", SneakFailed)
     CustomCancelTask(inst.task_sneakspeedbooststaminacost)
     CustomCancelTask(inst.task_cancelsneakspeedboost)
@@ -251,6 +253,26 @@ local function AddValkyrieTrailFx(inst)
     end
 end
 
+-- OnAttack fn for berserk mode
+local function BerserkOnAttackOther(inst, data)
+    local target = data.target
+    local weapon = data.weapon
+
+    if inst:HasTag("areaattack") then
+        local range = weapon and weapon:HasTag("areaattack") and 1.5 * TUNING.musha.areaattackrange
+            or TUNING.musha.areaattackrange
+        local excludetags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
+            "wall", "companion", "musha_companion" }
+
+        inst.components.combat:DoAreaAttack(target, range, weapon, nil, nil, excludetags) -- Note: DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags)
+
+        local fx = SpawnPrefab("groundpoundring_fx")
+        local scale = 0.4 + 0.066 * range
+        fx.Transform:SetScale(scale, scale, scale)
+        fx.Transform:SetPosition(target:GetPosition():Get())
+    end
+end
+
 -- Berserk trailing fx (ancient cane)
 local function AddBerserkTrailFx(inst)
     local owner = inst
@@ -307,6 +329,7 @@ local function OnModeChange(inst)
         inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fullmodebuff")
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
+        inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
         CustomCancelTask(inst.task_fullmodehealthregen)
         CustomRemoveEntity(inst.fx_fullmode)
     end
@@ -328,6 +351,8 @@ local function OnModeChange(inst)
             inst:RemoveSneakEffects()
             inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
         end
+        inst:RemoveTag("areaattack")
+        inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
         CustomCancelTask(inst.modetrailtask)
 
         CustomAttachFx(inst, "statue_transition_2")
@@ -346,6 +371,7 @@ local function OnModeChange(inst)
             TUNING.musha.fullmodespeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
         inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.fullmodesanityregen, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.fullmodehungerdrain, "fullmodebuff")
+        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.fullmodestaminaregen, "fullmodebuff")
         inst.task_fullmodehealthregen = inst:DoPeriodicTask(1, function()
             if not inst.components.health:IsDead() then
                 inst.components.health:DoDelta(TUNING.musha.fullmodehealthregen, true, "regen")
@@ -355,7 +381,6 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_full")
         inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
-
         inst.fx_fullmode = SpawnPrefab("fx_fullmode")
         inst.fx_fullmode.entity:SetParent(inst.entity)
         inst.fx_fullmode.Transform:SetPosition(0, -0.1, 0)
@@ -363,6 +388,7 @@ local function OnModeChange(inst)
 
     if currentmode == 2 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+
         inst:AddTag("stronggrip")
         inst.components.combat.externaldamagemultipliers:SetModifier(inst, TUNING.musha.valkyrieattackboost,
             "valkyriebuff")
@@ -381,6 +407,9 @@ local function OnModeChange(inst)
     if currentmode == 3 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
 
+        inst:AddTag("areaattack")
+        inst:ListenForEvent("onattackother", BerserkOnAttackOther)
+
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
         inst.customidleanim = "idle_winona"
@@ -389,6 +418,47 @@ local function OnModeChange(inst)
     end
 
     inst._mode = currentmode -- Update previous mode
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Fatigue level related
+
+local function DecideFatigueLevel(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or
+        inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+        return
+    end
+
+    local pct = inst.components.fatigue:GetPercent()
+
+    if pct < 0.1 then
+        inst.fatiguelevel:set(0)
+    elseif pct < 0.4 then
+        inst.fatiguelevel:set(1)
+    elseif pct < 0.6 then
+        inst.fatiguelevel:set(2)
+    elseif pct < 0.8 then
+        inst.fatiguelevel:set(3)
+    else
+        inst.fatiguelevel:set(4)
+    end
+end
+
+local function OnFatigueLevelChange(inst)
+    local fatiguelevel = inst.fatiguelevel:value()
+
+    if fatiguelevel == 0 then
+        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
+    elseif fatiguelevel == 1 then
+        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
+    elseif fatiguelevel == 2 then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.85)
+    elseif fatiguelevel == 3 then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.7)
+    elseif fatiguelevel == 4 then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.4)
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -412,13 +482,17 @@ end
 -- When the character is revived to human
 local function OnBecameHuman(inst)
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
+    inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
     inst:DecideNormalOrFull()
+    inst:DecideFatigueLevel()
 end
 
 -- When the character turn into a ghost
 local function OnBecameGhost(inst)
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+    inst:RemoveEventCallback("fatiguedelta", DecideFatigueLevel)
     inst.mode:set(0)
+    inst.fatiguelevel:set(0)
 end
 
 -- When save game progress
@@ -490,9 +564,6 @@ end
 
 -- This initializes for the server only. Components are added here.
 local function master_postinit(inst)
-    -- Set starting inventory
-    inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
-
     -- Leveler
     inst:AddComponent("leveler")
     inst.components.leveler:SetMaxExperience(TUNING.musha.maxexperience)
@@ -530,24 +601,28 @@ local function master_postinit(inst)
     -- Food bonus
     inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
 
-    -- Event handlers
-    inst:ListenForEvent("levelup", OnLevelUp)
+    -- Common attributes
+    inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
+    inst.OnPreLoad = OnPreload -- FIRST, the entity runs its PreLoad method.
+    inst.OnLoad = OnLoad -- SECOND, the entity runs the OnLoad function of its components. THIRD, the entity runs its own OnLoad method.
+    inst.OnSave = OnSave
+    inst.OnNewSpawn = OnLoad
 
     -- Character specific attributes
+    inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst.skills = {}
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
+    inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
     inst.ToggleValkyrie = ToggleValkyrie
     inst.ToggleBerserk = ToggleBerserk
     inst.ToggleSleep = ToggleSleep
 
-    -- Common attributes
-    inst.OnPreLoad = OnPreload -- FIRST, the entity runs its PreLoad method.
-    inst.OnLoad = OnLoad -- SECOND, the entity runs the OnLoad function of its components. THIRD, the entity runs its own OnLoad method.
-    inst.OnSave = OnSave
-    inst.OnNewSpawn = OnLoad
+    -- Event handlers
+    inst:ListenForEvent("levelup", OnLevelUp)
+    inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
 end
 
 ---------------------------------------------------------------------------------------------------------

@@ -112,7 +112,7 @@ function Stamina:Recalc(dt)
     self.rate = self.baserate + self.modifiers:Get()
 
     self.ratelevel = (self.rate >= 5 and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate > 1 and RATE_SCALE.INCREASE_MED) or
+        (self.rate > 1.5 and RATE_SCALE.INCREASE_MED) or
         (self.rate > 0.05 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -5 and RATE_SCALE.DECREASE_HIGH) or
         (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
