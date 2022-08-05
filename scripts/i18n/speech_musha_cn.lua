@@ -1,6 +1,24 @@
 --translated by deloquac
 return {
-
+    ACTIONFAIL_GENERIC = "Musha不能那样做。",
+    ACTIONFAIL = {
+        READ = {
+            GENERIC = "还有其他事在等着。",
+            ALREADYFULLMOON = "那样做恐怕太多余了。",
+            NOBIRDS = "鸟不喜欢这种天气。",
+            NOFIRES = "所幸没有需要扑灭的明火。",
+            NOHORTICULTURE = "没有能种的庄稼。",
+            NOMOONINCAVES = "这个地下位置影响不到月亮。",
+            NOSILVICULTURE = "没有可聚焦的树栖主体。",
+            NOSLEEPTARGETS = "Musha没看到谁需要睡前故事。",
+            NOTENTACLEGROUND = "触手无法突破这里的地表。",
+            NOWATERNEARBY = "鱼类只能在水体附近被召唤出来。",
+            TOOMANYBEES = "那样Musha身边就有太多蜜蜂了。",
+            TOOMANYBIRDS = "地上鸟太多了，魔法没那么有效。",
+            WAYTOOMANYBIRDS = "现在天上一只鸟都没有了。"
+        }
+    },
+    ANNOUNCE_BOOK_MOON_DAYTIME = "一旦夜幕降临，我们就会知道它管不管用。",
     --adds action start
     -- ACTIONFAIL =
     -- {
@@ -138,8 +156,6 @@ return {
     --         SAMEDISH = "Musha only needed to use one dish.",
     --     },
     -- },
-    -- ACTIONFAIL_GENERIC = "Musha can't do that.",
-    -- ANNOUNCE_DIG_DISEASE_WARNING = "It looks better already.",
     -- ANNOUNCE_PICK_DISEASE_WARNING = "Uh, Musha doesn't likes that smell.",
     --adds action end
 

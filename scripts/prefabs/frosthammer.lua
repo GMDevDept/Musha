@@ -286,16 +286,13 @@ local function boost_on(inst, data)
             end
         end
 
-        if inst.cooling then
-            if TheWorld.state.iswinter then
-                return
-            end
+        if inst.cooling and not TheWorld.state.iswinter then
             if not inst.components.heater then
                 inst:AddComponent("heater")
                 inst.components.heater:SetThermics(false, true)
             end
             inst.components.heater.heat = nil
-            inst.components.heater.equippedheat = 0 -- The target temperature when equipped
+            inst.components.heater.equippedheat = 15 -- The target temperature when equipped
             inst.task_cooling = inst:DoPeriodicTask(3, function()
                 if owner.components.temperature.current > 50 then
                     owner.components.mana:DoDelta(-2)
@@ -309,15 +306,14 @@ local function boost_on(inst, data)
         if inst.aura then
             inst.Light:Enable(true)
             inst.task_aura = inst:DoPeriodicTask(TUNING.musha.equipment.auraperiod, task_aura, 0)
-            if TheWorld.state.iswinter then
-                return
+            if not TheWorld.state.iswinter then
+                if not inst.components.heater then
+                    inst:AddComponent("heater")
+                    inst.components.heater:SetThermics(false, true)
+                end
+                inst.components.heater.equippedheat = nil
+                inst.components.heater.heat = 15 -- Cooling aura, works as cold fire pit
             end
-            if not inst.components.heater then
-                inst:AddComponent("heater")
-                inst.components.heater:SetThermics(false, true)
-            end
-            inst.components.heater.equippedheat = nil
-            inst.components.heater.heat = 0 -- Cooling aura, works as cold fire pit
         else
             inst.Light:Enable(false)
         end

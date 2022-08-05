@@ -16,8 +16,7 @@ ACTIONS.USEITEM.fn = function(act)
         if not act.invobject.boost then
             act.invobject.components.machine:TurnOn()
             return true
-        end
-        if act.invobject.boost then
+        else
             act.invobject.components.machine:TurnOff()
             return true
         end
