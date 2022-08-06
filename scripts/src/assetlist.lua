@@ -34,10 +34,14 @@ Assets = {
     Asset("IMAGE", "images/avatars/self_inspect_musha.tex"),
     Asset("ATLAS", "images/avatars/self_inspect_musha.xml"),
 
-    -- widgets
+    -- Widgets
     Asset("ANIM", "anim/widgets/mana.zip"),
     Asset("ANIM", "anim/widgets/fatigue.zip"),
     Asset("ANIM", "anim/widgets/stamina.zip"),
+
+    -- Inventory and recipes
+    Asset("ATLAS", "images/inventoryimages/musha_inventoryimages2.xml"),
+    Asset("IMAGE", "images/inventoryimages/musha_inventoryimages2.tex"),
 }
 
 AddMinimapAtlas("images/map_icons/musha_mapicon.xml")

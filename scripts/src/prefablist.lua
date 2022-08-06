@@ -3,6 +3,9 @@ PrefabFiles = {
     "musha",
     "musha_skins",
 
+    -- Creatures
+    "shadowmusha",
+
     -- Equipments
     "frosthammer",
 

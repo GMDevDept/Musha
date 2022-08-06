@@ -19,7 +19,7 @@ TUNING.musha = {
     staminarate = 5,
 
     damagemultiplier = 0.75,
-    areahitdamagepercent = 0.5,
+    areahitdamagepercent = 0.25,
     areaattackrange = 3,
 
     maxpets = 100,
