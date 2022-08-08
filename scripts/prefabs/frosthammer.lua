@@ -145,7 +145,7 @@ local function SpellFn(inst, target, pos)
         prefab.Transform:SetPosition(pos.x, pos.y, pos.z)
         caster.components.mana:DoDelta(-10)
         caster.components.sanity:DoDelta(-15)
-        inst.components.fueled:DoDelta(TUNING.musha.equipment.fuelconsume_cast)
+        inst.components.fueled:DoDelta(TUNING.musha.equipments.frosthammer.fuelconsume_cast)
     else
         local fx_fail = SpawnPrefab("small_puff")
         fx_fail.Transform:SetPosition(pos.x, pos.y, pos.z)
@@ -184,7 +184,7 @@ local function task_aura(inst)
     local must_tags = { "_combat", "locomotor" }
     local ignore_tags = { "freeze_cooldown", "INLIMBO", "notarget", "noattack", "flight", "invisible", "companion",
         "musha_companion", "isdead", "nofreeze", "player" }
-    local targets = TheSim:FindEntities(x, y, z, TUNING.musha.equipment.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
+    local targets = TheSim:FindEntities(x, y, z, TUNING.musha.equipments.frosthammer.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
     if targets then
         local freeze_target = #targets > 1 and math.random(#targets) or 1
         for k, v in pairs(targets) do
@@ -218,7 +218,7 @@ local function task_aura(inst)
         end
     end
 
-    inst.components.fueled:DoDelta(TUNING.musha.equipment.fuelconsume_aura)
+    inst.components.fueled:DoDelta(TUNING.musha.equipments.frosthammer.fuelconsume_aura)
 end
 
 -- Reticule (gamepad support)
@@ -229,7 +229,7 @@ end
 -- On attack
 local function onattack(inst, attacker, target, data)
     if target and not inst.broken then
-        inst.components.fueled:DoDelta(TUNING.musha.equipment.fuelconsume_attack)
+        inst.components.fueled:DoDelta(TUNING.musha.equipments.frosthammer.fuelconsume_attack)
 
         if inst.boost then
             if target.components.freezable and not target:HasTag("freeze_cooldown") then
@@ -245,7 +245,7 @@ local function onattack(inst, attacker, target, data)
             end
 
             if inst:HasTag("areaattack") and not attacker:HasTag("areaattack") then
-                local range = TUNING.musha.equipment.areaattackrange
+                local range = TUNING.musha.equipments.frosthammer.areaattackrange
                 local excludetags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
                     "wall", "companion", "musha_companion" }
 
@@ -305,7 +305,7 @@ local function boost_on(inst, data)
 
         if inst.aura then
             inst.Light:Enable(true)
-            inst.task_aura = inst:DoPeriodicTask(TUNING.musha.equipment.auraperiod, task_aura, 0)
+            inst.task_aura = inst:DoPeriodicTask(TUNING.musha.equipments.frosthammer.auraperiod, task_aura, 0)
             if not TheWorld.state.iswinter then
                 if not inst.components.heater then
                     inst:AddComponent("heater")
@@ -348,7 +348,6 @@ local function boost_off(inst, data)
     CustomRemoveEntity(inst.boost_fx)
 
     CustomCancelTask(inst.task_cooling)
-
     CustomCancelTask(inst.task_aura)
 
     inst.Light:Enable(false)
@@ -373,12 +372,12 @@ local function ontakefuel(inst, fuelvalue, fuel_obj)
     local extra_str = nil
 
     if not inst.forgelab_on then
-        inst.exp = inst.exp + TUNING.musha.equipment.expdelta
+        inst.exp = inst.exp + TUNING.musha.equipments.frosthammer.expdelta
         inst.components.talker:Say("-" ..
             STRINGS.MUSHA_WEAPON_FROSTHAMMER ..
             " \n" .. STRINGS.MUSHA_ITEM_LUCKY .. " +(2)\n[" .. STRINGS.MUSHA_ITEM_GROWPOINTS .. "]" .. (inst.level))
     end
-    inst.components.fueled:DoDelta(TUNING.musha.equipment.refueldelta)
+    inst.components.fueled:DoDelta(TUNING.musha.equipments.frosthammer.refueldelta)
 
     if enchant_req then
         enchant_req = enchant_req - 1
@@ -522,7 +521,7 @@ local function fn()
     inst.AnimState:SetBuild("frosthammer") -- The name of the build
     inst.AnimState:PlayAnimation("idle") -- Play idle animation on creation
 
-    inst.Light:SetRadius(TUNING.musha.equipment.auraradius)
+    inst.Light:SetRadius(TUNING.musha.equipments.frosthammer.auraradius)
     inst.Light:SetIntensity(0.99)
     inst.Light:SetColour(0.1, 0.1, 1)
     inst.Light:Enable(false)
@@ -570,7 +569,7 @@ local function fn()
     inst:AddComponent("fueled")
     inst.components.fueled.fueltype = "MUSHA"
     inst.components.fueled.accepting = true
-    inst.components.fueled:InitializeFuelLevel(TUNING.musha.equipment.fuellevel)
+    inst.components.fueled:InitializeFuelLevel(TUNING.musha.equipments.frosthammer.fuellevel)
     inst.components.fueled:SetDepletedFn(ondepleted)
     inst.components.fueled:SetTakeFuelFn(ontakefuel)
     inst.components.fueled:StopConsuming()

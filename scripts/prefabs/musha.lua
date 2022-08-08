@@ -1,4 +1,5 @@
 local MakePlayerCharacter = require("prefabs/player_common")
+local UserCommands = require("usercommands")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -32,6 +33,111 @@ local prefabs = FlattenTree(start_inv, true)
 local function bonusdamagefn(inst, target, damage, weapon)
     -- return (target:HasTag("") and TUNING.EXTRADAMAGE) or 0
     return 0
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Pet leash related
+
+local function ShadowMinionFx(pet)
+    local x, y, z = pet.Transform:GetWorldPosition()
+    SpawnPrefab("statue_transition_2").Transform:SetPosition(x, y, z)
+end
+
+local function KillPet(pet)
+    pet.components.health:Kill()
+end
+
+local function OnSpawnPet(inst, pet)
+    if pet:HasTag("shadowminion") then -- Shadow Musha and Maxwell's shadow puppets
+        pet:DoTaskInTime(0, ShadowMinionFx) -- Delayed in case we need to relocate for migration spawning
+
+        if not (inst.components.health:IsDead() or inst:HasTag("playerghost")) then
+            if not pet:HasTag("musha_companion") then -- Shadow maxwell
+                if not inst.components.builder.freebuildmode then
+                    inst.components.sanity:AddSanityPenalty(pet,
+                        TUNING.SHADOWWAXWELL_SANITY_PENALTY[string.upper(pet.prefab)])
+                end
+                inst:ListenForEvent("onremove", inst._onpetlost, pet)
+            end
+        elseif pet._killtask == nil then
+            pet._killtask = pet:DoTaskInTime(math.random(), KillPet)
+        end
+    elseif inst._OnSpawnPet ~= nil then
+        inst:_OnSpawnPet(pet)
+    end
+end
+
+local function OnDespawnPet(inst, pet)
+    if pet:HasTag("shadowminion") then
+        ShadowMinionFx(pet)
+        pet:Remove()
+    elseif inst._OnDespawnPet ~= nil then
+        inst:_OnDespawnPet(pet)
+    end
+end
+
+local function OnDeathForPetLeash(inst)
+    for k, v in pairs(inst.components.petleash:GetPets()) do
+        if (not v:HasTag("musha_companion")) and v:HasTag("shadowminion") and v._killtask == nil then
+            v._killtask = v:DoTaskInTime(math.random(), KillPet)
+        end
+    end
+end
+
+local function OnRerollForPetLeash(inst)
+    local todespawn = {}
+    for k, v in pairs(inst.components.petleash:GetPets()) do
+        if v:HasTag("musha_companion") or v:HasTag("shadowminion") then
+            table.insert(todespawn, v)
+        end
+    end
+    for i, v in ipairs(todespawn) do
+        inst.components.petleash:DespawnPet(v)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Companion Orders
+
+local function SwitchKeyBindings(inst)
+    if inst.companionhotkeysenabled then
+        inst.companionhotkeysenabled = false
+        inst.components.talker:Say(STRINGS.musha.switchkeybindings_off)
+        UserCommands.RunTextUserCommand("no", inst, false)
+    else
+        inst.companionhotkeysenabled = true
+        inst.components.talker:Say(STRINGS.musha.switchkeybindings_on)
+        UserCommands.RunTextUserCommand("wave", inst, false)
+    end
+end
+
+local function DoShadowMushaOrder(inst)
+    if not inst.companionhotkeysenabled then
+        return
+    elseif inst.shadowmushafollowonly then
+        inst.shadowmushafollowonly = false
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume)
+        UserCommands.RunTextUserCommand("rude", inst, false)
+        for k, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") then
+                v:RemoveTag("followonly")
+                v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "followonlybuff")
+            end
+        end
+    else
+        inst.shadowmushafollowonly = true
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow)
+        UserCommands.RunTextUserCommand("happy", inst, false)
+        for k, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
+                v:AddTag("followonly")
+                v.components.health.externalabsorbmodifiers:SetModifier(inst,
+                    TUNING.musha.creatures.shadowmusha.followonlydefenseboost, "followonlybuff")
+            end
+        end
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -355,6 +461,15 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
         CustomCancelTask(inst.modetrailtask)
 
+        for k, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") then
+                v:DoTaskInTime(0.5 + math.random() * 0.5,
+                    function() -- Delay for at least 0.5 seconds to make sure the activate event is triggered
+                        v:PushEvent("shadowberserk_quit")
+                    end)
+            end
+        end
+
         CustomAttachFx(inst, "statue_transition_2")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
@@ -409,6 +524,17 @@ local function OnModeChange(inst)
 
         inst:AddTag("areaattack")
         inst:ListenForEvent("onattackother", BerserkOnAttackOther)
+
+        inst.shadowmushafollowonly = false
+        for k, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") then
+                v:RemoveTag("followonly")
+                v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "followonlybuff")
+                v:DoTaskInTime(math.random() * 0.5, function()
+                    v:PushEvent("shadowberserk_activate")
+                end)
+            end
+        end
 
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
@@ -505,9 +631,6 @@ end
 
 -- When loading or spawning the character
 local function OnLoad(inst)
-    inst:ListenForEvent("ms_respawnedfromghost", OnBecameHuman)
-    inst:ListenForEvent("ms_becameghost", OnBecameGhost)
-
     if inst:HasTag("playerghost") then
         OnBecameGhost(inst)
     else
@@ -594,9 +717,12 @@ local function master_postinit(inst)
     inst.components.combat.bonusdamagefn = bonusdamagefn
 
     -- Petleash
+    inst._onpetlost = function(pet) inst.components.sanity:RemoveSanityPenalty(pet) end
+    inst._OnSpawnPet = inst.components.petleash.onspawnfn
+    inst._OnDespawnPet = inst.components.petleash.ondespawnfn
     inst.components.petleash:SetMaxPets(TUNING.musha.maxpets)
-    -- inst.components.petleash:SetOnSpawnFn(OnSpawnPet)
-    -- inst.components.petleash:SetOnDespawnFn(OnDespawnPet)
+    inst.components.petleash:SetOnSpawnFn(OnSpawnPet)
+    inst.components.petleash:SetOnDespawnFn(OnDespawnPet)
 
     -- Food bonus
     inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
@@ -612,6 +738,8 @@ local function master_postinit(inst)
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst.skills = {}
+    inst.companionhotkeysenabled = true
+    inst.shadowmushafollowonly = false
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
@@ -619,18 +747,25 @@ local function master_postinit(inst)
     inst.ToggleValkyrie = ToggleValkyrie
     inst.ToggleBerserk = ToggleBerserk
     inst.ToggleSleep = ToggleSleep
+    inst.SwitchKeyBindings = SwitchKeyBindings
+    inst.DoShadowMushaOrder = DoShadowMushaOrder
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
+    inst:ListenForEvent("death", OnDeathForPetLeash)
+    inst:ListenForEvent("ms_becameghost", OnDeathForPetLeash)
+    inst:ListenForEvent("ms_becameghost", OnBecameGhost)
+    inst:ListenForEvent("ms_respawnedfromghost", OnBecameHuman)
+    inst:ListenForEvent("ms_playerreroll", OnRerollForPetLeash)
 end
-
----------------------------------------------------------------------------------------------------------
 
 -- Set up remote procedure calls for client side
 AddModRPCHandler("musha", "ToggleValkyrie", ToggleValkyrie)
 AddModRPCHandler("musha", "ToggleBerserk", ToggleBerserk)
 AddModRPCHandler("musha", "ToggleSleep", ToggleSleep)
+AddModRPCHandler("musha", "SwitchKeyBindings", SwitchKeyBindings)
+AddModRPCHandler("musha", "DoShadowMushaOrder", DoShadowMushaOrder)
 
 ---------------------------------------------------------------------------------------------------------
 

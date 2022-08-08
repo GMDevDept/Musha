@@ -35,6 +35,44 @@ local function OnAttacked(inst, data)
     end
 end
 
+local function OnEnterShadowBerserk(inst)
+    if inst:HasTag("shadowberserk") then
+        return
+    end
+    inst:AddTag("shadowberserk")
+
+    local _healthpercent = inst.components.health:GetPercent()
+    inst.components.health:SetMaxHealth(TUNING.musha.creatures.shadowberserk.maxhealth)
+    inst.components.health:SetPercent(_healthpercent)
+    inst.components.health:StartRegen(TUNING.musha.creatures.shadowberserk.healthregen,
+        TUNING.musha.creatures.shadowmusha.healthregenperiod)
+    inst.components.combat:SetDefaultDamage(TUNING.musha.creatures.shadowberserk.damage)
+    inst.components.combat:SetAttackPeriod(TUNING.musha.creatures.shadowberserk.attackperiod)
+
+    inst.AnimState:SetBuild("shadowberserk")
+    inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+    CustomAttachFx(inst, "statue_transition")
+    inst.AnimState:OverrideSymbol("swap_object", "swap_nightmaresword_shadow", "swap_nightmaresword_shadow")
+end
+
+local function OnQuitShadowBerserk(inst)
+    if not inst:HasTag("shadowberserk") then
+        return
+    end
+    inst:RemoveTag("shadowberserk")
+
+    local _healthpercent = inst.components.health:GetPercent()
+    inst.components.health:SetMaxHealth(TUNING.musha.creatures.shadowmusha.maxhealth)
+    inst.components.health:SetPercent(_healthpercent)
+    inst.components.health:StartRegen(TUNING.musha.creatures.shadowmusha.healthregen,
+        TUNING.musha.creatures.shadowmusha.healthregenperiod)
+    inst.components.combat:SetDefaultDamage(TUNING.musha.creatures.shadowmusha.damage)
+    inst.components.combat:SetAttackPeriod(TUNING.musha.creatures.shadowmusha.attackperiod)
+
+    inst.AnimState:SetBuild("shadowmusha")
+    CustomAttachFx(inst, "statue_transition_2")
+end
+
 local RETARGET_MUST_TAGS = { "_combat" }
 local RETARGET_CANT_TAGS = { "playerghost", "INLIMBO" }
 local function retargetfn(inst)
@@ -43,11 +81,11 @@ local function retargetfn(inst)
     return leader ~= nil
         and FindEntity(
             leader,
-            TUNING.SHADOWWAXWELL_TARGET_DIST,
+            TUNING.musha.creatures.shadowmusha.targetrange,
             function(guy)
                 return guy ~= inst
-                    and (guy.components.combat:TargetIs(leader) or
-                        guy.components.combat:TargetIs(inst))
+                    and (guy.components.combat:TargetIs(leader) or guy.components.combat:TargetIs(inst)
+                        or (inst:HasTag("shadowberserk") and (guy:HasTag("monster") or guy:HasTag("hostile"))))
                     and inst.components.combat:CanTarget(guy)
             end,
             RETARGET_MUST_TAGS, -- see entityreplica.lua
@@ -64,33 +102,21 @@ local function keeptargetfn(inst, target)
         and target.components.minigame_participator == nil
 end
 
-local function spearfn(inst)
-    inst.components.health:SetMaxHealth(TUNING.SHADOWWAXWELL_LIFE)
-    inst.components.health:StartRegen(TUNING.SHADOWWAXWELL_HEALTH_REGEN, TUNING.SHADOWWAXWELL_HEALTH_REGEN_PERIOD)
-
-    inst.components.combat:SetDefaultDamage(TUNING.SHADOWWAXWELL_DAMAGE)
-    inst.components.combat:SetAttackPeriod(TUNING.SHADOWWAXWELL_ATTACK_PERIOD)
-    inst.components.combat:SetRetargetFunction(2, retargetfn) --Look for leader's target.
-    inst.components.combat:SetKeepTargetFunction(keeptargetfn) --Keep attacking while leader is near.
-
-    return inst
-end
-
-local function nokeeptargetfn(inst)
-    return false
-end
-
-local function noncombatantfn(inst)
-    inst.components.combat:SetKeepTargetFunction(nokeeptargetfn)
-end
-
 local function nodebrisdmg(inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
     return afflicter ~= nil and afflicter:HasTag("quakedebris")
 end
 
+---------------------------------------------------------------------------------------------------------
+
 local function MakeMinion(prefab, tool, hat, master_postinit)
     local function fn()
         local inst = CreateEntity()
+
+        inst:AddTag("musha_companion")
+        inst:AddTag("shadowmusha")
+        inst:AddTag("shadowminion")
+        inst:AddTag("scarytoprey")
+        inst:AddTag("NOBLOCK")
 
         inst.entity:AddTransform()
         inst.entity:AddAnimState()
@@ -104,6 +130,7 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst.AnimState:SetBank("wilson")
         inst.AnimState:SetBuild("shadowmusha")
         inst.AnimState:PlayAnimation("idle")
+        inst.AnimState:SetMultColour(1, 1, 1, .6)
 
         if tool ~= nil then
             inst.AnimState:OverrideSymbol("swap_object", tool, tool)
@@ -121,10 +148,6 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
             inst.AnimState:Hide("HAIR_HAT")
         end
 
-        inst:AddTag("scarytoprey")
-        inst:AddTag("shadowminion")
-        inst:AddTag("NOBLOCK")
-
         inst:SetPrefabNameOverride("shadowmusha")
 
         inst.entity:SetPristine()
@@ -134,19 +157,25 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         end
 
         inst:AddComponent("locomotor")
-        inst.components.locomotor.runspeed = TUNING.SHADOWWAXWELL_SPEED
+        inst.components.locomotor.runspeed = TUNING.musha.creatures.shadowmusha.speed
         inst.components.locomotor:SetTriggersCreep(false)
         inst.components.locomotor.pathcaps = { ignorecreep = true }
         inst.components.locomotor:SetSlowMultiplier(.6)
 
         inst:AddComponent("health")
-        inst.components.health:SetMaxHealth(1)
+        inst.components.health:SetMaxHealth(TUNING.musha.creatures.shadowmusha.maxhealth)
+        inst.components.health:StartRegen(TUNING.musha.creatures.shadowmusha.healthregen,
+            TUNING.musha.creatures.shadowmusha.healthregenperiod)
         inst.components.health.nofadeout = true
         inst.components.health.redirect = nodebrisdmg
 
         inst:AddComponent("combat")
-        inst.components.combat.hiteffectsymbol = "torso"
+        inst.components.combat:SetDefaultDamage(TUNING.musha.creatures.shadowmusha.damage)
+        inst.components.combat:SetAttackPeriod(TUNING.musha.creatures.shadowmusha.attackperiod)
+        inst.components.combat:SetRetargetFunction(2, retargetfn) --Look for leader's target.
+        inst.components.combat:SetKeepTargetFunction(keeptargetfn) --Keep attacking while leader is near.
         inst.components.combat:SetRange(2)
+        inst.components.combat.hiteffectsymbol = "torso"
 
         inst:AddComponent("follower")
         inst.components.follower:KeepLeaderOnAttacked()
@@ -154,9 +183,11 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst.components.follower.keepleaderduringminigame = true
 
         inst:SetBrain(brain)
-        inst:SetStateGraph("SGshadowwaxwell")
+        inst:SetStateGraph("SGshadowmusha")
 
         inst:ListenForEvent("attacked", OnAttacked)
+        inst:ListenForEvent("shadowberserk_activate", OnEnterShadowBerserk)
+        inst:ListenForEvent("shadowberserk_quit", OnQuitShadowBerserk)
 
         if master_postinit ~= nil then
             master_postinit(inst)
@@ -168,7 +199,7 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
     return Prefab(prefab, fn, assets, prefabs)
 end
 
---------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
 
 local function NoHoles(pt)
     return not TheWorld.Map:IsPointNearHole(pt)
@@ -216,13 +247,7 @@ local function MakeBuilder(prefab)
     return Prefab(prefab .. "_builder", fn, nil, { prefab })
 end
 
---------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
 
-return MakeMinion("shadowmusha", "swap_nightmaresword_shadow", nil, spearfn),
+return MakeMinion("shadowmusha", "swap_nightmaresword_shadow"),
     MakeBuilder("shadowmusha")
--- MakeMinion("shadowlumber", "swap_axe", nil, noncombatantfn),
--- MakeMinion("shadowminer", "swap_pickaxe", nil, noncombatantfn),
--- MakeMinion("shadowdigger", "swap_shovel", nil, noncombatantfn),
--- MakeBuilder("shadowlumber"),
--- MakeBuilder("shadowminer"),
--- MakeBuilder("shadowdigger")

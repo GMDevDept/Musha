@@ -1,5 +1,5 @@
 -- Hotkey: ToggleValkyrie
-TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_valkyrie"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
             ThePlayer:ToggleValkyrie()
@@ -10,13 +10,13 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_valkyrie, function()
 end)
 
 -- Hotkey: ToggleBerserk
-TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_berserk"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
             ThePlayer:ToggleBerserk()
         else
             SendModRPCToServer(MOD_RPC.musha.ToggleBerserk)
-            local previousmode = ThePlayer.mode:value()
+            local previousmode = ThePlayer._mode
             if previousmode == 0 or previousmode == 1 then
                 ThePlayer:PushEvent("activateberserk")
             end
@@ -25,12 +25,34 @@ TheInput:AddKeyDownHandler(TUNING.musha.hotkey_berserk, function()
 end)
 
 -- Hotkey: ToggleSleep
-TheInput:AddKeyDownHandler(TUNING.musha.hotkey_sleep, function()
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_sleep"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
         if TheWorld.ismastersim then
             ThePlayer:ToggleSleep()
         else
             SendModRPCToServer(MOD_RPC.musha.ToggleSleep)
+        end
+    end
+end)
+
+-- Hotkey: switch companion order hotkey bindings
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_keybinding"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        if TheWorld.ismastersim then
+            ThePlayer:SwitchKeyBindings()
+        else
+            SendModRPCToServer(MOD_RPC.musha.SwitchKeyBindings)
+        end
+    end
+end)
+
+-- Hotkey: Companion Order: Shadow Musha
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_shadowmusha"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        if TheWorld.ismastersim then
+            ThePlayer:DoShadowMushaOrder()
+        else
+            SendModRPCToServer(MOD_RPC.musha.DoShadowMushaOrder)
         end
     end
 end)

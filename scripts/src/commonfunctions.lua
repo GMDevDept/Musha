@@ -82,11 +82,13 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
             fx = nil
         end)
     end
+
+    return fx
 end
 
 GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent, scale/offset: Vector3
     if type(fx_list) == "string" then
-        SpawnFx(target, fx_list, duration, scale, offset)
+        return SpawnFx(target, fx_list, duration, scale, offset)
     elseif type(fx_list) == "table" then
         for i, fx_name in pairs(fx_list) do
             SpawnFx(target, fx_name, duration, scale, offset)

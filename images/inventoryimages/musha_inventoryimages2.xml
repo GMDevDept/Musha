@@ -2,6 +2,7 @@
     <Texture filename="musha_inventoryimages2.tex" />
     <Elements>
         <Element name="shadowmusha_builder.tex" u1="0.031494140625" u2="0.062255859375" v1="0.437744140625" v2="0.468505859375" />
+        <!-- Segmentation -->
         <Element name="spear_rose.tex" u1="0.500244140625" u2="0.531005859375" v1="0.375244140625" v2="0.406005859375" />
         <Element name="unknown_body.tex" u1="0.062744140625" u2="0.093505859375" v1="0.125244140625" v2="0.156005859375" />
         <Element name="saltbox_nautical.tex" u1="0.281494140625" u2="0.312255859375" v1="0.468994140625" v2="0.499755859375" />

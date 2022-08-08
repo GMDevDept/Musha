@@ -53,6 +53,12 @@ STRINGS.musha = {
     lack_of_mana = "Musha的魔力不够了！",
     lack_of_sanity = "Musha的理智值不够了！",
 
+    switchkeybindings_on = "随从命令快捷键：开启",
+    switchkeybindings_off = "随从命令快捷键：关闭",
+
+    shadowmushaorder_follow = "影子们，停下手中的活儿，到Musha身边来！",
+    shadowmushaorder_resume = "影子们，行动起来吧！",
+
     segmentation = "------------------------------\n",
 
     enchant_skill = "附魔技能",
@@ -75,9 +81,9 @@ STRINGS.musha = {
 STRINGS.CHARACTERS.GENERIC.ACTIONFAIL.RUMMAGE.MUSHA_NOT_OWNER = "我想它的主人不希望我这样做。"
 
 STRINGS.NAMES.SHADOWMUSHA_BUILDER = "影子Musha"
-STRINGS.RECIPE_DESC.SHADOWMUSHA_BUILDER = "召唤自己在阴影中的另一面。"
+STRINGS.RECIPE_DESC.SHADOWMUSHA_BUILDER = "召唤自己阴影中的另一面。"
 STRINGS.NAMES.SHADOWMUSHA = "影子Musha"
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHADOWMUSHA = "那影子看着像Musha。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHADOWMUSHA = "影子看起来和Musha一模一样。"
 
 --status
 STRINGS.MUSHA_LEVEL_NEXT_LEVEL_UP = "下一等级提升"

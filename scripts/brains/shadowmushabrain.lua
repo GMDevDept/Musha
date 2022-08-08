@@ -8,6 +8,8 @@ require "behaviours/standstill"
 require "behaviours/leash"
 require "behaviours/runaway"
 
+local BrainCommon = require "brains/braincommon"
+
 local ShadowMushaBrain = Class(Brain, function(self, inst)
     Brain._ctor(self, inst)
 end)
@@ -15,19 +17,20 @@ end)
 --Images will help chop, mine and fight.
 
 local MIN_FOLLOW_DIST = 0
-local TARGET_FOLLOW_DIST = 6
-local MAX_FOLLOW_DIST = 8
+local TARGET_FOLLOW_DIST = 8
+local MAX_FOLLOW_DIST = 10
 
-local START_FACE_DIST = 6
-local KEEP_FACE_DIST = 8
+local START_FACE_DIST = 8
+local KEEP_FACE_DIST = 10
 
+local MAX_TOLEADER_DIST = 18
 local KEEP_WORKING_DIST = 14
 local SEE_WORK_DIST = 10
 
-local KEEP_DANCING_DIST = 2
+local KEEP_DANCING_DIST = 5
 
-local KITING_DIST = 3
-local STOP_KITING_DIST = 5
+local KITING_DIST = 5
+local STOP_KITING_DIST = 8
 
 local RUN_AWAY_DIST = 5
 local STOP_RUN_AWAY_DIST = 8
@@ -178,34 +181,60 @@ function ShadowMushaBrain:OnStart()
                     ActionNode(function() DanceParty(self.inst) end),
                 }, .25)),
 
-            WhileNode(function() return IsNearLeader(self.inst, KEEP_WORKING_DIST) end, "Leader In Range",
+            WhileNode(function() return IsNearLeader(self.inst, MAX_TOLEADER_DIST) end, "Leader In Range",
                 PriorityNode({
                     --All shadows will avoid explosives
                     RunAway(self.inst, { fn = ShouldAvoidExplosive, tags = { "explosive" }, notags = { "INLIMBO" } },
                         AVOID_EXPLOSIVE_DIST, AVOID_EXPLOSIVE_DIST),
-                    --Duelists will try to fight before fleeing
-                    IfNode(function() return self.inst.prefab == "shadowmusha" end, "Is Duelist",
+
+                    -- Attack and work only when inst not under follow-only mode
+                    WhileNode(function() return not self.inst:HasTag("followonly") end, "Not Follow-Only",
                         PriorityNode({
-                            WhileNode(function() return self.inst.components.combat:GetCooldown() > .5 and
-                                    ShouldKite(self.inst.components.combat.target, self.inst)
+                            -- Flee from enermy if health level is low and not under berserk mode
+                            WhileNode(function() return self.inst.components.health:GetPercent() < 0.25 and
+                                    not self.inst:HasTag("shadowberserk")
+                            end, "Flee",
+                                RunAway(self.inst,
+                                    { fn = ShouldRunAway, oneoftags = { "monster", "hostile" },
+                                        notags = { "player", "INLIMBO", "companion" } }, RUN_AWAY_DIST,
+                                    STOP_RUN_AWAY_DIST)),
+
+                            -- Dodge if attack in cooldown
+                            WhileNode(function() return (self.inst.components.combat:InCooldown() and
+                                    ShouldKite(self.inst.components.combat.target, self.inst))
                             end, "Dodge",
                                 RunAway(self.inst,
                                     { fn = ShouldKite, tags = { "_combat", "_health" }, notags = { "INLIMBO" } },
                                     KITING_DIST, STOP_KITING_DIST)),
+
+                            -- Attack
                             ChaseAndAttack(self.inst),
+
+                            -- Won't flee or do works under berserk mode
+                            WhileNode(function() return not self.inst:HasTag("shadowberserk") end, "Not Berserk",
+                                PriorityNode({
+                                    --Flee from danger
+                                    RunAway(self.inst,
+                                        { fn = ShouldRunAway, oneoftags = { "monster", "hostile" },
+                                            notags = { "player", "INLIMBO", "companion" } }, RUN_AWAY_DIST,
+                                        STOP_RUN_AWAY_DIST),
+
+                                    --Try to work if not fleeing
+                                    BrainCommon.NodeAssistLeaderDoAction(self,
+                                        { action = "CHOP", keepgoing_leaderdist = KEEP_WORKING_DIST }),
+                                    BrainCommon.NodeAssistLeaderDoAction(self,
+                                        { action = "MINE", keepgoing_leaderdist = KEEP_WORKING_DIST }),
+                                    DoAction(self.inst,
+                                        function() return FindEntityToWorkAction(self.inst, ACTIONS.DIG, DIG_TAGS) end),
+                                }, .25))
                         }, .25)),
-                    --All shadows will flee from danger at this point
-                    RunAway(self.inst,
-                        { fn = ShouldRunAway, oneoftags = { "monster", "hostile" },
-                            notags = { "player", "INLIMBO", "companion" } }, RUN_AWAY_DIST, STOP_RUN_AWAY_DIST),
-                    --Workiers will try to work if not fleeing
-                    IfNode(function() return self.inst.prefab == "shadowlumber" end, "Keep Chopping",
-                        DoAction(self.inst, function() return FindEntityToWorkAction(self.inst, ACTIONS.CHOP) end)),
-                    IfNode(function() return self.inst.prefab == "shadowminer" end, "Keep Mining",
-                        DoAction(self.inst, function() return FindEntityToWorkAction(self.inst, ACTIONS.MINE) end)),
-                    IfNode(function() return self.inst.prefab == "shadowdigger" end, "Keep Digging",
-                        DoAction(self.inst,
-                            function() return FindEntityToWorkAction(self.inst, ACTIONS.DIG, DIG_TAGS) end)),
+
+                    -- Under follow-only mode, just ran away from danger and follow the leader
+                    -- Won't flee under berserk mode
+                    WhileNode(function() return not self.inst:HasTag("shadowberserk") end, "Not Berserk",
+                        RunAway(self.inst,
+                            { fn = ShouldRunAway, oneoftags = { "monster", "hostile" },
+                                notags = { "player", "INLIMBO", "companion" } }, RUN_AWAY_DIST, STOP_RUN_AWAY_DIST)),
                 }, .25)),
 
             Follow(self.inst, GetLeader, MIN_FOLLOW_DIST, TARGET_FOLLOW_DIST, MAX_FOLLOW_DIST),

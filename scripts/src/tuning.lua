@@ -1,9 +1,4 @@
 TUNING.musha = {
-    -- Hotkeys from modinfo
-    hotkey_valkyrie = GetModConfigData("hotkey_valkyrie") or 114, --R
-    hotkey_berserk = GetModConfigData("hotkey_berserk") or 103, --G
-    hotkey_sleep = GetModConfigData("hotkey_sleep") or 116, --T
-
     -- Stats related
     health = 200,
     hunger = 200,
@@ -21,8 +16,6 @@ TUNING.musha = {
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.25,
     areaattackrange = 3,
-
-    maxpets = 100,
 
     maxexperience = 300,
     maxlevel = 30,
@@ -62,15 +55,38 @@ TUNING.musha = {
     debuffslowdownmult = 0.3,
     debuffslowdownduration = 4,
 
-    equipment = {
-        fuellevel = 1000,
-        refueldelta = 200,
-        fuelconsume_attack = -10,
-        fuelconsume_cast = -50,
-        fuelconsume_aura = -10,
-        expdelta = 5,
-        auraradius = 10,
-        auraperiod = 2,
-        areaattackrange = 3,
+    maxpets = 50,
+
+    creatures = {
+        shadowmusha = {
+            maxhealth = 400,
+            healthregen = 10,
+            healthregenperiod = 2,
+            speed = 8,
+            damage = 30,
+            attackperiod = 3,
+            targetrange = 10,
+            followonlydefenseboost = 0.8,
+        },
+        shadowberserk = {
+            maxhealth = 800,
+            healthregen = 20,
+            damage = 30,
+            attackperiod = 0.4, -- TUNING.WILSON_ATTACK_PERIOD
+        },
+    },
+
+    equipments = {
+        frosthammer = {
+            fuellevel = 1000,
+            refueldelta = 200,
+            fuelconsume_attack = -10,
+            fuelconsume_cast = -50,
+            fuelconsume_aura = -10,
+            expdelta = 5,
+            auraradius = 10,
+            auraperiod = 2,
+            areaattackrange = 3,
+        },
     }
 }
