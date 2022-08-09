@@ -7,6 +7,6 @@ AddCharacterRecipe("frosthammer",
 
 -- Add to mod menu or workstation: AddRecipe2 = function(name, ingredients, tech, config, filters)
 AddRecipe2("shadowmusha_builder",
-    { Ingredient("torch", 1) },
+    { Ingredient("reviver", 1), Ingredient("nightsword", 1) },
     TECH.SHADOW_TWO,
     { builder_tag = "musha", atlas = "images/inventoryimages/musha_inventoryimages2.xml", nounlock = true })

@@ -20,19 +20,35 @@ local assets =
     Asset("SOUND", "sound/willow.fsb"),
 }
 
+local function OnAttackOther(inst, data)
+    local target = data.target
+    if inst:HasTag("shadowberserk") then
+        local dmg = TUNING.musha.creatures.shadowmusha.damage *
+            TUNING.musha.creatures.shadowberserk.randomdamagemultiplier *
+            math.random()
+        target.components.combat:GetAttacked(inst, dmg)
+    end
+end
+
 local function OnAttacked(inst, data)
     if data.attacker ~= nil then
         if data.attacker.components.petleash ~= nil and
             data.attacker.components.petleash:IsPet(inst) then
-            if inst.components.lootdropper == nil then
-                inst:AddComponent("lootdropper")
-            end
-            inst.components.lootdropper:SpawnLootPrefab("nightmarefuel", inst:GetPosition())
+            inst.components.lootdropper:SpawnLootPrefab("nightsword", inst:GetPosition())
             data.attacker.components.petleash:DespawnPet(inst)
         elseif data.attacker.components.combat ~= nil then
             inst.components.combat:SuggestTarget(data.attacker)
+            inst.components.combat:ShareTarget(data.attacker,
+                TUNING.musha.creatures.shadowmusha.targetrange * 2,
+                function(dude) return dude.components.follower:GetLeader() == inst.components.follower:GetLeader() end,
+                TUNING.musha.maxpets,
+                { "shadowmusha" }) -- Note: Combat:ShareTarget(target, range, fn, maxnum, musttags)
         end
     end
+end
+
+local function OnKilled(inst)
+    inst.components.lootdropper:DropLoot(inst:GetPosition())
 end
 
 local function OnEnterShadowBerserk(inst)
@@ -97,9 +113,12 @@ end
 local function keeptargetfn(inst, target)
     --Is your leader nearby and your target not dead? Stay on it.
     --Match KEEP_WORKING_DIST in brain
-    return inst.components.follower:IsNearLeader(14)
+    return inst.components.follower:IsNearLeader(TUNING.musha.creatures.shadowmusha.targetrange)
         and inst.components.combat:CanTarget(target)
         and target.components.minigame_participator == nil
+        and not target:HasTag("musha")
+        and not (target.components.follower and
+            target.components.follower:GetLeader() == inst.components.follower:GetLeader())
 end
 
 local function nodebrisdmg(inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
@@ -115,7 +134,6 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst:AddTag("musha_companion")
         inst:AddTag("shadowmusha")
         inst:AddTag("shadowminion")
-        inst:AddTag("scarytoprey")
         inst:AddTag("NOBLOCK")
 
         inst.entity:AddTransform()
@@ -182,10 +200,15 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst.components.follower.keepdeadleader = true
         inst.components.follower.keepleaderduringminigame = true
 
+        inst:AddComponent("lootdropper")
+        inst.components.lootdropper:SetLoot({ "nightmarefuel" })
+
         inst:SetBrain(brain)
         inst:SetStateGraph("SGshadowmusha")
 
+        inst:ListenForEvent("onattackother", OnAttackOther)
         inst:ListenForEvent("attacked", OnAttacked)
+        inst:ListenForEvent("death", OnKilled)
         inst:ListenForEvent("shadowberserk_activate", OnEnterShadowBerserk)
         inst:ListenForEvent("shadowberserk_quit", OnQuitShadowBerserk)
 

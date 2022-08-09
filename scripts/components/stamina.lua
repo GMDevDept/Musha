@@ -116,7 +116,7 @@ function Stamina:Recalc(dt)
         (self.rate > 0.05 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -5 and RATE_SCALE.DECREASE_HIGH) or
         (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
-        (self.rate < 0.05 and RATE_SCALE.DECREASE_LOW) or
+        (self.rate < -0.05 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 
     self:DoDelta(dt * self.rate, true)

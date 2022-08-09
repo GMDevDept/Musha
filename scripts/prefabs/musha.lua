@@ -307,7 +307,7 @@ local function ToggleBerserk(inst)
 
     local previousmode = inst.mode:value()
     if previousmode == 0 or previousmode == 1 then
-        inst:PushEvent("activateberserk")
+        inst.activateberserk:push()
     elseif previousmode == 3 and not inst:HasTag("sneaking") then
         StartSneaking(inst)
     elseif previousmode == 3 and inst:HasTag("sneaking") then
@@ -456,21 +456,22 @@ local function OnModeChange(inst)
         if inst:HasTag("sneaking") then
             inst:RemoveSneakEffects()
             inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+        else
+            CustomAttachFx(inst, "statue_transition_2") -- Avoid dupulicate fx
         end
-        inst:RemoveTag("areaattack")
+        inst:RemoveTag("areaattack") -- Must be removed after inst:RemoveSneakEffects()
         inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
         CustomCancelTask(inst.modetrailtask)
 
         for k, v in pairs(inst.components.petleash:GetPets()) do
-            if v:HasTag("shadowmusha") then
-                v:DoTaskInTime(0.5 + math.random() * 0.5,
+            if v:HasTag("shadowmusha") and not v:HasTag("shadowvalkyrie") then
+                v:DoTaskInTime(math.random() * 0.5 + 0.5,
                     function() -- Delay for at least 0.5 seconds to make sure the activate event is triggered
                         v:PushEvent("shadowberserk_quit")
                     end)
             end
         end
 
-        CustomAttachFx(inst, "statue_transition_2")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
 
@@ -530,9 +531,11 @@ local function OnModeChange(inst)
             if v:HasTag("shadowmusha") then
                 v:RemoveTag("followonly")
                 v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "followonlybuff")
-                v:DoTaskInTime(math.random() * 0.5, function()
-                    v:PushEvent("shadowberserk_activate")
-                end)
+                if not v:HasTag("shadowvalkyrie") then
+                    v:DoTaskInTime(math.random() * 0.5, function()
+                        v:PushEvent("shadowberserk_activate")
+                    end)
+                end
             end
         end
 
@@ -676,6 +679,7 @@ local function common_postinit(inst)
     inst.soundsname = "willow"
 
     -- Character specific attributes
+    inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst._mode = 0 -- Store previous mode
 
@@ -744,11 +748,6 @@ local function master_postinit(inst)
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
-    inst.ToggleValkyrie = ToggleValkyrie
-    inst.ToggleBerserk = ToggleBerserk
-    inst.ToggleSleep = ToggleSleep
-    inst.SwitchKeyBindings = SwitchKeyBindings
-    inst.DoShadowMushaOrder = DoShadowMushaOrder
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
@@ -761,11 +760,11 @@ local function master_postinit(inst)
 end
 
 -- Set up remote procedure calls for client side
-AddModRPCHandler("musha", "ToggleValkyrie", ToggleValkyrie)
-AddModRPCHandler("musha", "ToggleBerserk", ToggleBerserk)
-AddModRPCHandler("musha", "ToggleSleep", ToggleSleep)
-AddModRPCHandler("musha", "SwitchKeyBindings", SwitchKeyBindings)
-AddModRPCHandler("musha", "DoShadowMushaOrder", DoShadowMushaOrder)
+AddModRPCHandler("musha", "togglevalkyrie", ToggleValkyrie)
+AddModRPCHandler("musha", "toggleberserk", ToggleBerserk)
+AddModRPCHandler("musha", "togglesleep", ToggleSleep)
+AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)
+AddModRPCHandler("musha", "doshadowmushaorder", DoShadowMushaOrder)
 
 ---------------------------------------------------------------------------------------------------------
 

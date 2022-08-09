@@ -60,18 +60,19 @@ TUNING.musha = {
     creatures = {
         shadowmusha = {
             maxhealth = 400,
-            healthregen = 10,
+            healthregen = 20,
             healthregenperiod = 2,
             speed = 8,
-            damage = 30,
+            damage = 40,
             attackperiod = 3,
-            targetrange = 10,
+            targetrange = 18,
             followonlydefenseboost = 0.8,
         },
         shadowberserk = {
             maxhealth = 800,
-            healthregen = 20,
-            damage = 30,
+            healthregen = 40,
+            damage = 0,
+            randomdamagemultiplier = 1,
             attackperiod = 0.4, -- TUNING.WILSON_ATTACK_PERIOD
         },
     },

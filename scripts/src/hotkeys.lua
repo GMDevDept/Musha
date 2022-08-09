@@ -1,59 +1,35 @@
 -- Hotkey: ToggleValkyrie
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_valkyrie"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        if TheWorld.ismastersim then
-            ThePlayer:ToggleValkyrie()
-        else
-            SendModRPCToServer(MOD_RPC.musha.ToggleValkyrie)
-        end
+        SendModRPCToServer(MOD_RPC.musha.togglevalkyrie)
     end
 end)
 
 -- Hotkey: ToggleBerserk
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_berserk"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        if TheWorld.ismastersim then
-            ThePlayer:ToggleBerserk()
-        else
-            SendModRPCToServer(MOD_RPC.musha.ToggleBerserk)
-            local previousmode = ThePlayer._mode
-            if previousmode == 0 or previousmode == 1 then
-                ThePlayer:PushEvent("activateberserk")
-            end
-        end
+        SendModRPCToServer(MOD_RPC.musha.toggleberserk)
     end
 end)
 
 -- Hotkey: ToggleSleep
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_sleep"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        if TheWorld.ismastersim then
-            ThePlayer:ToggleSleep()
-        else
-            SendModRPCToServer(MOD_RPC.musha.ToggleSleep)
-        end
+        SendModRPCToServer(MOD_RPC.musha.togglesleep)
     end
 end)
 
 -- Hotkey: switch companion order hotkey bindings
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_keybinding"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        if TheWorld.ismastersim then
-            ThePlayer:SwitchKeyBindings()
-        else
-            SendModRPCToServer(MOD_RPC.musha.SwitchKeyBindings)
-        end
+        SendModRPCToServer(MOD_RPC.musha.switchkeybindings)
     end
 end)
 
 -- Hotkey: Companion Order: Shadow Musha
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_shadowmusha"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        if TheWorld.ismastersim then
-            ThePlayer:DoShadowMushaOrder()
-        else
-            SendModRPCToServer(MOD_RPC.musha.DoShadowMushaOrder)
-        end
+        SendModRPCToServer(MOD_RPC.musha.doshadowmushaorder)
     end
 end)
 
