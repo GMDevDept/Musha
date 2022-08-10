@@ -116,7 +116,6 @@ local function keeptargetfn(inst, target)
     return inst.components.follower:IsNearLeader(TUNING.musha.creatures.shadowmusha.targetrange)
         and inst.components.combat:CanTarget(target)
         and target.components.minigame_participator == nil
-        and not target:HasTag("musha")
         and not (target.components.follower and
             target.components.follower:GetLeader() == inst.components.follower:GetLeader())
 end

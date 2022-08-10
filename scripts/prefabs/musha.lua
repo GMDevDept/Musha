@@ -1,6 +1,8 @@
 local MakePlayerCharacter = require("prefabs/player_common")
 local UserCommands = require("usercommands")
 
+---------------------------------------------------------------------------------------------------------
+
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
 
@@ -10,8 +12,6 @@ local assets = {
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
-    "torch",
-    "hammer",
     "tentaclespike",
     "minotaurhorn",
     "ice",
@@ -29,8 +29,10 @@ end
 -- Character required prefabs
 local prefabs = FlattenTree(start_inv, true)
 
+---------------------------------------------------------------------------------------------------------
+
 -- Bonus damage
-local function bonusdamagefn(inst, target, damage, weapon)
+local function BonusDamageFn(inst, target, damage, weapon)
     -- return (target:HasTag("") and TUNING.EXTRADAMAGE) or 0
     return 0
 end
@@ -101,6 +103,7 @@ end
 
 -- Companion Orders
 
+-- Enable/disable hotkeys
 local function SwitchKeyBindings(inst)
     if inst.companionhotkeysenabled then
         inst.companionhotkeysenabled = false
@@ -113,6 +116,7 @@ local function SwitchKeyBindings(inst)
     end
 end
 
+-- Order shadow musha to toggle follow-only mode
 local function DoShadowMushaOrder(inst)
     if not inst.companionhotkeysenabled then
         return
@@ -123,7 +127,7 @@ local function DoShadowMushaOrder(inst)
         for k, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") then
                 v:RemoveTag("followonly")
-                v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "followonlybuff")
+                v.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "followonlybuff")
             end
         end
     else
@@ -133,8 +137,8 @@ local function DoShadowMushaOrder(inst)
         for k, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
                 v:AddTag("followonly")
-                v.components.health.externalabsorbmodifiers:SetModifier(inst,
-                    TUNING.musha.creatures.shadowmusha.followonlydefenseboost, "followonlybuff")
+                v.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+                    TUNING.musha.creatures.shadowmusha.followonlydamagetakenmultplier, "followonlybuff")
             end
         end
     end
@@ -679,9 +683,10 @@ local function common_postinit(inst)
     inst.soundsname = "willow"
 
     -- Character specific attributes
-    inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst._mode = 0 -- Store previous mode
+    inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
+    inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
@@ -718,7 +723,7 @@ local function master_postinit(inst)
     -- Combat
     inst.components.combat.damagemultiplier = TUNING.musha.damagemultiplier
     inst.components.combat.areahitdamagepercent = TUNING.musha.areahitdamagepercent
-    inst.components.combat.bonusdamagefn = bonusdamagefn
+    inst.components.combat.bonusdamagefn = BonusDamageFn
 
     -- Petleash
     inst._onpetlost = function(pet) inst.components.sanity:RemoveSanityPenalty(pet) end
@@ -739,8 +744,8 @@ local function master_postinit(inst)
     inst.OnNewSpawn = OnLoad
 
     -- Character specific attributes
-    inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
+    inst.fatiguelevel:set_local(0) -- Force to trigger dirty event on next :set()
     inst.skills = {}
     inst.companionhotkeysenabled = true
     inst.shadowmushafollowonly = false

@@ -64,9 +64,9 @@ TUNING.musha = {
             healthregenperiod = 2,
             speed = 8,
             damage = 40,
-            attackperiod = 3,
+            attackperiod = 2,
             targetrange = 18,
-            followonlydefenseboost = 0.8,
+            followonlydamagetakenmultplier = 0.2,
         },
         shadowberserk = {
             maxhealth = 800,
