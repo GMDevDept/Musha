@@ -1,9 +1,13 @@
 ACTIONS.ABANDON.priority = 5
 ACTIONS.ADDFUEL.priority = 4
 ACTIONS.USEITEM.priority = 3
-ACTIONS.TURNON.priority = 3
 ACTIONS.TURNOFF.priority = 2
+ACTIONS.TURNON.priority = 3
 ACTIONS.GIVE.priority = 2
+
+---------------------------------------------------------------------------------------------------------
+
+-- Redefinations of game built-in actions
 
 -- Open a useable item (for musha's equipments they can be always right-clicked while kept being equipped)
 local _UseItemFn = ACTIONS.USEITEM.fn
@@ -92,3 +96,49 @@ ACTIONS.HARVEST.fn = function(act)
         return _HarvestFn(act)
     end
 end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Add new actions
+
+-- Cast spell on self
+AddAction("MANASPELL", STRINGS.musha.manaspell.GENERIC, function(act)
+    -- No need to worry whether player is dead, action will be disabled anyway
+    if (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
+        act.doer:FreezingSpell()
+        return true
+    elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
+        return true
+    elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
+        return true
+    else
+        return false
+    end
+end)
+
+ACTIONS.MANASPELL.instant = true
+
+-- ACTIONS.MANASPELL.str = STRINGS.musha.manaspell
+STRINGS.ACTIONS.MANASPELL = STRINGS.musha.manaspell
+
+ACTIONS.MANASPELL.strfn = function(act)
+    if (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
+        return "FREEZINGSPELL"
+    elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
+        return "THUNDERSPELL"
+    elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
+        return "SHADOWSPELL"
+    else
+        return "GENERIC"
+    end
+end
+
+local function CastSpellOnSelf(inst, doer, actions, right)
+    if right then
+        if inst:HasTag("musha") and inst == doer then
+            table.insert(actions, GLOBAL.ACTIONS.MANASPELL)
+        end
+    end
+end
+
+AddComponentAction("SCENE", "spelltarget", CastSpellOnSelf) -- Note: AddComponentAction = function(actiontype, component, fn)

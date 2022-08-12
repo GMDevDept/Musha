@@ -39,6 +39,48 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Spells
+
+-- Common
+local function OnCastSpellToSelf(inst)
+end
+
+-- Freezing spell
+local function FreezingSpell(inst)
+    if inst.components.mana.current < TUNING.musha.skills.freezingspell.maxmanacost then
+        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+        inst.sg:GoToState("mindcontrolled_pst")
+        return
+    end
+
+    local validtargets = 0
+    local must_tags = { "_combat" }
+    local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
+
+    CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, function(v)
+        if v.components.freezable and not v.components.freezable:IsFrozen() then
+            v.components.freezable:AddColdness(4) -- Freeze
+            v.components.freezable:SpawnShatterFX()
+            if v.components.freezable:IsFrozen() then
+                CustomOnFreeze(v)
+            else
+                v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not frozen
+            end
+            validtargets = validtargets + 1
+        elseif not v.components.freezable and v:HasTag("locomotor") then
+            v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not freezable
+            validtargets = validtargets + 1
+        end
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
+
+    inst.components.mana:DoDelta(-
+        math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
+    inst.components.talker:Say(STRINGS.musha.skills.freezingspell.cast)
+    OnCastSpellToSelf(inst)
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Pet leash related
 
 local function ShadowMinionFx(pet)
@@ -604,6 +646,7 @@ local function OnLevelUp(inst, data)
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
     inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
+    inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
     inst.skills.sporebomb          = data.lvl >= TUNING.musha.leveltounlockskill.sporebomb and true or nil
     inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
@@ -712,6 +755,9 @@ local function master_postinit(inst)
     -- Stamina
     inst:AddComponent("stamina")
 
+    -- Cast spell to self
+    inst:AddComponent("spelltarget")
+
     -- Read books
     inst:AddComponent("reader")
 
@@ -753,6 +799,7 @@ local function master_postinit(inst)
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
+    inst.FreezingSpell = FreezingSpell
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)

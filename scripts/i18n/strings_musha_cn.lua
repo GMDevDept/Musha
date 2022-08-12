@@ -1,41 +1,3 @@
---translated by deloquac
--- The character's name as appears in-game
-STRINGS.NAMES.MUSHA = "Musha"
--- character select screen
-STRINGS.CHARACTER_TITLES.musha = "精灵公主"
-STRINGS.CHARACTER_NAMES.musha = "Musha"
-STRINGS.CHARACTER_DESCRIPTIONS.musha = "[升级解锁技能]\n状态(L) 技能(K) 外貌(P)\n女武神(R) 影子(G) 护盾(C) 音乐(X) 睡觉(T) Yamche(Z,V,B)"
-STRINGS.CHARACTER_QUOTES.musha = "我是真正的公主！"
-STRINGS.CHARACTER_SURVIVABILITY.musha = "想死都难"
-
--- Skins
-STRINGS.SKIN_NAMES.musha_none = "通常"
-STRINGS.SKIN_DESCRIPTIONS.musha_none = "默认状态，饱食度低于75%时自动触发\n"
-STRINGS.SKIN_QUOTES.musha_none = "我是真正的公主！"
-STRINGS.SKIN_NAMES.musha_full = "充盈"
-STRINGS.SKIN_DESCRIPTIONS.musha_full = "充盈状态，饱食度高于75%时自动触发\n"
-STRINGS.SKIN_QUOTES.musha_full = "吃饱饱，睡好好~"
-STRINGS.SKIN_NAMES.musha_valkyrie = "女武神"
-STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：暂无，按R键触发\n"
-STRINGS.SKIN_QUOTES.musha_valkyrie = "就让你见识，Musha真正的力量！"
-STRINGS.SKIN_NAMES.musha_berserk = "狂暴"
-STRINGS.SKIN_DESCRIPTIONS.musha_berserk = "解锁条件：暂无，按G键触发\n"
-STRINGS.SKIN_QUOTES.musha_berserk = "狂暴状态，限制解除！"
-
-STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("也许她能成为我书友会的成员。")
-STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("贵族的血？唔...")
-STRINGS.CHARACTERS.WOODIE.DESCRIBE.MUSHA = ("她能变身？..不，也许不是")
-STRINGS.CHARACTERS.WOLFGANG.DESCRIBE.MUSHA = ("她很弱..不过好像要帮我们。")
-STRINGS.CHARACTERS.WENDY.DESCRIBE.MUSHA = ("我感觉强烈..")
-STRINGS.CHARACTERS.WX78.DESCRIBE.MUSHA = ("我感到自己的心。")
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
-    GENERIC = "感觉很好！",
-    ATTACKER = "战斗 战斗 战斗",
-    MURDERER = "谋杀！",
-    REVIVER = "回来..",
-    GHOST = "走开！",
-}
-
 STRINGS.musha = {
     skills = {
         valkyrie = "女武神模式",
@@ -47,6 +9,16 @@ STRINGS.musha = {
         sneaksucceed = "融于暗影之中...",
         backstab_normal = "成功的背刺！",
         backstab_perfect = "完美的背刺！",
+        freezingspell = {
+            cast = "冰之精灵，回应Musha的呼唤！",
+        },
+    },
+
+    manaspell = {
+        GENERIC = "施放法术",
+        FREEZINGSPELL = "唤冰法咒",
+        THUNDERSPELL = "雷霆法咒",
+        SHADOWSPELL = "暗影波动",
     },
 
     lack_of_exp = "Musha需要更多经验值！",
@@ -78,13 +50,56 @@ STRINGS.musha = {
     },
 }
 
+---------------------------------------------------------------------------------------------------------
+
+-- The character's name as appears in-game
+STRINGS.NAMES.MUSHA = "Musha"
+-- character select screen
+STRINGS.CHARACTER_TITLES.musha = "精灵公主"
+STRINGS.CHARACTER_NAMES.musha = "Musha"
+STRINGS.CHARACTER_DESCRIPTIONS.musha = "[升级解锁技能]\n状态(L) 技能(K) 外貌(P)\n女武神(R) 影子(G) 护盾(C) 音乐(X) 睡觉(T) Yamche(Z,V,B)"
+STRINGS.CHARACTER_QUOTES.musha = "我是真正的公主！"
+STRINGS.CHARACTER_SURVIVABILITY.musha = "由你决定！"
+
+-- Skins
+STRINGS.SKIN_NAMES.musha_none = "通常"
+STRINGS.SKIN_DESCRIPTIONS.musha_none = "默认状态，饱食度低于75%时自动触发\n"
+STRINGS.SKIN_QUOTES.musha_none = "我是真正的公主！"
+STRINGS.SKIN_NAMES.musha_full = "充盈"
+STRINGS.SKIN_DESCRIPTIONS.musha_full = "充盈状态，饱食度高于75%时自动触发\n"
+STRINGS.SKIN_QUOTES.musha_full = "吃饱饱，睡好好~"
+STRINGS.SKIN_NAMES.musha_valkyrie = "女武神"
+STRINGS.SKIN_DESCRIPTIONS.musha_valkyrie = "解锁条件：暂无，按R键触发\n"
+STRINGS.SKIN_QUOTES.musha_valkyrie = "就让你见识，Musha真正的力量！"
+STRINGS.SKIN_NAMES.musha_berserk = "狂暴"
+STRINGS.SKIN_DESCRIPTIONS.musha_berserk = "解锁条件：暂无，按G键触发\n"
+STRINGS.SKIN_QUOTES.musha_berserk = "狂暴状态，限制解除！"
+
+STRINGS.CHARACTERS.WICKERBOTTOM.DESCRIBE.MUSHA = ("也许她能成为我书友会的成员。")
+STRINGS.CHARACTERS.WAXWELL.DESCRIBE.MUSHA = ("贵族的血？唔...")
+STRINGS.CHARACTERS.WOODIE.DESCRIBE.MUSHA = ("她能变身？..不，也许不是")
+STRINGS.CHARACTERS.WOLFGANG.DESCRIBE.MUSHA = ("她很弱..不过好像要帮我们。")
+STRINGS.CHARACTERS.WENDY.DESCRIBE.MUSHA = ("我感觉强烈..")
+STRINGS.CHARACTERS.WX78.DESCRIBE.MUSHA = ("我感到自己的心。")
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
+    GENERIC = "感觉很好！",
+    ATTACKER = "战斗 战斗 战斗",
+    MURDERER = "谋杀！",
+    REVIVER = "回来..",
+    GHOST = "走开！",
+}
+
 STRINGS.CHARACTERS.GENERIC.ACTIONFAIL.RUMMAGE.MUSHA_NOT_OWNER = "我想它的主人不希望我这样做。"
 
 STRINGS.NAMES.SHADOWMUSHA_BUILDER = "影子Musha"
 STRINGS.RECIPE_DESC.SHADOWMUSHA_BUILDER = "召唤自己阴影中的另一面。"
+
 STRINGS.NAMES.SHADOWMUSHA = "影子Musha"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHADOWMUSHA = "影子看起来和Musha一模一样。"
 
+---------------------------------------------------------------------------------------------------------
+
+--translated by deloquac
 --status
 STRINGS.MUSHA_LEVEL_NEXT_LEVEL_UP = "下一等级提升"
 STRINGS.MUSHA_LEVEL_LEVEL = "等级"

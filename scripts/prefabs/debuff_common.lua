@@ -10,6 +10,8 @@ local function slowdown_attach(inst, target)
     if target.components and target.components.locomotor then
         target.components.locomotor:SetExternalSpeedMultiplier(inst, inst.GUID, TUNING.musha.debuffslowdownmult) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier) set source as self to avoid duplicate effect
         SpawnPrefab("splash").Transform:SetPosition(target.Transform:GetWorldPosition())
+    else
+        inst.components.debuff:Stop()
     end
 end
 

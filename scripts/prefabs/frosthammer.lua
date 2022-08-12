@@ -182,8 +182,8 @@ end
 local function task_aura(inst)
     local x, y, z = inst.Transform:GetWorldPosition()
     local must_tags = { "_combat", "locomotor" }
-    local ignore_tags = { "freeze_cooldown", "INLIMBO", "notarget", "noattack", "flight", "invisible", "companion",
-        "musha_companion", "isdead", "nofreeze", "player" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "companion",
+        "musha_companion", "freeze_cooldown", "nofreeze", "player" }
     local targets = TheSim:FindEntities(x, y, z, TUNING.musha.equipments.frosthammer.auraradius, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
     if targets then
         local freeze_target = #targets > 1 and math.random(#targets) or 1

@@ -231,12 +231,14 @@ end
 
 local musha_berserk_pre = State {
     name = "musha_berserk_pre",
-    tags = { "busy", "berserk" },
+    tags = { "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
+        if inst.mode:value() ~= 3 then -- Set invincible if transform form other mode, else super armor only
+            inst.components.health:SetInvincible(true)
+        end
         inst.SoundEmitter:PlaySound("dontstarve/charlie/warn")
         inst.components.locomotor:Stop()
-        inst.components.health:SetInvincible(true)
         inst.AnimState:PlayAnimation("emoteXL_angry")
     end,
 
@@ -310,7 +312,7 @@ local musha_berserk_pre = State {
 -- Client
 local musha_berserk_pre_client = State {
     name = "musha_berserk_pre_client",
-    tags = { "busy", "berserk" },
+    tags = { "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
