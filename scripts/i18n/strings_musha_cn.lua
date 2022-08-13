@@ -1,25 +1,5 @@
 STRINGS.musha = {
-    skills = {
-        valkyrie = "女武神模式",
-        berserk = "狂暴模式",
-        manashield = "魔法护盾",
-        manashield_passive = "被动护盾",
-        sneak = "潜影突袭",
-        startsneaking = "潜行开始...",
-        sneaksucceed = "融于暗影之中...",
-        backstab_normal = "成功的背刺！",
-        backstab_perfect = "完美的背刺！",
-        freezingspell = {
-            cast = "冰之精灵，回应Musha的呼唤！",
-        },
-    },
-
-    manaspell = {
-        GENERIC = "施放法术",
-        FREEZINGSPELL = "唤冰法咒",
-        THUNDERSPELL = "雷霆法咒",
-        SHADOWSPELL = "暗影波动",
-    },
+    segmentation = "------------------------------\n",
 
     lack_of_exp = "Musha需要更多经验值！",
     lack_of_mana = "Musha的魔力不够了！",
@@ -31,22 +11,47 @@ STRINGS.musha = {
     shadowmushaorder_follow = "影子们，停下手中的活儿，到Musha身边来！",
     shadowmushaorder_resume = "影子们，行动起来吧！",
 
-    segmentation = "------------------------------\n",
-
-    enchant_skill = "附魔技能",
-    enchant_material_added = "附魔素材已添加",
-    skill_unlocked = "已解锁技能",
-    locked = "[未解锁]",
-    material_required = "所需素材",
-    weapon_broken = "武器已损坏",
-
-    frosthammer = {
-        enchant = {
-            cast_spell = "♠ 召唤：冰霜触手",
-            cooling = "◇ 冷却体温",
-            aura = "⊙ 光环：极寒领域",
+    skills = {
+        manaspells = {
+            actionstrings = {
+                GENERIC = "施放法术",
+                FREEZINGSPELL = "唤冰法咒",
+                THUNDERSPELL = "雷霆法咒",
+                SHADOWSPELL = "暗影波动",
+            },
+            freezingspell = {
+                cast = "冰之精灵，回应Musha的呼唤！",
+            },
         },
-        stopcoolinginwinter = "冬季开始，降温功能已关闭"
+        valkyrie = "女武神模式",
+        berserk = "狂暴模式",
+        manashield = "魔法护盾",
+        manashield_passive = "被动护盾",
+        sneak = {
+            name = "潜影突袭",
+            start = "潜行开始...",
+            success = "融于暗影之中...",
+            backstab_normal = "成功的背刺！",
+            backstab_perfect = "完美的背刺！",
+        },
+    },
+
+    equipments = {
+        enchant_skill = "附魔技能",
+        enchant_material_added = "附魔素材已添加",
+        skill_unlocked = "已解锁技能",
+        locked = "[未解锁]",
+        material_required = "所需素材",
+        weapon_broken = "武器已损坏",
+
+        frosthammer = {
+            enchants = {
+                cast_spell = "♠ 召唤：冰霜触手",
+                cooling = "◇ 冷却体温",
+                aura = "⊙ 光环：极寒领域",
+            },
+            stopcoolinginwinter = "冬季开始，降温功能已关闭"
+        },
     },
 }
 
@@ -54,6 +59,7 @@ STRINGS.musha = {
 
 -- The character's name as appears in-game
 STRINGS.NAMES.MUSHA = "Musha"
+
 -- character select screen
 STRINGS.CHARACTER_TITLES.musha = "精灵公主"
 STRINGS.CHARACTER_NAMES.musha = "Musha"

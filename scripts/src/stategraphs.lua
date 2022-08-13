@@ -345,3 +345,183 @@ AddStategraphEvent("wilson_client", EventHandler("activateberserk",
         end
     end)
 )
+
+---------------------------------------------------------------------------------------------------------
+
+-- Mana spell
+local BOOK_LAYERS = {
+    "FX_tentacles",
+    "FX_fish",
+    "FX_plants",
+    "FX_plants_big",
+    "FX_plants_small",
+    "FX_lightning",
+    "FX_roots",
+}
+
+local musha_spell = State {
+    name = "musha_spell",
+    tags = { "doing", "nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
+        inst.AnimState:PushAnimation("book", false)
+
+        local book = inst.bufferedbookfx or nil
+        if book ~= nil then
+            if book.def ~= nil then
+                if book.def.fx ~= nil then
+                    inst.sg.statemem.success_fx = book.def.fx
+                end
+
+                if book.def.layer ~= nil then
+                    for i, v in ipairs(BOOK_LAYERS) do
+                        if book.def.layer == v then
+                            inst.AnimState:Show(v)
+                        else
+                            inst.AnimState:Hide(v)
+                        end
+                    end
+
+                    inst.sg.statemem.book_layer = book.def.layer
+                end
+
+                if book.def.layer_sound ~= nil then
+                    --track and manage via soundtask and sound name (even though it is not a loop)
+                    --so we can handle interruptions to this state
+                    local frame = book.def.layer_sound.frame or 0
+                    if frame > 0 then
+                        inst.sg.statemem.soundtask = inst:DoTaskInTime(frame * FRAMES, function(inst)
+                            inst.sg.statemem.soundtask = nil
+                            inst.SoundEmitter:KillSound("book_layer_sound")
+                            inst.SoundEmitter:PlaySound(book.def.layer_sound.sound, "book_layer_sound")
+                        end)
+                    else
+                        inst.SoundEmitter:KillSound("book_layer_sound")
+                        inst.SoundEmitter:PlaySound(book.def.layer_sound.sound, "book_layer_sound")
+                    end
+                end
+            end
+
+            local swap_build = book.swap_build
+            local swap_prefix = book.swap_prefix or "book"
+            if swap_build ~= nil then
+                inst.AnimState:OverrideSymbol("book_open", swap_build, swap_prefix .. "_open")
+                inst.AnimState:OverrideSymbol("book_closed", swap_build, swap_prefix .. "_closed")
+                inst.sg.statemem.symbolsoverridden = true
+            end
+        end
+
+        inst.sg.statemem.castsound = book ~= nil and book.castsound or "dontstarve/common/book_spell"
+    end,
+
+    timeline =
+    {
+        TimeEvent(0, function(inst)
+            inst.sg.statemem.book_fx = SpawnPrefab(inst.components.rider:IsRiding() and "book_fx_mount" or "book_fx")
+            inst.sg.statemem.book_fx.entity:SetParent(inst.entity)
+            inst.sg.statemem.book_fx.Transform:SetPosition(0, .2, 0)
+        end),
+        TimeEvent(28 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/use_book_light")
+        end),
+        TimeEvent(54 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/use_book_close")
+        end),
+        TimeEvent(58 * FRAMES, function(inst)
+            inst[inst.bufferedspell](inst)
+            CustomAttachFx(inst, inst.sg.statemem.success_fx)
+            inst.SoundEmitter:PlaySound(inst.sg.statemem.castsound)
+            inst.sg.statemem.book_fx = nil --Don't cancel anymore
+        end)
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        if inst.sg.statemem.symbolsoverridden then
+            inst.AnimState:OverrideSymbol("book_open", "player_actions_uniqueitem", "book_open")
+            inst.AnimState:OverrideSymbol("book_closed", "player_actions_uniqueitem", "book_closed")
+        end
+        if inst.sg.statemem.book_fx ~= nil and inst.sg.statemem.book_fx:IsValid() then
+            inst.sg.statemem.book_fx:Remove()
+        end
+        if inst.sg.statemem.book_layer ~= nil then
+            if type(inst.sg.statemem.book_layer) == "table" then
+                for i, v in ipairs(inst.sg.statemem.book_layer) do
+                    inst.AnimState:Hide(v)
+                end
+            else
+                inst.AnimState:Hide(inst.sg.statemem.book_layer)
+            end
+        end
+        if inst.sg.statemem.soundtask ~= nil then
+            inst.sg.statemem.soundtask:Cancel()
+        elseif inst.SoundEmitter:PlayingSound("book_layer_sound") then
+            inst.SoundEmitter:SetVolume("book_layer_sound", .5)
+        end
+
+        inst.sg.statemem.success_fx = nil
+        inst.bufferedspell = nil
+        inst.bufferedbookfx = nil
+    end,
+}
+
+local musha_spell_client = State {
+    name = "musha_spell_client",
+    tags = { "doing", "nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
+        inst.AnimState:PushAnimation("action_uniqueitem_lag", false)
+        inst.sg:SetTimeout(2)
+    end,
+
+    onupdate = function(inst)
+        if inst:HasTag("doing") then
+            if inst.entity:FlattenMovementPrediction() then
+                inst.sg:GoToState("idle", "noanim")
+            end
+        elseif inst.bufferedaction == nil then
+            inst.sg:GoToState("idle")
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst:ClearBufferedAction()
+        inst.sg:GoToState("idle")
+    end,
+}
+
+AddStategraphState("wilson", musha_spell)
+AddStategraphState("wilson_client", musha_spell_client)
+
+AddStategraphEvent("wilson", EventHandler("castmanaspell",
+    function(inst, data)
+        if not inst.sg:HasStateTag("busy") then
+            inst.sg:GoToState("musha_spell")
+        else
+            inst.bufferedspell = nil
+            inst.bufferedbookfx = nil
+        end
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("castmanaspell",
+    function(inst, data)
+        if not inst.sg:HasStateTag("busy") then
+            inst.sg:GoToState("musha_spell_client")
+        end
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------

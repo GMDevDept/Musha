@@ -102,14 +102,48 @@ end
 -- Add new actions
 
 -- Cast spell on self
-AddAction("MANASPELL", STRINGS.musha.manaspell.GENERIC, function(act)
-    -- No need to worry whether player is dead, action will be disabled anyway
-    if (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
-        act.doer:FreezingSpell()
+AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, function(act)
+    -- No need to worry whether player is dead, action.ghost_valid is disabled by default
+    if act.doer.sg:HasStateTag("busy") then
+        return false
+    elseif (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
+        act.doer.bufferedspell = "FreezingSpell"
+        act.doer.bufferedbookfx = {
+            swap_build = "swap_books",
+            swap_prefix = "book_moon",
+            def = {
+                fx = "fx_book_temperature",
+                layer = "FX_fish",
+                layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
+            }
+        }
+        act.doer.castmanaspell:push()
         return true
     elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
+        act.doer.bufferedspell = "FreezingSpell"
+        act.doer.bufferedbookfx = {
+            swap_build = "swap_books",
+            swap_prefix = "book_horticulture_upgraded",
+            def = {
+                fx = "fx_book_rain",
+                layer = "FX_lightning",
+                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+            }
+        }
+        act.doer.castmanaspell:push()
         return true
     elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
+        act.doer.bufferedspell = "FreezingSpell"
+        act.doer.bufferedbookfx = {
+            swap_build = "swap_books",
+            swap_prefix = "book_tentacles",
+            def = {
+                fx = "fx_book_fire",
+                layer = "FX_tentacles",
+                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/tentacles" },
+            }
+        }
+        act.doer.castmanaspell:push()
         return true
     else
         return false
@@ -118,15 +152,14 @@ end)
 
 ACTIONS.MANASPELL.instant = true
 
--- ACTIONS.MANASPELL.str = STRINGS.musha.manaspell
-STRINGS.ACTIONS.MANASPELL = STRINGS.musha.manaspell
+STRINGS.ACTIONS.MANASPELL = STRINGS.musha.skills.manaspells.actionstrings
 
 ACTIONS.MANASPELL.strfn = function(act)
-    if (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
+    if (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) then
         return "FREEZINGSPELL"
-    elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
+    elseif act.doer.mode:value() == 2 then
         return "THUNDERSPELL"
-    elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
+    elseif act.doer.mode:value() == 3 then
         return "SHADOWSPELL"
     else
         return "GENERIC"

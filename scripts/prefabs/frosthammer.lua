@@ -119,16 +119,16 @@ local function boost_declaration(inst)
     local str4 = STRINGS.MUSHA_WEAPON_AREA .. "\n"
         .. STRINGS.MUSHA_WEAPON_FREEZESLOW .. "\n"
 
-    local str5 = "------" .. STRINGS.musha.enchant_skill .. "------\n"
+    local str5 = "------" .. STRINGS.musha.equipments.enchant_skill .. "------\n"
 
     local str6 = ""
     for k, v in pairs(inst.enchant_ability) do
         if not inst[v] then
-            str6 = str6 .. STRINGS.musha.locked .. " "
+            str6 = str6 .. STRINGS.musha.equipments.locked .. " "
         end
-        str6 = str6 .. STRINGS.musha.frosthammer.enchant[v] .. "\n"
+        str6 = str6 .. STRINGS.musha.equipments.frosthammer.enchants[v] .. "\n"
         if not inst[v] then
-            str6 = str6 .. STRINGS.musha.material_required .. ": "
+            str6 = str6 .. STRINGS.musha.equipments.material_required .. ": "
                 .. STRINGS.NAMES[string.upper(k)] .. " ( " .. inst.enchant_precondition[k] .. " )\n"
         end
     end
@@ -384,15 +384,15 @@ local function ontakefuel(inst, fuelvalue, fuel_obj)
         if enchant_req == 0 then
             inst.enchant_precondition[fuel] = false
             extra_str = STRINGS.musha.segmentation
-                .. STRINGS.musha.skill_unlocked .. ": "
-                .. STRINGS.musha.frosthammer.enchant[inst.enchant_ability[fuel]] .. "\n"
+                .. STRINGS.musha.equipments.skill_unlocked .. ": "
+                .. STRINGS.musha.equipments.frosthammer.enchants[inst.enchant_ability[fuel]] .. "\n"
                 .. STRINGS.musha.segmentation
             enchant_determine(inst)
         else
             inst.enchant_precondition[fuel] = enchant_req
-            extra_str = STRINGS.musha.enchant_skill .. " [ "
-                .. STRINGS.musha.frosthammer.enchant[inst.enchant_ability[fuel]] .. " ]\n"
-                .. STRINGS.musha.material_required .. ": "
+            extra_str = STRINGS.musha.equipments.enchant_skill .. " [ "
+                .. STRINGS.musha.equipments.frosthammer.enchants[inst.enchant_ability[fuel]] .. " ]\n"
+                .. STRINGS.musha.equipments.material_required .. ": "
                 .. STRINGS.NAMES[string.upper(fuel)] .. " ( " .. enchant_req .. " )"
         end
     end
@@ -406,7 +406,7 @@ local function OnSeasonTick(inst, data)
     if data.season == "winter" then
         if inst.components.heater then
             inst:RemoveComponent("heater")
-            inst.components.talker:Say(STRINGS.musha.frosthammer.stopcoolinginwinter)
+            inst.components.talker:Say(STRINGS.musha.equipments.frosthammer.stopcoolinginwinter)
         end
     end
 end

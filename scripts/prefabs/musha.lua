@@ -75,7 +75,7 @@ local function FreezingSpell(inst)
 
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
-    inst.components.talker:Say(STRINGS.musha.skills.freezingspell.cast)
+    inst.components.talker:Say(STRINGS.musha.skills.manaspells.freezingspell.cast)
     OnCastSpellToSelf(inst)
 end
 
@@ -210,11 +210,11 @@ local function BackStab(inst, data)
     if not (target.components and target.components.combat) then
         inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
     elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
-        inst.components.talker:Say(STRINGS.musha.skills.backstab_normal)
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
         target.components.combat:GetAttacked(inst, extradamage * 0.5, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
     else
-        inst.components.talker:Say(STRINGS.musha.skills.backstab_perfect)
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
         target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
         CustomAttachFx(inst, "nightsword_curve_fx")
@@ -238,14 +238,14 @@ local function StartSneaking(inst)
         inst:RemoveTag("scarytoprey")
         inst:RemoveTag("areaattack")
         inst.components.sanity:DoDelta(-TUNING.musha.sneaksanitycost)
-        inst.components.talker:Say(STRINGS.musha.skills.startsneaking)
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
         inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
         CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
 
         inst.task_entersneak = inst:DoTaskInTime(4, function()
             if not inst:HasTag("sneaking") then return end
             inst:AddTag("notarget")
-            inst.components.talker:Say(STRINGS.musha.skills.sneaksucceed)
+            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
             CustomAttachFx(inst, "statue_transition")
 
@@ -730,6 +730,7 @@ local function common_postinit(inst)
     inst._mode = 0 -- Store previous mode
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
+    inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
