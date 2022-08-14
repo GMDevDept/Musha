@@ -121,7 +121,7 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Add modifier to SourceModifierList
+-- Add modifier to SourceModifierList and set duration
 
 -- Copied from scheduler.lua
 local function task_finish(task, success, inst)
@@ -146,3 +146,5 @@ GLOBAL.CustomSetModifier = function(SourceModifierList, source, m, key, duration
         return task
     end
 end
+
+---------------------------------------------------------------------------------------------------------

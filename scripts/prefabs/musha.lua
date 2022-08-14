@@ -39,6 +39,65 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Sleep
+
+local function ToggleSleep(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+        return
+    end
+
+    inst:DecideNormalOrFull()
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Mana Shield
+
+local function KeepInvincible(inst, data)
+    if data.invincible == false then
+        inst.components.health:SetInvincible(true)
+    end
+end
+
+local function PlayBlockAnim(inst)
+    inst.fx_manashield.AnimState:PlayAnimation("hit")
+    inst.fx_manashield.AnimState:PushAnimation("idle_loop")
+end
+
+local function ShieldOn(inst)
+    inst:AddTag("manashieldactivated")
+    inst.components.health:SetInvincible(true)
+    inst:ListenForEvent("invincibletoggle", KeepInvincible)
+
+    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
+    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
+    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+    inst:ListenForEvent("blocked", PlayBlockAnim)
+end
+
+local function ShieldOff(inst)
+    inst:RemoveEventCallback("invincibletoggle", KeepInvincible)
+    inst.components.health:SetInvincible(false)
+    inst:RemoveTag("manashieldactivated")
+
+    inst:RemoveEventCallback("blocked", PlayBlockAnim)
+    inst.fx_manashield:kill_fx()
+end
+
+local function ToggleShield(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+        return
+    end
+
+    if not inst:HasTag("manashieldactivated") then
+        ShieldOn(inst)
+    else
+        ShieldOff(inst)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Spells
 
 -- Freezing spell
@@ -195,18 +254,6 @@ local function DoShadowMushaOrder(inst)
             end
         end
     end
-end
-
----------------------------------------------------------------------------------------------------------
-
--- Sleep
-
-local function ToggleSleep(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
-        return
-    end
-
-    inst:DecideNormalOrFull()
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -381,7 +428,7 @@ end
 local PLANTS_RANGE = 1
 local MAX_PLANTS = 18
 local PLANTFX_TAGS = { "wormwood_plant_fx" }
-local function AddValkyrieTrailFx(inst)
+local function AddFullModeTrailFx(inst)
     if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
         return
     end
@@ -494,7 +541,7 @@ local function OnModeChange(inst)
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
         CustomCancelTask(inst.task_fullmodehealthregen)
-        CustomRemoveEntity(inst.fx_fullmode)
+        CustomCancelTask(inst.modetrailtask)
     end
 
     if previousmode == 2 and currentmode ~= 2 then
@@ -503,7 +550,8 @@ local function OnModeChange(inst)
         inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
-        CustomCancelTask(inst.modetrailtask)
+        CustomCancelTask(inst.task_valkyriefx)
+        CustomRemoveEntity(inst.fx_valkyrie)
 
         CustomAttachFx(inst, "electrichitsparks")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
@@ -554,9 +602,7 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_full")
         inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
-        inst.fx_fullmode = SpawnPrefab("fx_fullmode")
-        inst.fx_fullmode.entity:SetParent(inst.entity)
-        inst.fx_fullmode.Transform:SetPosition(0, -0.1, 0)
+        inst.modetrailtask = inst:DoPeriodicTask(.25, AddFullModeTrailFx)
     end
 
     if currentmode == 2 then
@@ -574,7 +620,9 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
-        inst.modetrailtask = inst:DoPeriodicTask(.25, AddValkyrieTrailFx)
+        inst.task_valkyriefx = inst:DoPeriodicTask(2.6, function()
+            inst.fx_valkyrie = CustomAttachFx(inst, "mossling_spin_fx", 0)
+        end, 0)
     end
 
     if currentmode == 3 then
@@ -634,8 +682,11 @@ end
 local function OnFatigueLevelChange(inst)
     local fatiguelevel = inst.fatiguelevel:value()
 
+    CustomRemoveEntity(inst.fx_fatiguelevel)
+
     if fatiguelevel == 0 then
         inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_fullmode", 0, nil, Vector3(0, -0.1, 0))
     elseif fatiguelevel == 1 then
         inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
     elseif fatiguelevel == 2 then
@@ -827,6 +878,7 @@ end
 -- Set up remote procedure calls for client side
 AddModRPCHandler("musha", "togglevalkyrie", ToggleValkyrie)
 AddModRPCHandler("musha", "toggleberserk", ToggleBerserk)
+AddModRPCHandler("musha", "toggleshield", ToggleShield)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)
 AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)
 AddModRPCHandler("musha", "doshadowmushaorder", DoShadowMushaOrder)

@@ -28,7 +28,7 @@ STRINGS.musha = {
         },
         valkyrie = "女武神模式",
         berserk = "狂暴模式",
-        manashield = "魔法护盾",
+        manashield = "精灵护盾",
         manashield_passive = "被动护盾",
         sneak = {
             name = "潜影突袭",

@@ -12,6 +12,13 @@ TheInput:AddKeyDownHandler(GetModConfigData("hotkey_berserk"), function()
     end
 end)
 
+-- Hotkey: ToggleShield
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_shield"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        SendModRPCToServer(MOD_RPC.musha.toggleshield)
+    end
+end)
+
 -- Hotkey: ToggleSleep
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_sleep"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then

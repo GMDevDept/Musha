@@ -13,6 +13,7 @@ PrefabFiles = {
 
     -- FXs
     "fx_fullmode",
+    "manashield",
 
     -- General
     "debuff_common",

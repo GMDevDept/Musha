@@ -1,5 +1,4 @@
 TUNING.musha = {
-    -- Stats related
     health = 200,
     hunger = 200,
     sanity = 200,
@@ -37,7 +36,7 @@ TUNING.musha = {
     freezecooldowntime = 2.5,
 
     debuffslowdownmult = 0.3,
-    debuffslowdownduration = 4,
+    debuffslowdownduration = 5,
 
     debuffparalysisattackperiodmult = 2,
     debuffparalysisattackperiodmax = 4,
@@ -74,7 +73,7 @@ TUNING.musha = {
         thunderspell = {
             manacost = 10,
             maxmanacost = 30,
-            range = 14,
+            range = 10,
             damage = 20,
         },
     },
