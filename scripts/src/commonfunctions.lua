@@ -39,7 +39,10 @@ end
 -- Freeze
 local function StartFreezeCooldown(inst)
     inst:AddDebuff("postfreezeslowdown", "debuff_slowdown") -- Add slowdown debuff upon unfreeze
-    inst.components.debuffable:GetDebuff("postfreezeslowdown"):SetDuration(TUNING.musha.freezecooldowntime)
+    local debuff = inst.components.debuffable:GetDebuff("postfreezeslowdown") -- Nil if target doesn't have locomotor component, eg. tentacle
+    if debuff then
+        debuff:SetDuration(TUNING.musha.freezecooldowntime)
+    end
     inst:DoTaskInTime(TUNING.musha.freezecooldowntime, function()
         inst:RemoveTag("freeze_cooldown")
         inst:RemoveEventCallback("unfreeze", StartFreezeCooldown)

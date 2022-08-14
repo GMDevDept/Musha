@@ -35,8 +35,15 @@ TUNING.musha = {
     backstabbasedamage = 200,
 
     freezecooldowntime = 2.5,
+
     debuffslowdownmult = 0.3,
     debuffslowdownduration = 4,
+
+    debuffparalysisattackperiodmult = 2,
+    debuffparalysisattackperiodmax = 4,
+    debuffparalysisduration = 20,
+    debuffparalysisperiod = 2,
+    debuffparalysisdamage = 5,
 
     maxexperience = 300,
     maxlevel = 30,
@@ -63,7 +70,13 @@ TUNING.musha = {
             manacost = 5,
             maxmanacost = 15,
             range = 14,
-        }
+        },
+        thunderspell = {
+            manacost = 10,
+            maxmanacost = 30,
+            range = 14,
+            damage = 20,
+        },
     },
 
     creatures = {

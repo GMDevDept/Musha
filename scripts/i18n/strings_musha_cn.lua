@@ -22,6 +22,9 @@ STRINGS.musha = {
             freezingspell = {
                 cast = "冰之精灵，回应Musha的呼唤！",
             },
+            thunderspell = {
+                cast = "雷之精灵，惩罚Musha的敌人！",
+            },
         },
         valkyrie = "女武神模式",
         berserk = "狂暴模式",

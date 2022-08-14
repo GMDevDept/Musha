@@ -231,12 +231,10 @@ end
 
 local musha_berserk_pre = State {
     name = "musha_berserk_pre",
-    tags = { "busy", "nomorph", "nointerrupt" },
+    tags = { "doing", "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
-        if inst.mode:value() ~= 3 then -- Set invincible if transform form other mode, else super armor only
-            inst.components.health:SetInvincible(true)
-        end
+        inst.components.health:SetInvincible(true)
         inst.SoundEmitter:PlaySound("dontstarve/charlie/warn")
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("emoteXL_angry")
@@ -300,7 +298,6 @@ local musha_berserk_pre = State {
     {
         EventHandler("animqueueover", function(inst)
             inst.sg:GoToState("idle", true)
-            inst.components.health:SetInvincible(false)
         end),
     },
 
@@ -312,7 +309,7 @@ local musha_berserk_pre = State {
 -- Client
 local musha_berserk_pre_client = State {
     name = "musha_berserk_pre_client",
-    tags = { "busy", "nomorph", "nointerrupt" },
+    tags = { "doing", "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -361,7 +358,7 @@ local BOOK_LAYERS = {
 
 local musha_spell = State {
     name = "musha_spell",
-    tags = { "doing", "nointerrupt" },
+    tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -440,9 +437,7 @@ local musha_spell = State {
     events =
     {
         EventHandler("animqueueover", function(inst)
-            if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("idle")
-            end
+            inst.sg:GoToState("idle")
         end),
     },
 
@@ -477,7 +472,7 @@ local musha_spell = State {
 
 local musha_spell_client = State {
     name = "musha_spell_client",
-    tags = { "doing", "nointerrupt" },
+    tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()

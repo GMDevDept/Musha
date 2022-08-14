@@ -6,17 +6,21 @@ local assets =
     Asset("ANIM", "anim/general/debuff_spark.zip"),
 }
 
+---------------------------------------------------------------------------------------------------------
+
+--Slowdown
+
 local function slowdown_attach(inst, target)
     if target.components and target.components.locomotor then
         target.components.locomotor:SetExternalSpeedMultiplier(inst, inst.GUID, TUNING.musha.debuffslowdownmult) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier) set source as self to avoid duplicate effect
-        SpawnPrefab("splash").Transform:SetPosition(target.Transform:GetWorldPosition())
+        CustomAttachFx(target, "splash")
     else
         inst.components.debuff:Stop()
     end
 end
 
 local function slowdown_extend(inst, target)
-    SpawnPrefab("splash").Transform:SetPosition(target.Transform:GetWorldPosition())
+    CustomAttachFx(target, "splash")
 end
 
 local function slowdown_detach(inst, target)
@@ -24,6 +28,64 @@ local function slowdown_detach(inst, target)
         target.components.locomotor:RemoveExternalSpeedMultiplier(inst, inst.GUID)
     end
 end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Paralysis
+local function ParalysisDamageReflection(inst, data)
+    if data.target then
+        inst.components.combat:GetAttacked(data.target, TUNING.musha.debuffparalysisdamage)
+    else
+        inst.components.health:DoDelta(-TUNING.musha.debuffparalysisdamage)
+    end
+end
+
+local function paralysis_attach(inst, target)
+    if target.components and target.components.combat then
+        -- Periodic get damage and prolong attack period
+        inst.task_debuff_paralysis = inst:DoPeriodicTask(TUNING.musha.debuffparalysisperiod, function()
+            local damagesource = target.components.combat.target or target.components.combat.lastattacker or nil
+            if damagesource then
+                target.components.combat:GetAttacked(damagesource, TUNING.musha.debuffparalysisdamage)
+            else
+                target.components.health:DoDelta(-TUNING.musha.debuffparalysisdamage)
+            end
+
+            if target.components.combat.min_attack_period > 0 and not target._min_attack_period then -- This effect can only be set once
+                target._min_attack_period = target.components.combat.min_attack_period
+                target.components.combat:SetAttackPeriod(math.max((target._min_attack_period *
+                    TUNING.musha.debuffparalysisattackperiodmult), TUNING.musha.debuffparalysisattackperiodmax))
+            end
+        end, 0.1) -- Set 0.1s initial delay to limit total hits
+
+        -- Get damage when attack
+        -- ? How to handle multiple paralysis debuff? -- Currently will reset when trigger paralysis_extend()
+        target:ListenForEvent("onattackother", ParalysisDamageReflection)
+
+        CustomAttachFx(target, "electrichitsparks")
+    else
+        inst.components.debuff:Stop()
+    end
+end
+
+local function paralysis_extend(inst, target)
+    target:RemoveEventCallback("onattackother", ParalysisDamageReflection)
+    target:ListenForEvent("onattackother", ParalysisDamageReflection)
+    CustomAttachFx(target, "electrichitsparks")
+end
+
+local function paralysis_detach(inst, target)
+    if target.components and target.components.combat then
+        if target._min_attack_period then
+            target.components.combat:SetAttackPeriod(target._min_attack_period)
+            target._min_attack_period = nil
+        end
+        CustomCancelTask(inst.task_debuff_paralysis)
+        target:RemoveEventCallback("onattackother", ParalysisDamageReflection)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
 
 local function OnTimerDone(inst, data)
     if data.name == "buffover" then
@@ -92,7 +154,7 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
         inst.AnimState:SetBank("poison")
         inst.AnimState:SetBuild(name)
         inst.AnimState:PlayAnimation("level2_pre")
-        inst.AnimState:PushAnimation("level2_loop", true) -- Let this loop until detach    
+        inst.AnimState:PushAnimation("level2_loop", true) -- Let this loop until detach
         inst.AnimState:SetFinalOffset(2)
 
         inst.entity:SetPristine()
@@ -118,7 +180,10 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
     return Prefab(name, fn, { Asset("ANIM", "anim/general/" .. name .. ".zip") })
 end
 
-return MakeBuff("debuff_slowdown", slowdown_attach, slowdown_extend, slowdown_detach, TUNING.musha.debuffslowdownduration)
+return MakeBuff("debuff_slowdown", slowdown_attach, slowdown_extend, slowdown_detach,
+    TUNING.musha.debuffslowdownduration),
+    MakeBuff("debuff_paralysis", paralysis_attach, paralysis_extend, paralysis_detach,
+        TUNING.musha.debuffparalysisduration)
 -- MakeBuff("debuff_poison"),
 -- MakeBuff("debuff_blood"),
 -- MakeBuff("debuff_spark")

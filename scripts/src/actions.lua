@@ -104,46 +104,46 @@ end
 -- Cast spell on self
 AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, function(act)
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
-    if act.doer.sg:HasStateTag("busy") then
+    if act.doer.sg:HasStateTag("busy") or act.doer.sg:HasStateTag("musha_spell") then
         return false
     elseif (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
-        act.doer.bufferedspell = "FreezingSpell"
-        act.doer.bufferedbookfx = {
-            swap_build = "swap_books",
-            swap_prefix = "book_moon",
-            def = {
-                fx = "fx_book_temperature",
-                layer = "FX_fish",
-                layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
+        if act.doer.components.mana.current >= TUNING.musha.skills.freezingspell.maxmanacost then
+            act.doer.bufferedspell = "FreezingSpell"
+            act.doer.bufferedbookfx = {
+                swap_build = "swap_books",
+                swap_prefix = "book_moon",
+                def = {
+                    fx = "fx_book_temperature",
+                    layer = "FX_fish",
+                    layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
+                }
             }
-        }
-        act.doer.castmanaspell:push()
+            act.doer.castmanaspell:push()
+        else
+            act.doer.components.talker:Say(STRINGS.musha.lack_of_mana)
+            act.doer.sg:GoToState("mindcontrolled_pst")
+        end
         return true
     elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
-        act.doer.bufferedspell = "FreezingSpell"
-        act.doer.bufferedbookfx = {
-            swap_build = "swap_books",
-            swap_prefix = "book_horticulture_upgraded",
-            def = {
-                fx = "fx_book_rain",
-                layer = "FX_lightning",
-                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+        if act.doer.components.mana.current >= TUNING.musha.skills.thunderspell.maxmanacost then
+            act.doer.bufferedspell = "ThunderSpell"
+            act.doer.bufferedbookfx = {
+                swap_build = "swap_books",
+                swap_prefix = "book_horticulture_upgraded",
+                def = {
+                    fx = "fx_book_rain",
+                    layer = "FX_lightning",
+                    layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+                }
             }
-        }
-        act.doer.castmanaspell:push()
+            act.doer.castmanaspell:push()
+        else
+            act.doer.components.talker:Say(STRINGS.musha.lack_of_mana)
+            act.doer.sg:GoToState("mindcontrolled_pst")
+        end
         return true
     elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
-        act.doer.bufferedspell = "FreezingSpell"
-        act.doer.bufferedbookfx = {
-            swap_build = "swap_books",
-            swap_prefix = "book_tentacles",
-            def = {
-                fx = "fx_book_fire",
-                layer = "FX_tentacles",
-                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/tentacles" },
-            }
-        }
-        act.doer.castmanaspell:push()
+        act.doer.activateberserk:push()
         return true
     else
         return false

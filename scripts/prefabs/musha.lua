@@ -41,18 +41,8 @@ end
 
 -- Spells
 
--- Common
-local function OnCastSpellToSelf(inst)
-end
-
 -- Freezing spell
 local function FreezingSpell(inst)
-    if inst.components.mana.current < TUNING.musha.skills.freezingspell.maxmanacost then
-        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-        inst.sg:GoToState("mindcontrolled_pst")
-        return
-    end
-
     local validtargets = 0
     local must_tags = { "_combat" }
     local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
@@ -76,7 +66,28 @@ local function FreezingSpell(inst)
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
     inst.components.talker:Say(STRINGS.musha.skills.manaspells.freezingspell.cast)
-    OnCastSpellToSelf(inst)
+end
+
+-- Thunder spell
+local function ThunderSpell(inst)
+    local validtargets = 0
+    local must_tags = { "_combat" }
+    local ignore_tags = { "companion", "musha_companion", "player" }
+
+    CustomDoAOE(inst, TUNING.musha.skills.thunderspell.range, must_tags, ignore_tags, function(v)
+        v:DoTaskInTime(validtargets * (.3 + math.random() * .2), function()
+            v.components.combat:GetAttacked(inst,
+                TUNING.musha.skills.thunderspell.damage + 5 * math.floor(inst.components.leveler.lvl / 5), nil,
+                "electric")
+            v:AddDebuff("thunderspell", "debuff_paralysis")
+            CustomAttachFx(v, "lightning")
+        end)
+        validtargets = validtargets + 1
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
+
+    inst.components.mana:DoDelta(-
+        math.min(TUNING.musha.skills.thunderspell.manacost * validtargets, TUNING.musha.skills.thunderspell.maxmanacost))
+    inst.components.talker:Say(STRINGS.musha.skills.manaspells.thunderspell.cast)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -556,7 +567,7 @@ local function OnModeChange(inst)
             "valkyriebuff")
         inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.musha.valkyriedefenseboost,
             "valkyriebuff")
-        inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)     
+        inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
         inst:ListenForEvent("freeze", UnfreezeOnFreeze)
 
         CustomAttachFx(inst, "electricchargedfx")
@@ -801,6 +812,7 @@ local function master_postinit(inst)
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
     inst.FreezingSpell = FreezingSpell
+    inst.ThunderSpell = ThunderSpell
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
