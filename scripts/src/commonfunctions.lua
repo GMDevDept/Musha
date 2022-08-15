@@ -93,7 +93,7 @@ GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Se
     if type(fx_list) == "string" then
         return SpawnFx(target, fx_list, duration, scale, offset)
     elseif type(fx_list) == "table" then
-        for i, fx_name in pairs(fx_list) do
+        for _, fx_name in pairs(fx_list) do
             SpawnFx(target, fx_name, duration, scale, offset)
         end
     end
@@ -148,3 +148,12 @@ GLOBAL.CustomSetModifier = function(SourceModifierList, source, m, key, duration
 end
 
 ---------------------------------------------------------------------------------------------------------
+
+-- Play skill failed anim
+GLOBAL.CustomPlayFailedAnim = function(inst)
+    if inst.components.rider:IsRiding() then
+        inst.sg:GoToState("repelled")
+    else
+        inst.sg:GoToState("mindcontrolled_pst")
+    end
+end

@@ -90,40 +90,43 @@ function Stamina:SetRateLevel(ratelevel)
     self.inst.replica.stamina:SetRateLevel(ratelevel)
 end
 
+function Stamina:ModifierOnly()
+    return self.inst:HasTag("sneakspeedboost")
+end
+
 function Stamina:Recalc(dt)
     if self.ispaused then
         return
     end
 
     local inst = self.inst
-    local baserate = self.baserate
 
-    local m = inst.sg:HasStateTag("sleeping") and 15 - baserate
-        or inst.sg:HasStateTag("working") and -5 - baserate
-        or (inst.sg:HasStateTag("attacking") or inst.sg:HasStateTag("abouttoattack")) and -5 - baserate
-        or (inst.sg:HasStateTag("doing") or inst.sg:HasStateTag("fishing")) and -1 - baserate
-        or inst.sg:HasStateTag("busy") and 0 - baserate
-        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 1 - baserate
-        or inst.sg:HasStateTag("idle") and 0
-        or 0 - baserate
+    local m = inst.sg:HasStateTag("sleeping") and 15
+        or (inst.sg:HasStateTag("working") or inst.sg:HasStateTag("attacking") or
+            inst.sg:HasStateTag("abouttoattack")) and -5
+        or (inst.sg:HasStateTag("doing") or inst.sg:HasStateTag("busy")) and -2
+        or inst.sg:HasStateTag("fishing") and -1
+        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 1
+        or inst.sg:HasStateTag("idle") and 5
+        or 0
 
-    self.modifiers:SetModifier(inst, m, "stategraph")
+    self.baserate = TUNING.musha.staminarate + m
 
-    self.rate = self.baserate + self.modifiers:Get()
+    self.rate = self:ModifierOnly() and self.modifiers:Get() or self.baserate + self.modifiers:Get()
 
     self.ratelevel = (self.rate >= 5 and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate > 1.5 and RATE_SCALE.INCREASE_MED) or
+        (self.rate >= 2 and RATE_SCALE.INCREASE_MED) or
         (self.rate > 0.05 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -5 and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
+        (self.rate <= -2 and RATE_SCALE.DECREASE_MED) or
         (self.rate < -0.05 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 
     self:DoDelta(dt * self.rate, true)
 end
 
-function Stamina:DoDelta(delta, overtime, ignore_invincible)
-    if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
+function Stamina:DoDelta(delta, overtime, follow_invincible)
+    if follow_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
         self.inst.is_teleporting then
         return
     end

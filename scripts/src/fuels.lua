@@ -29,6 +29,6 @@ local function fuelsetup(inst)
     inst.components.fuel.fueltype = "MUSHA"
 end
 
-for k, v in pairs(fuel_list) do
+for _, v in pairs(fuel_list) do
     AddPrefabPostInit(v, fuelsetup)
 end

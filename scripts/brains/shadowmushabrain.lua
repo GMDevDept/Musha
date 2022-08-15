@@ -79,7 +79,7 @@ local function FindEntityToWorkAction(inst, action, addtltags)
             target:IsNear(leader, KEEP_WORKING_DIST) then
 
             if addtltags ~= nil then
-                for i, v in ipairs(addtltags) do
+                for _, v in ipairs(addtltags) do
                     if target:HasTag(v) then
                         return BufferedAction(inst, target, action)
                     end

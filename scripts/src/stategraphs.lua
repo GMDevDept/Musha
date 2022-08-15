@@ -231,7 +231,7 @@ end
 
 local musha_berserk_pre = State {
     name = "musha_berserk_pre",
-    tags = { "doing", "busy", "nomorph", "nointerrupt" },
+    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.health:SetInvincible(true)
@@ -309,7 +309,7 @@ local musha_berserk_pre = State {
 -- Client
 local musha_berserk_pre_client = State {
     name = "musha_berserk_pre_client",
-    tags = { "doing", "busy", "nomorph", "nointerrupt" },
+    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -361,6 +361,10 @@ local musha_spell = State {
     tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
+        if inst.bufferedspell == "ShieldDelayedEffects" then
+            inst.sg:AddStateTag("busy")
+        end
+
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("action_uniqueitem_pre")
         inst.AnimState:PushAnimation("book", false)
@@ -373,7 +377,7 @@ local musha_spell = State {
                 end
 
                 if book.def.layer ~= nil then
-                    for i, v in ipairs(BOOK_LAYERS) do
+                    for _, v in ipairs(BOOK_LAYERS) do
                         if book.def.layer == v then
                             inst.AnimState:Show(v)
                         else
@@ -427,8 +431,12 @@ local musha_spell = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/use_book_close")
         end),
         TimeEvent(58 * FRAMES, function(inst)
-            inst[inst.bufferedspell](inst)
-            CustomAttachFx(inst, inst.sg.statemem.success_fx)
+            if inst.bufferedspell and inst[inst.bufferedspell] then
+                inst[inst.bufferedspell](inst)
+            end
+            if inst.sg.statemem.success_fx then
+                CustomAttachFx(inst, inst.sg.statemem.success_fx, 3)
+            end
             inst.SoundEmitter:PlaySound(inst.sg.statemem.castsound)
             inst.sg.statemem.book_fx = nil --Don't cancel anymore
         end)
@@ -451,7 +459,7 @@ local musha_spell = State {
         end
         if inst.sg.statemem.book_layer ~= nil then
             if type(inst.sg.statemem.book_layer) == "table" then
-                for i, v in ipairs(inst.sg.statemem.book_layer) do
+                for _, v in ipairs(inst.sg.statemem.book_layer) do
                     inst.AnimState:Hide(v)
                 end
             else
@@ -502,7 +510,7 @@ AddStategraphState("wilson_client", musha_spell_client)
 
 AddStategraphEvent("wilson", EventHandler("castmanaspell",
     function(inst, data)
-        if not inst.sg:HasStateTag("busy") then
+        if not inst.sg:HasStateTag("busy") or inst.bufferedspell == "ShieldDelayedEffects" then
             inst.sg:GoToState("musha_spell")
         else
             inst.bufferedspell = nil

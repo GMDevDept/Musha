@@ -90,6 +90,10 @@ function Mana:SetRateLevel(ratelevel)
     self.inst.replica.mana:SetRateLevel(ratelevel)
 end
 
+function Mana:ModifierOnly()
+    return self.inst:HasTag("manashieldactivated")
+end
+
 function Mana:Recalc(dt)
     if self.ispaused then
         return
@@ -97,7 +101,7 @@ function Mana:Recalc(dt)
 
     local baserate = math.abs(self.baserate)
 
-    self.rate = self.baserate + self.modifiers:Get()
+    self.rate = self:ModifierOnly() and self.modifiers:Get() or self.baserate + self.modifiers:Get()
 
     self.ratelevel = (self.rate > 3 * baserate and RATE_SCALE.INCREASE_HIGH) or
         (self.rate > 2 * baserate and RATE_SCALE.INCREASE_MED) or
@@ -110,8 +114,8 @@ function Mana:Recalc(dt)
     self:DoDelta(dt * self.rate, true)
 end
 
-function Mana:DoDelta(delta, overtime, ignore_invincible)
-    if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
+function Mana:DoDelta(delta, overtime, follow_invincible)
+    if follow_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
         self.inst.is_teleporting then
         return
     end

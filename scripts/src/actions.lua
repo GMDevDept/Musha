@@ -103,13 +103,26 @@ end
 
 -- Cast spell on self
 AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, function(act)
+    local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
-    if act.doer.sg:HasStateTag("busy") or act.doer.sg:HasStateTag("musha_spell") then
+    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_spell") then
         return false
-    elseif (act.doer.mode:value() == 0 or act.doer.mode:value() == 1) and act.doer.skills.freezingspell then
-        if act.doer.components.mana.current >= TUNING.musha.skills.freezingspell.maxmanacost then
-            act.doer.bufferedspell = "FreezingSpell"
-            act.doer.bufferedbookfx = {
+    elseif (inst.mode:value() == 0 or inst.mode:value() == 1) then
+        if not inst.skills.freezingspell then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.timer:TimerExists("cooldown_freezingspell") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.manaspells.freezingspell.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_freezingspell"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.freezingspell.maxmanacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        else
+            inst.bufferedspell = "FreezingSpell"
+            inst.bufferedbookfx = {
                 swap_build = "swap_books",
                 swap_prefix = "book_moon",
                 def = {
@@ -118,16 +131,25 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
                 }
             }
-            act.doer.castmanaspell:push()
-        else
-            act.doer.components.talker:Say(STRINGS.musha.lack_of_mana)
-            act.doer.sg:GoToState("mindcontrolled_pst")
+            inst.castmanaspell:push()
         end
         return true
-    elseif act.doer.mode:value() == 2 and act.doer.skills.thunderspell then
-        if act.doer.components.mana.current >= TUNING.musha.skills.thunderspell.maxmanacost then
-            act.doer.bufferedspell = "ThunderSpell"
-            act.doer.bufferedbookfx = {
+    elseif inst.mode:value() == 2 then
+        if not inst.skills.thunderspell then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.timer:TimerExists("cooldown_thunderspell") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.manaspells.thunderspell.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_thunderspell"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.thunderspell.maxmanacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        else
+            inst.bufferedspell = "ThunderSpell"
+            inst.bufferedbookfx = {
                 swap_build = "swap_books",
                 swap_prefix = "book_horticulture_upgraded",
                 def = {
@@ -136,14 +158,19 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
                 }
             }
-            act.doer.castmanaspell:push()
-        else
-            act.doer.components.talker:Say(STRINGS.musha.lack_of_mana)
-            act.doer.sg:GoToState("mindcontrolled_pst")
+            inst.castmanaspell:push()
         end
         return true
-    elseif act.doer.mode:value() == 3 and act.doer.skills.shadowspell then
-        act.doer.activateberserk:push()
+    elseif inst.mode:value() == 3 then
+        if not inst.skills.shadowspell then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.sanity.current < TUNING.musha.skills.shadowspell.sanitycost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+            CustomPlayFailedAnim(inst)
+        else
+            inst.components.sanity:DoDelta(TUNING.musha.skills.shadowspell.sanitycost)
+            inst.activateberserk:push()
+        end
         return true
     else
         return false

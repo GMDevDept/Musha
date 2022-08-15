@@ -10,7 +10,7 @@ TUNING.musha = {
     fatiguerate = 1 / 96, -- 5/day
 
     maxstamina = 100,
-    staminarate = 5,
+    staminarate = 0,
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.25,
@@ -28,10 +28,6 @@ TUNING.musha = {
     valkyriedefenseboost = 0.2,
 
     activateberserkbasedamage = 5,
-    sneaksanitycost = 50,
-    sneakspeedboost = 2.5,
-    sneakspeedboostduration = 5,
-    backstabbasedamage = 200,
 
     freezecooldowntime = 2.5,
 
@@ -59,6 +55,7 @@ TUNING.musha = {
         thunderspell       = 0,
         shadowspell        = 0,
         sneak              = 0,
+        sneakspeedboost    = 0,
         sporebomb          = 0,
         shadowshield       = 0,
         instantcast        = 0,
@@ -69,12 +66,33 @@ TUNING.musha = {
             manacost = 5,
             maxmanacost = 15,
             range = 14,
+            cooldown = 5,
         },
         thunderspell = {
             manacost = 10,
             maxmanacost = 30,
             range = 10,
             damage = 20,
+            cooldown = 10,
+        },
+        shadowspell = {
+            sanitycost = -50,
+        },
+        manashield = {
+            manarequired = 10,
+            manaongoingcost = -2,
+            cooldown = 15,
+            staminacostonhit = -5,
+            durabilitybase = 400,
+            durabilitygrowth = 40,
+        },
+        sneak = {
+            sanitycost = 50,
+            backstabbasedamage = 100,
+        },
+        sneakspeedboost = {
+            max = 2,
+            staminacost = -10,
         },
     },
 

@@ -59,40 +59,104 @@ local function KeepInvincible(inst, data)
     end
 end
 
-local function PlayBlockAnim(inst)
+local function ShieldOnAttacked(inst, data)
+    inst.components.stamina:DoDelta(TUNING.musha.skills.manashield.staminacostonhit)
     inst.fx_manashield.AnimState:PlayAnimation("hit")
     inst.fx_manashield.AnimState:PushAnimation("idle_loop")
+    inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
+    if inst.shielddurability and inst.shielddurability > 0 then
+        local delta = 20
+        if data.attacker and data.attacker.components.combat and data.attacker.components.combat.defaultdamage then
+            delta = delta + data.attacker.components.combat.defaultdamage
+        end
+        inst.shielddurability = inst.shielddurability - delta
+        if inst.shielddurability <= 0 then
+            inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
+            inst.task_shieldbrokendelay = inst:DoTaskInTime(3, function() inst:ShieldOff() end)
+        end
+    end
+end
+
+local function ShieldOnTimerDone(inst, data)
+    if data.name == "cooldown_manashield" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manashield.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShieldOnTimerDone)
+    end
+end
+
+local function ShieldDelayedEffects(inst)
+    inst.shielddurability = TUNING.musha.skills.manashield.durabilitybase +
+        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl
 end
 
 local function ShieldOn(inst)
     inst:AddTag("manashieldactivated")
+
     inst.components.health:SetInvincible(true)
     inst:ListenForEvent("invincibletoggle", KeepInvincible)
+    inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+    inst:ListenForEvent("blocked", ShieldOnAttacked)
 
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
     inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-    inst:ListenForEvent("blocked", PlayBlockAnim)
+
+    inst.bufferedspell = "ShieldDelayedEffects"
+    inst.bufferedbookfx = {
+        swap_build = "swap_books",
+        swap_prefix = "book_moon",
+        def = {
+            fx = "fx_book_moon",
+            layer = "FX_plants_big",
+            layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+        }
+    }
+    inst.castmanaspell:push()
 end
 
 local function ShieldOff(inst)
     inst:RemoveEventCallback("invincibletoggle", KeepInvincible)
     inst.components.health:SetInvincible(false)
+    inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
+    inst.shielddurability = nil
+    inst:RemoveEventCallback("blocked", ShieldOnAttacked)
+    CustomCancelTask(inst.task_shieldbrokendelay)
+
+    inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
+    inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
+    inst.fx_manashield:kill_fx()
+
     inst:RemoveTag("manashieldactivated")
 
-    inst:RemoveEventCallback("blocked", PlayBlockAnim)
-    inst.fx_manashield:kill_fx()
+    inst.components.timer:StartTimer("cooldown_manashield", TUNING.musha.skills.manashield.cooldown)
+    inst:ListenForEvent("timerdone", ShieldOnTimerDone)
 end
 
 local function ToggleShield(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("musha_spell") or inst.sg:HasStateTag("musha_berserk_pre") then
         return
     end
 
-    if not inst:HasTag("manashieldactivated") then
-        ShieldOn(inst)
+    if inst:HasTag("manashieldactivated") then
+        inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manarequired)
+        inst:ShieldOff()
+    elseif not inst.skills.manashield then
+        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+    elseif inst.components.timer:TimerExists("cooldown_manashield") then
+        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.manashield.name
+            .. STRINGS.musha.skills.incooldown.part2
+            .. STRINGS.musha.skills.incooldown.part3
+            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
+            .. STRINGS.musha.skills.incooldown.part4)
+    elseif inst.components.mana.current < TUNING.musha.skills.manashield.manarequired then
+        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+        CustomPlayFailedAnim(inst)
     else
-        ShieldOff(inst)
+        ShieldOn(inst)
     end
 end
 
@@ -101,6 +165,15 @@ end
 -- Spells
 
 -- Freezing spell
+local function FreezingSpellOnTimerDone(inst, data)
+    if data.name == "cooldown_freezingspell" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.freezingspell.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", FreezingSpellOnTimerDone)
+    end
+end
+
 local function FreezingSpell(inst)
     local validtargets = 0
     local must_tags = { "_combat" }
@@ -125,9 +198,21 @@ local function FreezingSpell(inst)
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
     inst.components.talker:Say(STRINGS.musha.skills.manaspells.freezingspell.cast)
+
+    inst.components.timer:StartTimer("cooldown_freezingspell", TUNING.musha.skills.freezingspell.cooldown)
+    inst:ListenForEvent("timerdone", FreezingSpellOnTimerDone)
 end
 
 -- Thunder spell
+local function ThunderSpellOnTimerDone(inst, data)
+    if data.name == "cooldown_thunderspell" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.thunderspell.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ThunderSpellOnTimerDone)
+    end
+end
+
 local function ThunderSpell(inst)
     local validtargets = 0
     local must_tags = { "_combat" }
@@ -147,6 +232,9 @@ local function ThunderSpell(inst)
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.thunderspell.manacost * validtargets, TUNING.musha.skills.thunderspell.maxmanacost))
     inst.components.talker:Say(STRINGS.musha.skills.manaspells.thunderspell.cast)
+
+    inst.components.timer:StartTimer("cooldown_thunderspell", TUNING.musha.skills.thunderspell.cooldown)
+    inst:ListenForEvent("timerdone", ThunderSpellOnTimerDone)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -192,7 +280,7 @@ local function OnDespawnPet(inst, pet)
 end
 
 local function OnDeathForPetLeash(inst)
-    for k, v in pairs(inst.components.petleash:GetPets()) do
+    for _, v in pairs(inst.components.petleash:GetPets()) do
         if (not v:HasTag("musha_companion")) and v:HasTag("shadowminion") and v._killtask == nil then
             v._killtask = v:DoTaskInTime(math.random(), KillPet)
         end
@@ -201,12 +289,12 @@ end
 
 local function OnRerollForPetLeash(inst)
     local todespawn = {}
-    for k, v in pairs(inst.components.petleash:GetPets()) do
+    for _, v in pairs(inst.components.petleash:GetPets()) do
         if v:HasTag("musha_companion") or v:HasTag("shadowminion") then
             table.insert(todespawn, v)
         end
     end
-    for i, v in ipairs(todespawn) do
+    for _, v in ipairs(todespawn) do
         inst.components.petleash:DespawnPet(v)
     end
 end
@@ -236,7 +324,7 @@ local function DoShadowMushaOrder(inst)
         inst.shadowmushafollowonly = false
         inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume)
         UserCommands.RunTextUserCommand("rude", inst, false)
-        for k, v in pairs(inst.components.petleash:GetPets()) do
+        for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") then
                 v:RemoveTag("followonly")
                 v.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "followonlybuff")
@@ -246,7 +334,7 @@ local function DoShadowMushaOrder(inst)
         inst.shadowmushafollowonly = true
         inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow)
         UserCommands.RunTextUserCommand("happy", inst, false)
-        for k, v in pairs(inst.components.petleash:GetPets()) do
+        for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
                 v:AddTag("followonly")
                 v.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
@@ -260,111 +348,121 @@ end
 
 -- Sneak
 
+local function ResetSneakSpeedMultiplier(inst)
+    inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
+        (TUNING.musha.skills.sneakspeedboost.max * inst.components.stamina:GetPercent() + 1))
+end
+
+local function CancelSneakSpeedBoost(inst)
+    inst:RemoveEventCallback("staminadelta", ResetSneakSpeedMultiplier)
+    inst:RemoveEventCallback("startstaminadepleted", CancelSneakSpeedBoost)
+    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+    inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
+    inst:RemoveTag("sneakspeedboost")
+end
+
+local function SneakSpeedBoost(inst)
+    if inst.components.stamina.current > 0 then
+        inst:AddTag("sneakspeedboost")
+        ResetSneakSpeedMultiplier(inst)
+        inst:ListenForEvent("staminadelta", ResetSneakSpeedMultiplier)
+        inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
+        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.skills.sneakspeedboost.staminacost,
+            "sneakspeedboost")
+    end
+end
+
 local function BackStab(inst, data)
     inst:RemoveSneakEffects()
-    inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+    inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
     local target = data.target
-    local extradamage = TUNING.musha.backstabbasedamage + 100 * math.floor(inst.components.leveler.lvl / 5)
+    local extradamage = TUNING.musha.skills.sneak.backstabbasedamage + 50 * math.floor(inst.components.leveler.lvl / 5)
     if not (target.components and target.components.combat) then
         inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
     elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
-        target.components.combat:GetAttacked(inst, extradamage * 0.5, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
-        CustomAttachFx(target, "statue_transition")
-    else
-        inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
         target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
-        CustomAttachFx(inst, "nightsword_curve_fx")
+        CustomAttachFx(inst, "nightsword_curve_fx", 3)
+    else
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
+        target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+        CustomAttachFx(target, "statue_transition")
+        CustomAttachFx(inst, "nightsword_curve_fx", 3)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-            TUNING.musha.sneakspeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-        inst.task_cancelsneakspeedboost = inst:DoTaskInTime(2, function()
-            inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
-            inst.task_cancelsneakspeedboost = nil
+            TUNING.musha.skills.sneakspeedboost.max) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+        inst:DoTaskInTime(2, function()
+            if not inst:HasTag("sneakspeedboost") then
+                inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+            end
         end)
     end
 end
 
 local function SneakFailed(inst, data)
     inst:RemoveSneakEffects()
-    inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_ATTACKED)
+    inst.components.talker:Say(STRINGS.musha.skills.sneak.failed)
 end
 
 local function StartSneaking(inst)
-    if inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.sneaksanitycost then
+    if not inst.skills.sneak then
+        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+    elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
+        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+        CustomPlayFailedAnim(inst)
+    elseif inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.skills.sneak.sanitycost then
         inst:AddTag("sneaking")
         inst:RemoveTag("scarytoprey")
         inst:RemoveTag("areaattack")
-        inst.components.sanity:DoDelta(-TUNING.musha.sneaksanitycost)
+        inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
         inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
+        inst:ListenForEvent("attacked", SneakFailed)
         inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
         CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
 
         inst.task_entersneak = inst:DoTaskInTime(4, function()
             if not inst:HasTag("sneaking") then return end
             inst:AddTag("notarget")
-            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
-            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
-            CustomAttachFx(inst, "statue_transition")
 
             local x, y, z = inst.Transform:GetWorldPosition()
             local must_tags = { "_combat" }
             local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
             local targets = TheSim:FindEntities(x, y, z, 12, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
             if targets then
-                for k, v in pairs(targets) do
+                for _, v in pairs(targets) do
                     if v.components.combat and v.components.combat.target == inst then
                         v.components.combat.target = nil
                     end
                 end
             end
 
-            if inst.components.stamina.current >= 50 then
-                inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-                    TUNING.musha.sneakspeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-                inst.task_cancelsneakspeedboost = inst:DoTaskInTime(TUNING.musha.sneakspeedboostduration, function()
-                    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
-                end)
-                inst.task_sneakspeedbooststaminacost = CustomSetModifier(inst.components.stamina.modifiers, inst, -10,
-                    "sneakspeedboost", TUNING.musha.sneakspeedboostduration)
-            end
-
+            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst:ListenForEvent("onattackother", BackStab)
+            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
+            CustomAttachFx(inst, "statue_transition")
         end)
 
-        inst:ListenForEvent("attacked", SneakFailed)
-    else
-        if not inst.skills.sneak then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.sanity.current < TUNING.musha.sneaksanitycost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-        end
-
-        if inst.components.rider ~= nil and inst.components.rider:IsRiding() then
-            inst.sg:GoToState("repelled")
-        else
-            inst.sg:GoToState("mindcontrolled_pst")
+        if inst.skills.sneakspeedboost and not inst:HasTag("sneakspeedboost") then
+            SneakSpeedBoost(inst)
         end
     end
 end
 
 local function StopSneaking(inst)
     inst:RemoveSneakEffects()
-    inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
-    inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
+    inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
+    inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
 end
 
 local function RemoveSneakEffects(inst)
+    CancelSneakSpeedBoost(inst)
     inst:RemoveTag("sneaking")
     inst:RemoveTag("notarget")
     inst:AddTag("scarytoprey")
     inst:AddTag("areaattack")
     inst:RemoveEventCallback("onattackother", BackStab)
     inst:RemoveEventCallback("attacked", SneakFailed)
-    CustomCancelTask(inst.task_sneakspeedbooststaminacost)
-    CustomCancelTask(inst.task_cancelsneakspeedboost)
     CustomCancelTask(inst.task_entersneak)
-    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
     CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
 end
@@ -560,7 +658,7 @@ local function OnModeChange(inst)
     if previousmode == 3 and currentmode ~= 3 then
         if inst:HasTag("sneaking") then
             inst:RemoveSneakEffects()
-            inst.components.sanity:DoDelta(TUNING.musha.sneaksanitycost)
+            inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
         else
             CustomAttachFx(inst, "statue_transition_2") -- Avoid dupulicate fx
         end
@@ -568,7 +666,7 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
         CustomCancelTask(inst.modetrailtask)
 
-        for k, v in pairs(inst.components.petleash:GetPets()) do
+        for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("shadowvalkyrie") then
                 v:DoTaskInTime(math.random() * 0.5 + 0.5,
                     function() -- Delay for at least 0.5 seconds to make sure the activate event is triggered
@@ -632,7 +730,7 @@ local function OnModeChange(inst)
         inst:ListenForEvent("onattackother", BerserkOnAttackOther)
 
         inst.shadowmushafollowonly = false
-        for k, v in pairs(inst.components.petleash:GetPets()) do
+        for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") then
                 v:RemoveTag("followonly")
                 v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "followonlybuff")
@@ -710,6 +808,7 @@ local function OnLevelUp(inst, data)
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
+    inst.skills.sneakspeedboost    = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
     inst.skills.sporebomb          = data.lvl >= TUNING.musha.leveltounlockskill.sporebomb and true or nil
     inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
     inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
@@ -723,6 +822,19 @@ local function OnBecameHuman(inst)
     inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
     inst:DecideNormalOrFull()
     inst:DecideFatigueLevel()
+
+    -- Cancel skill cooldowns
+    local cooldowns = {
+        "cooldown_thunderspell",
+        "cooldown_freezingspell",
+        "cooldown_manashield",
+    }
+
+    for _, name in pairs(cooldowns) do
+        if inst.components.timer:TimerExists(name) then
+            inst.components.timer:StopTimer(name)
+        end
+    end
 end
 
 -- When the character turn into a ghost
@@ -862,6 +974,8 @@ local function master_postinit(inst)
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
+    inst.ShieldDelayedEffects = ShieldDelayedEffects
+    inst.ShieldOff = ShieldOff
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
 

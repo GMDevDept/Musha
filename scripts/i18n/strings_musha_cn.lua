@@ -12,6 +12,16 @@ STRINGS.musha = {
     shadowmushaorder_resume = "影子们，行动起来吧！",
 
     skills = {
+        incooldown = {
+            part1 = "技能 [",
+            part2 = "] 正在冷却，\n",
+            part3 = "剩余冷却时间：[ ",
+            part4 = " ] 秒",
+        },
+        cooldownfinished = {
+            part1 = "技能 [",
+            part2 = "] 冷却完毕！",
+        },
         manaspells = {
             actionstrings = {
                 GENERIC = "施放法术",
@@ -20,22 +30,35 @@ STRINGS.musha = {
                 SHADOWSPELL = "暗影波动",
             },
             freezingspell = {
+                name = "唤冰法咒",
                 cast = "冰之精灵，回应Musha的呼唤！",
             },
             thunderspell = {
+                name = "雷霆法咒",
                 cast = "雷之精灵，惩罚Musha的敌人！",
             },
         },
-        valkyrie = "女武神模式",
-        berserk = "狂暴模式",
-        manashield = "精灵护盾",
-        manashield_passive = "被动护盾",
+        manashield = {
+            name = "精灵护盾",
+            broken = "敌人好凶，护盾要碎掉了！",
+        },
+        manashield_passive = {
+            name = "精灵庇佑",
+        },
+        valkyrie = {
+            name = "女武神模式",
+        },
+        berserk = {
+            name = "暗影模式",
+        },
         sneak = {
             name = "潜影突袭",
             start = "潜行开始...",
             success = "融于暗影之中...",
             backstab_normal = "成功的背刺！",
             backstab_perfect = "完美的背刺！",
+            stop = "现身！",
+            failed = "Musha被敌人发现了！",
         },
     },
 
@@ -100,10 +123,9 @@ STRINGS.CHARACTERS.GENERIC.DESCRIBE.MUSHA = {
 
 STRINGS.CHARACTERS.GENERIC.ACTIONFAIL.RUMMAGE.MUSHA_NOT_OWNER = "我想它的主人不希望我这样做。"
 
+STRINGS.NAMES.SHADOWMUSHA = "影子Musha"
 STRINGS.NAMES.SHADOWMUSHA_BUILDER = "影子Musha"
 STRINGS.RECIPE_DESC.SHADOWMUSHA_BUILDER = "召唤自己阴影中的另一面。"
-
-STRINGS.NAMES.SHADOWMUSHA = "影子Musha"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHADOWMUSHA = "影子看起来和Musha一模一样。"
 
 ---------------------------------------------------------------------------------------------------------

@@ -23,6 +23,7 @@ local Fatigue = Class(function(self, inst)
     self.ispaused = false
     self.baserate = TUNING.musha.fatiguerate
     self.modifiers = SourceModifierList(inst, 0, SourceModifierList.additive)
+    self.multipliers = SourceModifierList(inst)
     self.rate = 0 -- Dynamic, delta per second
     self.ratelevel = RATE_SCALE.NEUTRAL -- 0: neutral, 1-3: upwards, 4-6: downwards
 
@@ -90,13 +91,16 @@ function Fatigue:SetRateLevel(ratelevel)
     self.inst.replica.fatigue:SetRateLevel(ratelevel)
 end
 
+function Fatigue:ModifierOnly()
+    return
+end
+
 function Fatigue:Recalc(dt)
     if self.ispaused then
         return
     end
 
     local inst = self.inst
-    local baserate = self.baserate
     local stamina = inst.components.stamina:GetPercent()
 
     local m = inst.sg:HasStateTag("sleeping") and -2
@@ -107,23 +111,24 @@ function Fatigue:Recalc(dt)
         or stamina < 0.8 and 0.01
         or 0
 
-    self.modifiers:SetModifier(inst, m, "stamina")
+    self.baserate = TUNING.musha.fatiguerate + m
 
-    self.rate = self.baserate + self.modifiers:Get()
+    self.rate = (self:ModifierOnly() and self.modifiers:Get() or
+        self.baserate + self.modifiers:Get()) * self.multipliers:Get()
 
     self.ratelevel = (self.rate >= 0.25 and RATE_SCALE.INCREASE_HIGH) or
         (self.rate >= 0.05 and RATE_SCALE.INCREASE_MED) or
-        (self.rate > baserate and RATE_SCALE.INCREASE_LOW) or
+        (self.rate > 0.02 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -3 and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate < -1 and RATE_SCALE.DECREASE_MED) or
+        (self.rate <= -2 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 
     self:DoDelta(dt * self.rate, true)
 end
 
-function Fatigue:DoDelta(delta, overtime, ignore_invincible)
-    if not ignore_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
+function Fatigue:DoDelta(delta, overtime, follow_invincible)
+    if follow_invincible and self.inst.components.health and self.inst.components.health:IsInvincible() or
         self.inst.is_teleporting then
         return
     end
