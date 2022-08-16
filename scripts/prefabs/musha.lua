@@ -110,11 +110,11 @@ local function ShieldOn(inst)
         local validtargets = 1
         local must_tags = { "_combat" }
         local ignore_tags = { "manashieldactivated" }
-        local one_of_tags = { "player", "companion", "musha_companion", "wall" }
+        local one_of_tags = { "player", "companion", "musha_companion" }
 
         local function cancel_manashield_area(v, data)
             if data.name == "cancel_manashield_area" then
-                if v:HasTag("manashieldactivated") then
+                if v == inst then -- Only be triggered by caster himself, even not by other musha players
                     v:ShieldOff()
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
@@ -188,14 +188,12 @@ local function ToggleShield(inst)
         return
     end
 
-    local manacost = inst.skills.manashield_area and TUNING.musha.skills.manashield_area.maxmanacost or
+    local manarequired = inst.skills.manashield_area and TUNING.musha.skills.manashield_area.maxmanacost or
         TUNING.musha.skills.manashield.manacost
 
-    if inst:HasTag("manashieldactivated") then
+    if inst:HasTag("manashieldactivated") then -- Shield is already on (single)
         inst:ShieldOff()
-        if not inst.skills.manashield_area then
-            inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
-        end
+        inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
     elseif not inst.skills.manashield then
         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
     elseif inst.components.timer:TimerExists("cooldown_manashield") then
@@ -205,14 +203,15 @@ local function ToggleShield(inst)
             .. STRINGS.musha.skills.incooldown.part3
             .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
             .. STRINGS.musha.skills.incooldown.part4)
-    elseif inst.components.mana.current < manacost then
+    elseif inst.components.mana.current < manarequired then
         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
         CustomPlayFailedAnim(inst)
-    else
-        if inst.components.timer:TimerExists("cancel_manashield_area") then
+    else -- Ready to cast
+        if inst.components.timer:TimerExists("cancel_manashield_area") then -- Area Shield is on (by self or other)
             inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
+        else
+            ShieldOn(inst)
         end
-        ShieldOn(inst)
     end
 end
 

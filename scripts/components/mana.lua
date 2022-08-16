@@ -91,7 +91,7 @@ function Mana:SetRateLevel(ratelevel)
 end
 
 function Mana:ModifierOnly()
-    return self.inst:HasTag("manashieldactivated")
+    return
 end
 
 function Mana:Recalc(dt)

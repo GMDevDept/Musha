@@ -82,16 +82,16 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = -1,
-            cooldown = 15,
+            cooldown = 30,
             staminacostonhit = -5,
             durabilitybase = 400,
             durabilitygrowth = 40,
         },
         manashield_area = {
-            manacost = 10,
-            maxmanacost = 30,
-            duration = 10,
-            cooldown = 0,
+            manacost = 30,
+            maxmanacost = 50,
+            duration = 15,
+            cooldown = 5,
             range = 18,
         },
         sneak = {
