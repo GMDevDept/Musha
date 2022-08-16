@@ -99,8 +99,9 @@ TUNING.musha = {
             backstabbasedamage = 100,
         },
         sneakspeedboost = {
-            max = 2,
+            max = 1,
             staminacost = -10,
+            backstabbonustime = 2,
         },
     },
 
