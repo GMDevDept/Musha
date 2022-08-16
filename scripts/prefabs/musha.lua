@@ -405,7 +405,7 @@ end
 
 local function ResetSneakSpeedMultiplier(inst)
     inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-        (TUNING.musha.skills.sneakspeedboost.max * inst.components.stamina:GetPercent() + 1))
+        (TUNING.musha.skills.sneakspeedboost.max * inst.components.stamina:GetPercent() + 1.5))
 end
 
 local function CancelSneakSpeedBoost(inst)
@@ -446,7 +446,7 @@ local function BackStab(inst, data)
         CustomAttachFx(inst, "nightsword_curve_fx", 3)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
             TUNING.musha.skills.sneakspeedboost.max) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-        inst:DoTaskInTime(2, function()
+        inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime, function()
             if not inst:HasTag("sneakspeedboost") then
                 inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
             end
