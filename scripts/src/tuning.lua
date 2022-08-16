@@ -49,8 +49,9 @@ TUNING.musha = {
     leveltounlockskill = {
         freezingspell      = 0,
         manashield         = 0,
-        valkyrie           = 0,
+        manashield_area    = 1,
         manashield_passive = 0,
+        valkyrie           = 0,
         berserk            = 0,
         thunderspell       = 0,
         shadowspell        = 0,
@@ -65,13 +66,13 @@ TUNING.musha = {
         freezingspell = {
             manacost = 5,
             maxmanacost = 15,
-            range = 14,
+            range = 18,
             cooldown = 5,
         },
         thunderspell = {
             manacost = 10,
             maxmanacost = 30,
-            range = 10,
+            range = 12,
             damage = 20,
             cooldown = 10,
         },
@@ -79,12 +80,19 @@ TUNING.musha = {
             sanitycost = -50,
         },
         manashield = {
-            manarequired = 10,
-            manaongoingcost = -2,
+            manacost = 10,
+            manaongoingcost = -1,
             cooldown = 15,
             staminacostonhit = -5,
             durabilitybase = 400,
             durabilitygrowth = 40,
+        },
+        manashield_area = {
+            manacost = 10,
+            maxmanacost = 30,
+            duration = 10,
+            cooldown = 0,
+            range = 18,
         },
         sneak = {
             sanitycost = 50,

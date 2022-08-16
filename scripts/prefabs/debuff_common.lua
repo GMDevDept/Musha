@@ -95,8 +95,7 @@ end
 
 local function SetDuration(inst, duration)
     if duration and duration > 0 then
-        inst.components.timer:StopTimer("buffover")
-        inst.components.timer:StartTimer("buffover", duration)
+        inst.components.timer:SetTimeLeft("buffover", duration)
     else
         inst.components.timer:StopTimer("buffover")
     end
@@ -120,8 +119,7 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
     end
 
     local function OnExtended(inst, target)
-        inst.components.timer:StopTimer("buffover")
-        inst.components.timer:StartTimer("buffover", defaultduration)
+        inst.components.timer:SetTimeLeft("buffover", defaultduration)
 
         if onextendedfn ~= nil then
             onextendedfn(inst, target)

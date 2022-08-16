@@ -231,7 +231,7 @@ end
 
 local musha_berserk_pre = State {
     name = "musha_berserk_pre",
-    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt" },
+    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.health:SetInvincible(true)
@@ -243,7 +243,7 @@ local musha_berserk_pre = State {
     timeline =
     {
         TimeEvent(15 * FRAMES, function(inst)
-            CustomDoAOE(inst, 3, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 3, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -251,7 +251,7 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(21 * FRAMES, function(inst)
-            CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -259,7 +259,7 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(27 * FRAMES, function(inst)
-            CustomDoAOE(inst, 5, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 5, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -269,7 +269,7 @@ local musha_berserk_pre = State {
         TimeEvent(31 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
             inst.mode:set(3)
-            CustomDoAOE(inst, 6, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 6, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -277,7 +277,7 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(33 * FRAMES, function(inst)
-            CustomDoAOE(inst, 8, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 8, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -285,7 +285,7 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(35 * FRAMES, function(inst)
-            CustomDoAOE(inst, 10, { "_combat" }, { "player", "companion", "musha_companion" },
+            CustomDoAOE(inst, 10, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
                 end)
@@ -309,7 +309,7 @@ local musha_berserk_pre = State {
 -- Client
 local musha_berserk_pre_client = State {
     name = "musha_berserk_pre_client",
-    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt" },
+    tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -329,17 +329,13 @@ AddStategraphState("wilson_client", musha_berserk_pre_client)
 
 AddStategraphEvent("wilson", EventHandler("activateberserk",
     function(inst, data)
-        if not inst.sg:HasStateTag("busy") then
-            inst.sg:GoToState("musha_berserk_pre")
-        end
+        inst.sg:GoToState("musha_berserk_pre")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("activateberserk",
     function(inst, data)
-        if not inst.sg:HasStateTag("busy") then
-            inst.sg:GoToState("musha_berserk_pre_client")
-        end
+        inst.sg:GoToState("musha_berserk_pre_client")
     end)
 )
 
@@ -361,8 +357,9 @@ local musha_spell = State {
     tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
-        if inst.bufferedspell == "ShieldDelayedEffects" then
+        if inst.bufferedspell == "SetShieldDurability" then
             inst.sg:AddStateTag("busy")
+            inst.sg:AddStateTag("musha_nointerrupt")
         end
 
         inst.components.locomotor:Stop()
@@ -480,7 +477,7 @@ local musha_spell = State {
 
 local musha_spell_client = State {
     name = "musha_spell_client",
-    tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
+    tags = { "doing", "nomorph", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -510,20 +507,13 @@ AddStategraphState("wilson_client", musha_spell_client)
 
 AddStategraphEvent("wilson", EventHandler("castmanaspell",
     function(inst, data)
-        if not inst.sg:HasStateTag("busy") or inst.bufferedspell == "ShieldDelayedEffects" then
-            inst.sg:GoToState("musha_spell")
-        else
-            inst.bufferedspell = nil
-            inst.bufferedbookfx = nil
-        end
+        inst.sg:GoToState("musha_spell")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("castmanaspell",
     function(inst, data)
-        if not inst.sg:HasStateTag("busy") then
-            inst.sg:GoToState("musha_spell_client")
-        end
+        inst.sg:GoToState("musha_spell_client")
     end)
 )
 

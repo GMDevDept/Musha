@@ -105,7 +105,7 @@ end
 AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, function(act)
     local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
-    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_spell") then
+    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_spell") then
         return false
     elseif (inst.mode:value() == 0 or inst.mode:value() == 1) then
         if not inst.skills.freezingspell then

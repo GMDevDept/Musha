@@ -42,7 +42,8 @@ end
 -- Sleep
 
 local function ToggleSleep(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
@@ -86,34 +87,81 @@ local function ShieldOnTimerDone(inst, data)
     end
 end
 
-local function ShieldDelayedEffects(inst)
-    inst.shielddurability = TUNING.musha.skills.manashield.durabilitybase +
-        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl
+local function SetShieldDurability(inst)
+    -- Unlimited durability when manashield_area
+    inst.shielddurability = inst.skills.manashield_area and -1 or (TUNING.musha.skills.manashield.durabilitybase +
+        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
 end
 
 local function ShieldOn(inst)
-    inst:AddTag("manashieldactivated")
+    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
+    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
+    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0)) -- Put before ListenForEvent("blocked", ShieldOnAttacked)
 
     inst.components.health:SetInvincible(true)
     inst:ListenForEvent("invincibletoggle", KeepInvincible)
-    inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
     inst:ListenForEvent("blocked", ShieldOnAttacked)
 
-    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
-    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
-    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+    if not inst.skills.manashield_area then
+        inst:AddTag("manashieldactivated")
+        inst:SetShieldDurability()
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+    else
+        local validtargets = 1
+        local must_tags = { "_combat" }
+        local ignore_tags = { "manashieldactivated" }
+        local one_of_tags = { "player", "companion", "musha_companion", "wall" }
 
-    inst.bufferedspell = "ShieldDelayedEffects"
-    inst.bufferedbookfx = {
-        swap_build = "swap_books",
-        swap_prefix = "book_moon",
-        def = {
-            fx = "fx_book_moon",
-            layer = "FX_plants_big",
-            layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+        local function cancel_manashield_area(v, data)
+            if data.name == "cancel_manashield_area" then
+                if v:HasTag("manashieldactivated") then
+                    v:ShieldOff()
+                    v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
+                else
+                    v.components.health:SetInvincible(false)
+                    CustomRemoveEntity(v.fx_manashield)
+                end
+                v:RemoveEventCallback("timerdone", cancel_manashield_area)
+            end
+        end
+
+        inst.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
+        inst:ListenForEvent("timerdone", cancel_manashield_area)
+
+        CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, one_of_tags, function(v)
+            if not v.components.health then
+                return
+            elseif not v.components.timer then
+                v:AddComponent("timer")
+            end
+
+            if not v.components.timer:TimerExists("cancel_manashield_area") then
+                v.components.health:SetInvincible(true)
+                v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+                v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
+                v:ListenForEvent("timerdone", cancel_manashield_area)
+            else
+                v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
+            end
+
+            validtargets = validtargets + 1
+        end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+
+        inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
+            TUNING.musha.skills.manashield_area.maxmanacost))
+
+        inst.bufferedspell = "SetShieldDurability"
+        inst.bufferedbookfx = {
+            swap_build = "swap_books",
+            swap_prefix = "book_moon",
+            def = {
+                fx = "fx_book_moon",
+                layer = "FX_plants_big",
+                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+            }
         }
-    }
-    inst.castmanaspell:push()
+        inst.castmanaspell:push()
+    end
 end
 
 local function ShieldOff(inst)
@@ -136,13 +184,18 @@ end
 
 local function ToggleShield(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_spell") or inst.sg:HasStateTag("musha_berserk_pre") then
+        inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
+    local manacost = inst.skills.manashield_area and TUNING.musha.skills.manashield_area.maxmanacost or
+        TUNING.musha.skills.manashield.manacost
+
     if inst:HasTag("manashieldactivated") then
-        inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manarequired)
         inst:ShieldOff()
+        if not inst.skills.manashield_area then
+            inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
+        end
     elseif not inst.skills.manashield then
         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
     elseif inst.components.timer:TimerExists("cooldown_manashield") then
@@ -152,10 +205,13 @@ local function ToggleShield(inst)
             .. STRINGS.musha.skills.incooldown.part3
             .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
             .. STRINGS.musha.skills.incooldown.part4)
-    elseif inst.components.mana.current < TUNING.musha.skills.manashield.manarequired then
+    elseif inst.components.mana.current < manacost then
         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
         CustomPlayFailedAnim(inst)
     else
+        if inst.components.timer:TimerExists("cancel_manashield_area") then
+            inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
+        end
         ShieldOn(inst)
     end
 end
@@ -179,7 +235,7 @@ local function FreezingSpell(inst)
     local must_tags = { "_combat" }
     local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
 
-    CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, function(v)
+    CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, nil, function(v)
         if v.components.freezable and not v.components.freezable:IsFrozen() then
             v.components.freezable:AddColdness(4) -- Freeze
             v.components.freezable:SpawnShatterFX()
@@ -193,7 +249,7 @@ local function FreezingSpell(inst)
             v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not freezable
             validtargets = validtargets + 1
         end
-    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
@@ -218,7 +274,7 @@ local function ThunderSpell(inst)
     local must_tags = { "_combat" }
     local ignore_tags = { "companion", "musha_companion", "player" }
 
-    CustomDoAOE(inst, TUNING.musha.skills.thunderspell.range, must_tags, ignore_tags, function(v)
+    CustomDoAOE(inst, TUNING.musha.skills.thunderspell.range, must_tags, ignore_tags, nil, function(v)
         v:DoTaskInTime(validtargets * (.3 + math.random() * .2), function()
             v.components.combat:GetAttacked(inst,
                 TUNING.musha.skills.thunderspell.damage + 5 * math.floor(inst.components.leveler.lvl / 5), nil,
@@ -227,7 +283,7 @@ local function ThunderSpell(inst)
             CustomAttachFx(v, "lightning")
         end)
         validtargets = validtargets + 1
-    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, fn)
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.thunderspell.manacost * validtargets, TUNING.musha.skills.thunderspell.maxmanacost))
@@ -473,8 +529,8 @@ end
 
 -- Decide normal mode or full mode
 local function DecideNormalOrFull(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or
-        inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
         return
     end
 
@@ -488,7 +544,7 @@ end
 -- Toggle valkyrie mode
 local function ToggleValkyrie(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("nomorph") then
+        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
         return
     end
 
@@ -503,7 +559,7 @@ end
 -- Toggle berserk mode
 local function ToggleBerserk(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("nomorph") then
+        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
         return
     end
 
@@ -757,8 +813,8 @@ end
 -- Fatigue level related
 
 local function DecideFatigueLevel(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or
-        inst.sg:HasStateTag("ghostbuild") or inst.sg:HasStateTag("nomorph") then
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
+        or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
@@ -802,8 +858,9 @@ end
 local function OnLevelUp(inst, data)
     inst.skills.freezingspell      = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
-    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil
+    inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
+    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil
     inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
@@ -974,7 +1031,7 @@ local function master_postinit(inst)
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.RemoveSneakEffects = RemoveSneakEffects
-    inst.ShieldDelayedEffects = ShieldDelayedEffects
+    inst.SetShieldDurability = SetShieldDurability
     inst.ShieldOff = ShieldOff
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
