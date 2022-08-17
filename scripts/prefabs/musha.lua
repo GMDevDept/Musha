@@ -88,8 +88,7 @@ local function ShieldOnTimerDone(inst, data)
 end
 
 local function SetShieldDurability(inst)
-    -- Unlimited durability when manashield_area
-    inst.shielddurability = inst.skills.manashield_area and -1 or (TUNING.musha.skills.manashield.durabilitybase +
+    inst.shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
         TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
 end
 
@@ -107,7 +106,7 @@ local function ShieldOn(inst)
         inst:SetShieldDurability()
         inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
     else
-        local validtargets = 1
+        local validtargets = 0
         local must_tags = { "_combat" }
         local ignore_tags = { "manashieldactivated" }
         local one_of_tags = { "player", "companion", "musha_companion" }
@@ -119,16 +118,14 @@ local function ShieldOn(inst)
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
                     v.components.health:SetInvincible(false)
-                    CustomRemoveEntity(v.fx_manashield)
+                    v.fx_manashield:kill_fx()
                 end
                 v:RemoveEventCallback("timerdone", cancel_manashield_area)
             end
         end
 
-        inst.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
-        inst:ListenForEvent("timerdone", cancel_manashield_area)
-
         CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, one_of_tags, function(v)
+            print(v)
             if not v.components.health then
                 return
             elseif not v.components.timer then
@@ -136,15 +133,17 @@ local function ShieldOn(inst)
             end
 
             if not v.components.timer:TimerExists("cancel_manashield_area") then
-                v.components.health:SetInvincible(true)
-                v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+                if v ~= inst then
+                    v.components.health:SetInvincible(true)
+                    v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+                end
                 v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
                 v:ListenForEvent("timerdone", cancel_manashield_area)
             else
                 v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
             end
-
             validtargets = validtargets + 1
+            print(validtargets)
         end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
         inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
@@ -194,6 +193,8 @@ local function ToggleShield(inst)
     if inst:HasTag("manashieldactivated") then -- Shield is already on (single)
         inst:ShieldOff()
         inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
+    elseif inst.components.timer:TimerExists("cancel_manashield_area") then -- Area Shield is on (by self or other)
+        inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
     elseif not inst.skills.manashield then
         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
     elseif inst.components.timer:TimerExists("cooldown_manashield") then
@@ -207,11 +208,7 @@ local function ToggleShield(inst)
         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
         CustomPlayFailedAnim(inst)
     else -- Ready to cast
-        if inst.components.timer:TimerExists("cancel_manashield_area") then -- Area Shield is on (by self or other)
-            inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
-        else
-            ShieldOn(inst)
-        end
+        ShieldOn(inst)
     end
 end
 

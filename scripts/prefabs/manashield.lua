@@ -22,6 +22,13 @@ local function OnUpdateLight(inst, dframes)
     if done then
         inst._lighttask:Cancel()
         inst._lighttask = nil
+        if inst._islighton:value() then
+            inst:DoTaskInTime(3, function() -- Cancel light effect after 3 seconds
+                inst._islighton:set(false)
+                inst._lightframe:set(inst._lightframe:value())
+                inst:OnLightDirty()
+            end)
+        end
     end
 end
 
@@ -67,6 +74,7 @@ local function fn()
     inst._islighton = net_bool(inst.GUID, "forcefieldfx._islighton", "lightdirty")
     inst._lighttask = nil
     inst._islighton:set(true)
+    inst.OnLightDirty = OnLightDirty
 
     inst.entity:SetPristine()
 

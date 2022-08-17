@@ -359,6 +359,7 @@ local musha_spell = State {
     onenter = function(inst)
         if inst.bufferedspell == "SetShieldDurability" then
             inst.sg:AddStateTag("busy")
+            inst.sg:AddStateTag("nopredict")
             inst.sg:AddStateTag("musha_nointerrupt")
         end
 
