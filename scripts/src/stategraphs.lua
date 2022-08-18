@@ -3,6 +3,86 @@
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Sleep related
+
+-- Knockout
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["knockout"].onenter
+    self.states["knockout"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+            inst.components.talker:Say(STRINGS.musha.sleep.poor[math.random(#STRINGS.musha.sleep.poor)])
+        end
+        return _onenter(inst)
+    end
+end)
+
+-- Bedroll
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["bedroll"].onenter
+    self.states["bedroll"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+            inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
+        end
+        return _onenter(inst)
+    end
+
+    local _fn = self.states["bedroll"].events["animqueueover"].fn
+    self.states["bedroll"].events["animqueueover"].fn = function(inst)
+        if inst:HasTag("musha") and inst.AnimState:AnimDone()
+            and not (TheWorld.state.isday or
+                (inst.components.health ~= nil and inst.components.health.takingfiredamage) or
+                (inst.components.burnable ~= nil and inst.components.burnable:IsBurning()))
+            and not inst:GetBufferedAction() then
+
+            if inst.components.playercontroller ~= nil then
+                inst.components.playercontroller:Enable(true)
+            end
+            inst.sg:AddStateTag("sleeping")
+            inst.sg:AddStateTag("silentmorph")
+            inst.sg:RemoveStateTag("nomorph")
+            inst.sg:RemoveStateTag("busy")
+            inst.AnimState:PlayAnimation("bedroll_sleep_loop", true)
+        else
+            return _fn(inst)
+        end
+    end
+end)
+
+-- Tent
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["tent"].onenter
+    self.states["tent"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+            inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
+        end
+        return _onenter(inst)
+    end
+end)
+
+-- Wakeup
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["wakeup"].onenter
+    self.states["wakeup"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+        end
+        return _onenter(inst)
+    end
+
+    local _onexit = self.states["wakeup"].onexit
+    self.states["wakeup"].onexit = function(inst)
+        if inst:HasTag("musha") then
+            inst.components.talker:Say(STRINGS.musha.sleep.wakeup[math.random(#STRINGS.musha.sleep.wakeup)])
+        end
+        return _onexit(inst)
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
 -- Smite
 local musha_smite = State {
     name = "musha_smite",
@@ -179,46 +259,30 @@ local musha_smite_client = State {
 AddStategraphState("wilson", musha_smite)
 AddStategraphState("wilson_client", musha_smite_client)
 
--- Redefine action handlers
-AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ATTACK,
-    function(inst, action)
-        inst.sg.mem.localchainattack = not action.forced or nil
-        if not
-            (
-            inst.sg:HasStateTag("attack") and action.target == inst.sg.statemem.attacktarget or
-                inst.components.health:IsDead()) then
-            local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon() or nil
-            return (weapon == nil and "attack")
-                or (weapon:HasTag("blowdart") and "blowdart")
-                or (weapon:HasTag("slingshot") and "slingshot_shoot")
-                or (weapon:HasTag("thrown") and "throw")
-                or (weapon:HasTag("propweapon") and "attack_prop_pre")
-                or (weapon:HasTag("multithruster") and "multithrust_pre")
-                or (weapon:HasTag("helmsplitter") and "helmsplitter_pre")
-                or (weapon:HasTag("attackmodule_smite") and "musha_smite")
-                or "attack"
+-- Redefine attack action handlers
+AddStategraphPostInit("wilson", function(self)
+    local _deststate = self.actionhandlers[ACTIONS.ATTACK].deststate
+    self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon() or nil
+        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack" then
+            return "musha_smite"
+        else
+            return _deststate(inst, action)
         end
-    end)
-)
+    end
+end)
 
-AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ATTACK,
-    function(inst, action)
-        if not (inst.sg:HasStateTag("attack") and action.target == inst.sg.statemem.attacktarget or IsEntityDead(inst)) then
-            local equip = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-            if equip == nil then
-                return "attack"
-            end
-            local inventoryitem = equip.replica.inventoryitem
-            return (not (inventoryitem ~= nil and inventoryitem:IsWeapon()) and "attack")
-                or (equip:HasTag("blowdart") and "blowdart")
-                or (equip:HasTag("slingshot") and "slingshot_shoot")
-                or (equip:HasTag("thrown") and "throw")
-                or (equip:HasTag("propweapon") and "attack_prop_pre")
-                or (equip:HasTag("attackmodule_smite") and "musha_smite_client")
-                or "attack"
+AddStategraphPostInit("wilson_client", function(self)
+    local _deststate = self.actionhandlers[ACTIONS.ATTACK].deststate
+    self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
+        local weapon = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack" then
+            return "musha_smite_client"
+        else
+            return _deststate(inst, action)
         end
-    end)
-)
+    end
+end)
 
 ---------------------------------------------------------------------------------------------------------
 

@@ -43,11 +43,60 @@ end
 
 local function ToggleSleep(inst)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") then
+        (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("sleeping")) then
         return
     end
 
-    inst:DecideNormalOrFull()
+    if not inst.sg:HasStateTag("sleeping") and not inst.sg:HasStateTag("idle") then
+        inst.components.talker:Say(STRINGS.musha.sleep.fail.busy)
+    elseif not inst.sg:HasStateTag("sleeping") and inst.sg:HasStateTag("idle") then
+        local indanger
+        local hounded = TheWorld.components.hounded
+
+        if hounded ~= nil and (hounded:GetWarning() or hounded:GetAttacking()) then
+            indanger = true
+        else
+            local must_tags = { "_combat" }
+            local ignore_tags = { "player", "companion", "musha_companion" }
+
+            indanger = FindEntity(inst, 14, function(target)
+                return target:HasTag("monster") or target:HasTag("hostile")
+                    or (target.components.combat ~= nil and target.components.combat.target == inst)
+            end, must_tags, ignore_tags)
+        end
+
+        if not inst.LightWatcher:IsInLight() then
+            inst.components.talker:Say(STRINGS.musha.sleep.fail.dark)
+        elseif inst.components.temperature:GetCurrent() >= 65 then
+            inst.components.talker:Say(STRINGS.musha.sleep.fail.hot)
+        elseif inst.components.temperature:GetCurrent() <= 0 then
+            inst.components.talker:Say(STRINGS.musha.sleep.fail.cold)
+        elseif inst.components.hunger:GetPercent() < 0.1 then
+            inst.components.talker:Say(STRINGS.musha.sleep.fail.starving)
+        elseif indanger ~= nil then
+            inst.components.talker:Say(STRINGS.musha.sleep.fail.indanger)
+        else
+            inst:DecideNormalOrFull()
+
+            local one_of_tags = { "campfire", "yamche" }
+            local campfire = FindEntity(inst, 6, function(target)
+                return target.components.burnable and target.components.burnable:IsBurning()
+            end, nil, nil, one_of_tags)
+
+            if not campfire or TheWorld.state.isday then
+                inst.sg:GoToState("knockout")
+            else
+                if inst.components.temperature:GetCurrent() >= 45 then
+                    inst.AnimState:OverrideSymbol("swap_bedroll", "swap_bedroll_straw", "bedroll_straw")
+                else
+                    inst.AnimState:OverrideSymbol("swap_bedroll", "swap_bedroll_furry", "bedroll_furry")
+                end
+                inst.sg:GoToState("bedroll")
+            end
+        end
+    else
+        inst.sg:GoToState("wakeup")
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -61,10 +110,8 @@ local function KeepInvincible(inst, data)
 end
 
 local function ShieldOnAttacked(inst, data)
+    inst.fx_manashield:PushEvent("blocked")
     inst.components.stamina:DoDelta(TUNING.musha.skills.manashield.staminacostonhit)
-    inst.fx_manashield.AnimState:PlayAnimation("hit")
-    inst.fx_manashield.AnimState:PushAnimation("idle_loop")
-    inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
     if inst.shielddurability and inst.shielddurability > 0 then
         local delta = 20
         if data.attacker and data.attacker.components.combat and data.attacker.components.combat.defaultdamage then
@@ -125,7 +172,6 @@ local function ShieldOn(inst)
         end
 
         CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, one_of_tags, function(v)
-            print(v)
             if not v.components.health then
                 return
             elseif not v.components.timer then
@@ -143,7 +189,6 @@ local function ShieldOn(inst)
                 v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
             end
             validtargets = validtargets + 1
-            print(validtargets)
         end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
         inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
@@ -182,8 +227,9 @@ local function ShieldOff(inst)
 end
 
 local function ToggleShield(inst)
+    -- Can interrupt wake up state
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") then
+        (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("waking")) then
         return
     end
 

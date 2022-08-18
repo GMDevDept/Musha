@@ -23,11 +23,11 @@ local function OnUpdateLight(inst, dframes)
         inst._lighttask:Cancel()
         inst._lighttask = nil
         if inst._islighton:value() then
-            inst:DoTaskInTime(3, function() -- Cancel light effect after 3 seconds
-                inst._islighton:set(false)
-                inst._lightframe:set(inst._lightframe:value())
-                inst:OnLightDirty()
-            end)
+            if not inst.components.timer:TimerExists("fireout") then
+                inst.components.timer:StartTimer("fireout", 3) -- Cancel light effect after 3 seconds
+            else
+                inst.components.timer:SetTimeLeft("fireout", 3)
+            end
         end
     end
 end
@@ -37,6 +37,30 @@ local function OnLightDirty(inst)
         inst._lighttask = inst:DoPeriodicTask(FRAMES, OnUpdateLight, nil, 1)
     end
     OnUpdateLight(inst, 0)
+end
+
+local function OnBlocked(inst)
+    inst.AnimState:PlayAnimation("hit")
+    inst.AnimState:PushAnimation("idle_loop")
+    inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
+    if not inst._islighton:value() then -- Light again
+        inst._islighton:set(true)
+        inst._lightframe:set(inst._lightframe:value())
+        inst:OnLightDirty()
+    else
+        if inst.components.timer:TimerExists("fireout") then
+            inst.components.timer:SetTimeLeft("fireout", 3)
+        end
+        inst:OnLightDirty()
+    end
+end
+
+local function OnTimerDone(inst, data)
+    if data.name == "fireout" then
+        inst._islighton:set(false)
+        inst._lightframe:set(inst._lightframe:value())
+        inst:OnLightDirty()
+    end
 end
 
 local function kill_fx(inst)
@@ -74,11 +98,17 @@ local function fn()
     inst._islighton = net_bool(inst.GUID, "forcefieldfx._islighton", "lightdirty")
     inst._lighttask = nil
     inst._islighton:set(true)
+
     inst.OnLightDirty = OnLightDirty
+
+    inst:AddComponent("timer")
 
     inst.entity:SetPristine()
 
     OnLightDirty(inst)
+
+    inst:ListenForEvent("blocked", OnBlocked)
+    inst:ListenForEvent("timerdone", OnTimerDone)
 
     if not TheWorld.ismastersim then
         inst:ListenForEvent("lightdirty", OnLightDirty)

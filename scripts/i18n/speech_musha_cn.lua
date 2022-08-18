@@ -19,6 +19,10 @@ return {
         }
     },
     ANNOUNCE_BOOK_MOON_DAYTIME = "一旦夜幕降临，我们就会知道它管不管用。",
+    ANNOUNCE_NODAYSLEEP = "天色还早，Musha想要去冒险！",
+    ANNOUNCE_NODAYSLEEP_CAVE = "小孩子才要这么早睡觉呢。",
+    ANNOUNCE_NODANGERSLEEP = "附近有危险，Musha还不能放松警惕。",
+    ANNOUNCE_NOHUNGERSLEEP = "肚子好饿，Musha睡不着。。。",
     --adds action start
     -- ACTIONFAIL =
     -- {
@@ -210,20 +214,16 @@ return {
     ANNOUNCE_TRAP_WENT_OFF = "啊！",
     ANNOUNCE_CRAFTING_FAIL = "哇？这个不起作用。",
     ANNOUNCE_QUAKE = "听起来像胃疼一样！山洞胃疼了吗？",
-    ANNOUNCE_NODANGERSLEEP = "Musha听到了什么。\n Musha得去看看。",
-    ANNOUNCE_NOHUNGERSLEEP = "Musha肚子饿啦！\n Musha睡不着！",
     ANNOUNCE_FREEDOM = "Musha自由啦！没有人能困住Musha！",
     ANNOUNCE_RESEARCH = "Musha认识那个！Musha知道怎么用！",
     ANNOUNCE_NO_TRAP = "对Musha来说太轻松了！",
     ANNOUNCE_HIGHRESEARCH = "非常棒！Musha做到了！",
     ANNOUNCE_THORNS = "噢！粗鲁的植物！",
-    ANNOUNCE_NODAYSLEEP_CAVE = "Musha想去玩！\n Musha不累。",
     ANNOUNCE_BEES = "有只蜜蜂在Musha耳边嗡嗡响！",
     ANNOUNCE_KNOCKEDOUT = "噢..满天星星..",
     ANNOUNCE_LOWRESEARCH = "Musha做太多了。",
     ANNOUNCE_DEERCLOPS = "小伙伴上吧！\n 大狩猎开始了！",
     ANNOUNCE_MOSQUITOS = "臭虫子，Musha要咬回去！",
-    ANNOUNCE_NODAYSLEEP = "睡觉？Musha想到处跑！",
     ANNOUNCE_INSUFFICIENTFERTILIZER = "那应该对植物不好...",
     ANNOUNCE_CANFIX = "\nMusha能够修好它！",
     ANNOUNCE_LIGHTNING_DAMAGE_AVOIDED = "Musha比光还快！",

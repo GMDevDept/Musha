@@ -3,8 +3,10 @@ TUNING.musha = {
     hunger = 200,
     sanity = 200,
 
-    maxmana = 50,
-    manaregenspeed = 1,
+    -- maxmana = 50,
+    -- manaregenspeed = 1,
+    maxmana = 500,
+    manaregenspeed = 10,
 
     maxfatigue = 100,
     fatiguerate = 1 / 96, -- 5/day
@@ -82,7 +84,8 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = -1,
-            cooldown = 30,
+            -- cooldown = 30,
+            cooldown = 5,
             staminacostonhit = -5,
             durabilitybase = 400,
             durabilitygrowth = 40,

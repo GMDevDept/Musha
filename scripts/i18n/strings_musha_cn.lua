@@ -11,6 +11,38 @@ STRINGS.musha = {
     shadowmushaorder_follow = "影子们，停下手中的活儿，到Musha身边来！",
     shadowmushaorder_resume = "影子们，行动起来吧！",
 
+    sleep = {
+        fail = {
+            busy = "睡觉之前，Musha得先停下手中的活儿！",
+            dark = "不可以，Musha会被查理抓走的！",
+            indanger = "附近有危险，Musha还不能放松警惕。",
+            hot = "太热啦！",
+            cold = "Musha会被冻死的！",
+            starving = "肚子好饿，Musha睡不着。。。",
+        },
+        poor = {
+            "使不上力气。。。",
+            "要昏过去了。。。",
+            "头晕眼花。。。",
+            "不行，Musha顶不住睡意了。。。",
+            "先这样将就着休息。。一下吧。。。",
+        },
+        good = {
+            "晚安，伙伴们！",
+            "Musha会做一个好梦。",
+            "冒险途中偶尔休息一下也不坏呢。",
+            "温暖的被窝，Musha喜欢！",
+            "Musha要睡觉啦，明天再努力吧！",
+        },
+        wakeup = {
+            "到起床时间了吗。。",
+            "哈~~~~~欠！",
+            "Musha准备好继续冒险了！",
+            "姆咪缪缪。。。 >_<",
+            "休息时间结束~~！",
+        },
+    },
+
     skills = {
         incooldown = {
             part1 = "技能 [",
