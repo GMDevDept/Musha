@@ -83,6 +83,21 @@ end)
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Cancel attacked effects if manashield is active
+AddStategraphPostInit("wilson", function(self)
+    local _fn = self.events["attacked"].fn
+    self.events["attacked"].fn = function(inst, data)
+        if not inst.components.health:IsDead() and not inst.sg:HasStateTag("drowning") and
+            (inst:HasTag("manashieldactivated") or inst:HasTag("areamanashieldactivated")) then
+            return
+        else
+            return _fn(inst, data)
+        end
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
 -- Smite
 local musha_smite = State {
     name = "musha_smite",

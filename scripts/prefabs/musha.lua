@@ -47,9 +47,9 @@ local function ToggleSleep(inst)
         return
     end
 
-    if not inst.sg:HasStateTag("sleeping") and not inst.sg:HasStateTag("idle") then
+    if not inst.sg:HasStateTag("sleeping") and not (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
         inst.components.talker:Say(STRINGS.musha.sleep.fail.busy)
-    elseif not inst.sg:HasStateTag("sleeping") and inst.sg:HasStateTag("idle") then
+    elseif not inst.sg:HasStateTag("sleeping") and (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
         local indanger
         local hounded = TheWorld.components.hounded
 
@@ -103,24 +103,28 @@ end
 
 -- Mana Shield
 
-local function KeepInvincible(inst, data)
-    if data.invincible == false then
-        inst.components.health:SetInvincible(true)
-    end
-end
-
 local function ShieldOnAttacked(inst, data)
     inst.fx_manashield:PushEvent("blocked")
-    inst.components.stamina:DoDelta(TUNING.musha.skills.manashield.staminacostonhit)
+
+    if inst.components.stamina then
+        inst.components.stamina:DoDelta(TUNING.musha.skills.manashield.staminacostonhit)
+    end
+
     if inst.shielddurability and inst.shielddurability > 0 then
-        local delta = 20
-        if data.attacker and data.attacker.components.combat and data.attacker.components.combat.defaultdamage then
-            delta = delta + data.attacker.components.combat.defaultdamage
+        local delta = TUNING.musha.skills.manashield.durabilitydamage
+        if data.original_damage and data.original_damage > 0 then
+            delta = delta + data.original_damage
         end
         inst.shielddurability = inst.shielddurability - delta
         if inst.shielddurability <= 0 then
             inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
-            inst.task_shieldbrokendelay = inst:DoTaskInTime(3, function() inst:ShieldOff() end)
+            inst.task_shieldbrokendelay = inst:DoTaskInTime(3, function()
+                if inst:HasTag("manashieldactivated") then
+                    inst:ShieldOff()
+                elseif inst:HasTag("areamanashieldactivated") then
+                    inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
+                end
+            end)
         end
     end
 end
@@ -142,11 +146,10 @@ end
 local function ShieldOn(inst)
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
-    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0)) -- Put before ListenForEvent("blocked", ShieldOnAttacked)
+    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0)) -- Put before ListenForEvent("attacked", ShieldOnAttacked)
 
-    inst.components.health:SetInvincible(true)
-    inst:ListenForEvent("invincibletoggle", KeepInvincible)
-    inst:ListenForEvent("blocked", ShieldOnAttacked)
+    inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
+    inst:ListenForEvent("attacked", ShieldOnAttacked) -- Caster is not really in invincible state so event is "attacked" instead of "blocked"
 
     if not inst.skills.manashield_area then
         inst:AddTag("manashieldactivated")
@@ -160,12 +163,14 @@ local function ShieldOn(inst)
 
         local function cancel_manashield_area(v, data)
             if data.name == "cancel_manashield_area" then
+                v:RemoveTag("areamanashieldactivated")
                 if v == inst then -- Only be triggered by caster himself, even not by other musha players
                     v:ShieldOff()
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
-                    v.components.health:SetInvincible(false)
+                    v:RemoveEventCallback("blocked", ShieldOnAttacked)
                     v.fx_manashield:kill_fx()
+                    v.components.health:SetInvincible(false)
                 end
                 v:RemoveEventCallback("timerdone", cancel_manashield_area)
             end
@@ -178,10 +183,12 @@ local function ShieldOn(inst)
                 v:AddComponent("timer")
             end
 
-            if not v.components.timer:TimerExists("cancel_manashield_area") then
+            if not v:HasTag("areamanashieldactivated") then
+                v:AddTag("areamanashieldactivated")
                 if v ~= inst then
-                    v.components.health:SetInvincible(true)
                     v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+                    v:ListenForEvent("blocked", ShieldOnAttacked) -- For other targets except for caster, they are in truely invincible state so event is "blocked" instead of "attacked"
+                    v.components.health:SetInvincible(true)
                 end
                 v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
                 v:ListenForEvent("timerdone", cancel_manashield_area)
@@ -209,11 +216,10 @@ local function ShieldOn(inst)
 end
 
 local function ShieldOff(inst)
-    inst:RemoveEventCallback("invincibletoggle", KeepInvincible)
-    inst.components.health:SetInvincible(false)
+    inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
     inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
     inst.shielddurability = nil
-    inst:RemoveEventCallback("blocked", ShieldOnAttacked)
+    inst:RemoveEventCallback("attacked", ShieldOnAttacked)
     CustomCancelTask(inst.task_shieldbrokendelay)
 
     inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
@@ -236,10 +242,10 @@ local function ToggleShield(inst)
     local manarequired = inst.skills.manashield_area and TUNING.musha.skills.manashield_area.maxmanacost or
         TUNING.musha.skills.manashield.manacost
 
-    if inst:HasTag("manashieldactivated") then -- Shield is already on (single)
+    if inst:HasTag("manashieldactivated") then -- Shield is on (not area shield)
         inst:ShieldOff()
         inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
-    elseif inst.components.timer:TimerExists("cancel_manashield_area") then -- Area Shield is on (by self or other)
+    elseif inst:HasTag("areamanashieldactivated") then -- Area Shield is on (by self or other)
         inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
     elseif not inst.skills.manashield then
         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -253,7 +259,7 @@ local function ToggleShield(inst)
     elseif inst.components.mana.current < manarequired then
         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
         CustomPlayFailedAnim(inst)
-    else -- Ready to cast
+    else
         ShieldOn(inst)
     end
 end

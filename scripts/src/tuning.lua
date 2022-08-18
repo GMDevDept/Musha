@@ -89,6 +89,7 @@ TUNING.musha = {
             staminacostonhit = -5,
             durabilitybase = 400,
             durabilitygrowth = 40,
+            durabilitydamage = 20,
         },
         manashield_area = {
             manacost = 30,
