@@ -3,6 +3,21 @@
 
 ---------------------------------------------------------------------------------------------------------
 
+-- No interrupt states exclusively for Musha
+
+-- Frozen
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["frozen"].onenter
+    self.states["frozen"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+        end
+        return _onenter(inst)
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sleep related
 
 -- Knockout

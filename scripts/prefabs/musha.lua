@@ -463,11 +463,71 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Lightning strike
+
+local function LightningStrike(inst, data)
+    if not data.target then return end
+
+    local target = data.target
+    local damage = TUNING.musha.skills.lightningstrike.damage +
+        TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+
+    target.components.combat:GetAttacked(inst, damage, inst.components.combat:GetWeapon(), "electric")
+    CustomAttachFx(target, { "lightning", "shock_fx" })
+    inst:LightningDischarge()
+end
+
+local function LightningRecharge(inst)
+    if not inst.components.electricattacks then
+        inst:AddComponent("electricattacks")
+    end
+    inst.components.electricattacks:AddSource("lightningstrike")
+
+    if inst.components.stamina.current >= TUNING.musha.skills.lightningstrike.staminacost then
+        inst.components.stamina:DoDelta(-TUNING.musha.skills.lightningstrike.staminacost)
+        inst.components.combat:SetRange(TUNING.musha.skills.lightningstrike.range)
+    end
+
+    inst.components.timer:StopTimer("lightningrecharge")
+    inst:ListenForEvent("onattackother", LightningStrike)
+    inst:AddTag("lightningstrikeready")
+
+    inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+    CustomAttachFx(inst, "electricchargedfx")
+    inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
+        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", 0)
+    end, 0)
+end
+
+local function LightningDischarge(inst)
+    inst:RemoveTag("lightningstrikeready")
+    inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+    inst:RemoveEventCallback("onattackother", LightningStrike)
+
+    if inst.components.electricattacks then
+        inst.components.electricattacks:RemoveSource("lightningstrike")
+    end
+
+    CustomCancelTask(inst.task_lightningfx)
+    CustomRemoveEntity(inst.fx_lightning)
+    if inst.mode:value() == 2 then
+        inst.components.timer:StartTimer("lightningrecharge", TUNING.musha.skills.lightningstrike.cooldown)
+    end
+end
+
+local function LightningStrikeOnTimerDone(inst, data)
+    if data.name == "lightningrecharge" then
+        LightningRecharge(inst)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sneak
 
 local function ResetSneakSpeedMultiplier(inst)
     inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-        (TUNING.musha.skills.sneakspeedboost.max * inst.components.stamina:GetPercent() + 1.5))
+        (TUNING.musha.skills.sneakspeedboost.max + inst.components.stamina:GetPercent()))
 end
 
 local function CancelSneakSpeedBoost(inst)
@@ -495,19 +555,19 @@ local function BackStab(inst, data)
     local target = data.target
     local extradamage = TUNING.musha.skills.sneak.backstabbasedamage + 50 * math.floor(inst.components.leveler.lvl / 5)
     if not (target.components and target.components.combat) then
-        inst.components.talker:Say(STRINGS.MUSHA_TALK_SNEAK_UNHIDE)
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
     elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
         target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
-        CustomAttachFx(inst, "nightsword_curve_fx", 3)
+        CustomAttachFx(inst, "nightsword_curve_fx")
     else
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
         target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
-        CustomAttachFx(inst, "nightsword_curve_fx", 3)
+        CustomAttachFx(inst, "nightsword_curve_fx")
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-            TUNING.musha.skills.sneakspeedboost.max) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+            (TUNING.musha.skills.sneakspeedboost.max + 1)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
         inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime, function()
             if not inst:HasTag("sneakspeedboost") then
                 inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
@@ -604,14 +664,26 @@ end
 
 -- Toggle valkyrie mode
 local function ToggleValkyrie(inst)
+    -- Can interrupt frozen
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
+        (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("frozen")) or
+        inst.sg:HasStateTag("nomorph") then
         return
     end
 
     local previousmode = inst.mode:value()
     if previousmode == 0 or previousmode == 1 then
-        inst.mode:set(2)
+        if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
+            inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
+            inst.mode:set(2)
+        else
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        end
+    elseif previousmode == 2 and not inst:HasTag("lightningstrikeready") and
+        inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
+        inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
+        LightningRecharge(inst)
     elseif previousmode == 2 then
         inst:DecideNormalOrFull()
     end
@@ -764,9 +836,12 @@ local function OnModeChange(inst)
         inst.components.combat.externaldamagemultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
         inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
+        inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
-        CustomCancelTask(inst.task_valkyriefx)
-        CustomRemoveEntity(inst.fx_valkyrie)
+
+        LightningDischarge(inst)
+        inst.components.timer:StopTimer("lightningrecharge")
+        inst:RemoveEventCallback("timerdone", LightningStrikeOnTimerDone)
 
         CustomAttachFx(inst, "electrichitsparks")
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
@@ -824,20 +899,23 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
 
         inst:AddTag("stronggrip")
+
         inst.components.combat.externaldamagemultipliers:SetModifier(inst, TUNING.musha.valkyrieattackboost,
             "valkyriebuff")
         inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.musha.valkyriedefenseboost,
             "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.valkyriemanaongoingcost, "valkyriebuff")
+
+        inst.components.freezable:Unfreeze()
         inst:ListenForEvent("freeze", UnfreezeOnFreeze)
 
-        CustomAttachFx(inst, "electricchargedfx")
+        LightningRecharge(inst)
+        inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
+
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
-        inst.task_valkyriefx = inst:DoPeriodicTask(2.6, function()
-            inst.fx_valkyrie = CustomAttachFx(inst, "mossling_spin_fx", 0)
-        end, 0)
     end
 
     if currentmode == 3 then
@@ -1129,6 +1207,7 @@ local function master_postinit(inst)
     inst.ShieldOff = ShieldOff
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
+    inst.LightningDischarge = LightningDischarge
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)

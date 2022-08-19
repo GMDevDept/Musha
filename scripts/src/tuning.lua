@@ -48,6 +48,7 @@ TUNING.musha = {
 
     valkyrieattackboost = 1.2,
     valkyriedefenseboost = 0.2,
+    valkyriemanaongoingcost = -1,
 
     activateberserkbasedamage = 5,
 
@@ -125,12 +126,20 @@ TUNING.musha = {
             cooldown = 5,
             range = 18,
         },
+        lightningstrike = {
+            manacost = 5,
+            staminacost = 20,
+            range = 12,
+            cooldown = 5,
+            damage = 20,
+            damagegrowth = 1,
+        },
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
         },
         sneakspeedboost = {
-            max = 1,
+            max = 1.5,
             staminacost = -10,
             backstabbonustime = 2,
         },
