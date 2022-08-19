@@ -178,6 +178,8 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
 end)
 
 ACTIONS.MANASPELL.instant = true
+ACTIONS.MANASPELL.mount_valid = true
+ACTIONS.MANASPELL.priority = 2 -- Mount and unmount: 1
 
 STRINGS.ACTIONS.MANASPELL = STRINGS.musha.skills.manaspells.actionstrings
 

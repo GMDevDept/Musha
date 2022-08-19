@@ -73,7 +73,7 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     end
 
     local fx = SpawnPrefab(fx_name)
-    local dur = duration or 1
+    local dur = duration or 3
 
     fx.entity:SetParent(target.entity)
     fx.Transform:SetScale(a, b, c)

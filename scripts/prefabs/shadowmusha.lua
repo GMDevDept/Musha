@@ -202,6 +202,12 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst:AddComponent("lootdropper")
         inst.components.lootdropper:SetLoot({ "nightmarefuel" })
 
+        inst:AddComponent("workmultiplier")
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP,
+            TUNING.musha.creatures.shadowmusha.workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE,
+            TUNING.musha.creatures.shadowmusha.workmultiplier, inst)
+
         inst:SetBrain(brain)
         inst:SetStateGraph("SGshadowmusha")
 

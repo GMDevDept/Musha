@@ -104,10 +104,10 @@ function Fatigue:Recalc(dt)
     local stamina = inst.components.stamina:GetPercent()
 
     local m = inst.sg:HasStateTag("sleeping") and
-        (inst.sg:HasStateTag("tent") and -4
+        (inst.sg:HasStateTag("tent") and -3
             or inst.sg:HasStateTag("bedroll") and -2
             or inst.sg:HasStateTag("knockout") and -1
-            or -2)
+            or -1)
         or stamina == 0 and 0.25
         or stamina < 0.2 and 0.1
         or stamina < 0.4 and 0.05

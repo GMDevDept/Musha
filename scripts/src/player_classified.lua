@@ -136,7 +136,7 @@ local function PrefabPostInitFn(inst)
         end
     end
 
-    _OnEntityReplicated = inst.OnEntityReplicated
+    local _OnEntityReplicated = inst.OnEntityReplicated
     local function OnEntityReplicated(inst)
         inst._parent = inst.entity:GetParent()
         if inst._parent then

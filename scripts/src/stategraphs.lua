@@ -128,10 +128,10 @@ local musha_smite = State {
         else
             inst.AnimState:PlayAnimation("pickaxe_pre")
             inst.AnimState:PushAnimation("pickaxe_loop", false)
-            if equip and equip:HasTag("phoenix_axe") then
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
-            else
+            if equip and equip:HasTag("frosthammer") then
                 inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
+            else
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
             end
             cooldown = math.max(cooldown, 24 * FRAMES)
         end

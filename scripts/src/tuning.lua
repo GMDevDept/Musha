@@ -8,11 +8,31 @@ TUNING.musha = {
     maxmana = 500,
     manaregenspeed = 10,
 
+    maxstamina = 100,
+    staminarate = 0,
+
     maxfatigue = 100,
     fatiguerate = 1 / 96, -- 5/day
 
-    maxstamina = 100,
-    staminarate = 0,
+    fatiguelevel = {
+        level0 = {
+            workmultiplier = 1.5,
+        },
+        level1 = {
+        },
+        level2 = {
+            workmultiplier = 0.75,
+            speedmultiplier = 0.9,
+        },
+        level3 = {
+            workmultiplier = 0.5,
+            speedmultiplier = 0.75,
+        },
+        level4 = {
+            workmultiplier = 0.1,
+            speedmultiplier = 0.4,
+        },
+    },
 
     damagemultiplier = 0.75,
     areahitdamagepercent = 0.25,
@@ -20,7 +40,7 @@ TUNING.musha = {
 
     maxpets = 50,
 
-    fullmodespeedboost = 1.15,
+    fullmodespeedboost = 1.1,
     fullmodehealthregen = 0.1,
     fullmodesanityregen = 0.1,
     fullmodestaminaregen = 0.5,
@@ -68,15 +88,22 @@ TUNING.musha = {
         freezingspell = {
             manacost = 5,
             maxmanacost = 15,
-            range = 18,
+            range = 9,
+            rangegrowth = 0.3,
+            coldness = 1,
+            coldnessgrowth = 0.1,
             cooldown = 5,
         },
         thunderspell = {
             manacost = 10,
             maxmanacost = 30,
-            range = 12,
+            range = 6,
+            rangegrowth = 0.2,
             damage = 20,
+            damagegrowth = 1,
             cooldown = 10,
+            duration = 8,
+            durationgrowth = 0.4,
         },
         shadowspell = {
             sanitycost = -50,
@@ -119,6 +146,7 @@ TUNING.musha = {
             attackperiod = 2,
             targetrange = 18,
             followonlydamagetakenmultplier = 0.2,
+            workmultiplier = 1.5,
         },
         shadowberserk = {
             maxhealth = 800,

@@ -47,7 +47,9 @@ local function ToggleSleep(inst)
         return
     end
 
-    if not inst.sg:HasStateTag("sleeping") and not (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
+    if inst.components.rider:IsRiding() then
+        inst.components.rider:Dismount()
+    elseif not inst.sg:HasStateTag("sleeping") and not (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
         inst.components.talker:Say(STRINGS.musha.sleep.fail.busy)
     elseif not inst.sg:HasStateTag("sleeping") and (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
         local indanger
@@ -282,10 +284,14 @@ local function FreezingSpell(inst)
     local validtargets = 0
     local must_tags = { "_combat" }
     local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.freezingspell.range +
+        TUNING.musha.skills.freezingspell.rangegrowth * inst.components.leveler.lvl
+    local coldness = TUNING.musha.skills.freezingspell.coldness +
+        TUNING.musha.skills.freezingspell.coldnessgrowth * math.floor(inst.components.leveler.lvl / 5) * 5
 
-    CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, nil, function(v)
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
         if v.components.freezable and not v.components.freezable:IsFrozen() then
-            v.components.freezable:AddColdness(4) -- Freeze
+            v.components.freezable:AddColdness(coldness)
             v.components.freezable:SpawnShatterFX()
             if v.components.freezable:IsFrozen() then
                 CustomOnFreeze(v)
@@ -321,13 +327,20 @@ local function ThunderSpell(inst)
     local validtargets = 0
     local must_tags = { "_combat" }
     local ignore_tags = { "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.thunderspell.range +
+        TUNING.musha.skills.thunderspell.rangegrowth * inst.components.leveler.lvl
+    local damage = TUNING.musha.skills.thunderspell.damage +
+        TUNING.musha.skills.thunderspell.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+    local duration = TUNING.musha.skills.thunderspell.duration +
+        TUNING.musha.skills.thunderspell.durationgrowth * inst.components.leveler.lvl
 
-    CustomDoAOE(inst, TUNING.musha.skills.thunderspell.range, must_tags, ignore_tags, nil, function(v)
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
         v:DoTaskInTime(validtargets * (.3 + math.random() * .2), function()
-            v.components.combat:GetAttacked(inst,
-                TUNING.musha.skills.thunderspell.damage + 5 * math.floor(inst.components.leveler.lvl / 5), nil,
-                "electric")
+            v.components.combat:GetAttacked(inst, damage, nil, "electric")
             v:AddDebuff("thunderspell", "debuff_paralysis")
+            if v.components.debuffable:GetDebuff("thunderspell") then
+                v.components.debuffable:GetDebuff("thunderspell"):SetDuration(duration)
+            end
             CustomAttachFx(v, "lightning")
         end)
         validtargets = validtargets + 1
@@ -885,18 +898,51 @@ local function OnFatigueLevelChange(inst)
     local fatiguelevel = inst.fatiguelevel:value()
 
     CustomRemoveEntity(inst.fx_fatiguelevel)
+    inst.components.workmultiplier:RemoveMultiplier(ACTIONS.CHOP, inst)
+    inst.components.workmultiplier:RemoveMultiplier(ACTIONS.MINE, inst)
+    inst.components.workmultiplier:RemoveMultiplier(ACTIONS.HAMMER, inst)
+    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
 
     if fatiguelevel == 0 then
-        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
+        local workmultiplier = TUNING.musha.fatiguelevel.level0.workmultiplier
+
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
         inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_fullmode", 0, nil, Vector3(0, -0.1, 0))
-    elseif fatiguelevel == 1 then
-        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
-    elseif fatiguelevel == 2 then
-        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.85)
-    elseif fatiguelevel == 3 then
-        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.7)
-    elseif fatiguelevel == 4 then
-        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", 0.4)
+    end
+
+    if fatiguelevel == 1 then
+    end
+
+    if fatiguelevel == 2 then
+        local workmultiplier = TUNING.musha.fatiguelevel.level2.workmultiplier
+        local speedmultiplier = TUNING.musha.fatiguelevel.level2.speedmultiplier
+
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+    end
+
+    if fatiguelevel == 3 then
+        local workmultiplier = TUNING.musha.fatiguelevel.level3.workmultiplier
+        local speedmultiplier = TUNING.musha.fatiguelevel.level3.speedmultiplier
+
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+    end
+
+    if fatiguelevel == 4 then
+        local workmultiplier = TUNING.musha.fatiguelevel.level4.workmultiplier
+        local speedmultiplier = TUNING.musha.fatiguelevel.level4.speedmultiplier
+
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
+        inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
     end
 end
 

@@ -105,7 +105,7 @@ function Stamina:Recalc(dt)
         (inst.sg:HasStateTag("tent") and 50
             or inst.sg:HasStateTag("bedroll") and 33
             or inst.sg:HasStateTag("knockout") and 20
-            or 25)
+            or 20)
         or (inst.sg:HasStateTag("working") or inst.sg:HasStateTag("attacking") or
             inst.sg:HasStateTag("abouttoattack")) and -5
         or (inst.sg:HasStateTag("doing") or inst.sg:HasStateTag("busy")) and -2
