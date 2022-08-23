@@ -81,7 +81,11 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
 
     if dur ~= 0 then
         target:DoTaskInTime(dur, function()
-            fx:Remove()
+            if fx_name == "balloonparty_confetti_cloud" then
+                fx.AnimState:PlayAnimation("confetti_pst")
+            else
+                fx:Remove()
+            end
             fx = nil
         end)
     end
@@ -90,6 +94,10 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
 end
 
 GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent, scale/offset: Vector3
+    if target:HasTag("nofx") then
+        return
+    end
+
     if type(fx_list) == "string" then
         return SpawnFx(target, fx_list, duration, scale, offset)
     elseif type(fx_list) == "table" then

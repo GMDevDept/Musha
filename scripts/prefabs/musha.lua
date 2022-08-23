@@ -1,5 +1,7 @@
 local MakePlayerCharacter = require("prefabs/player_common")
 local UserCommands = require("usercommands")
+local Emotes = require("src/emotes")
+local Musics = require("src/musics")
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -42,6 +44,7 @@ end
 -- Sleep
 
 local function ToggleSleep(inst)
+    -- Can interrupt sleep (wake up)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("sleeping")) then
         return
@@ -98,6 +101,198 @@ local function ToggleSleep(inst)
         end
     else
         inst.sg:GoToState("wakeup")
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Elf melody and treasure sniffing
+
+-- Trailing fx (Wormwood blooming)
+local function AddBloomingTrailFx(inst)
+    if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
+        return
+    end
+
+    local PLANTS_RANGE = 1
+    local MAX_PLANTS = 18
+    local PLANTFX_TAGS = { "wormwood_plant_fx" }
+    local x, y, z = inst.Transform:GetWorldPosition()
+
+    if #TheSim:FindEntities(x, y, z, PLANTS_RANGE, PLANTFX_TAGS) < MAX_PLANTS then
+        local map = TheWorld.Map
+        local pt = Vector3(0, 0, 0)
+        local offset = FindValidPositionByFan(
+            math.random() * 2 * PI,
+            math.random() * PLANTS_RANGE,
+            3,
+            function(offset)
+                pt.x = x + offset.x
+                pt.z = z + offset.z
+                return map:CanPlantAtPoint(pt.x, 0, pt.z)
+                    and #TheSim:FindEntities(pt.x, 0, pt.z, .5, PLANTFX_TAGS) < 3
+                    and map:IsDeployPointClear(pt, nil, .5)
+                    and not map:IsPointNearHole(pt, .4)
+            end
+        )
+        if offset ~= nil then
+            local plant = SpawnPrefab("wormwood_plant_fx")
+            plant.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+            --randomize, favoring ones that haven't been used recently
+            local rnd = math.random()
+            ---@diagnostic disable-next-line: undefined-field
+            rnd = table.remove(inst.plantpool, math.clamp(math.ceil(rnd * rnd * #inst.plantpool), 1, #inst.plantpool))
+            table.insert(inst.plantpool, rnd)
+            plant:SetVariation(rnd)
+        end
+    end
+end
+
+local function AddStalkerTrailFx(inst)
+    local BLOOM_CHOICES = {
+        ["stalker_bulb"] = .5,
+        ["stalker_bulb_double"] = .5,
+        ["stalker_berry"] = 1,
+        ["stalker_fern"] = 8,
+    }
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local map = TheWorld.Map
+    local offset = FindValidPositionByFan(
+        math.random() * 2 * PI,
+        math.random() * 3,
+        8,
+        function(offset)
+            local x1 = x + offset.x
+            local z1 = z + offset.z
+            return map:IsPassableAtPoint(x1, 0, z1)
+                and map:IsDeployPointClear(Vector3(x1, 0, z1), nil, 1)
+                and #TheSim:FindEntities(x1, 0, z1, 2.5, { "stalkerbloom" }) < 4
+        end
+    )
+
+    if offset ~= nil then
+        SpawnPrefab(weighted_random_choice(BLOOM_CHOICES)).Transform:SetPosition(x + offset.x, 0, z + offset.z)
+    end
+end
+
+local function MelodyOnTimerDone(inst, data)
+    if data.name == "cooldown_elfmelody" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.elfmelody.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", MelodyOnTimerDone)
+    end
+end
+
+local function StopElfMelody(inst, data)
+    if data.name == "stopelfmelody_full" or data.name == "stopelfmelody_partial" then
+        if data.name == "stopelfmelody_full" then
+            inst.components.timer:StartTimer("cooldown_elfmelody", TUNING.musha.skills.elfmelody.full.cooldown)
+        elseif data.name == "stopelfmelody_partial" then
+            inst.components.timer:StartTimer("cooldown_elfmelody", TUNING.musha.skills.elfmelody.partial.cooldown)
+        end
+        inst:StopMelodyBuff()
+        inst:ListenForEvent("timerdone", MelodyOnTimerDone)
+        inst:RemoveEventCallback("timerdone", StopElfMelody)
+    end
+end
+
+local function StartMelodyBuff(inst, data)
+    if data.mode == "full" then
+        local music = Musics[math.random(#Musics)]
+        inst.SoundEmitter:PlaySound(music, "elfmelody")
+        inst.components.mana:DoDelta(TUNING.musha.skills.elfmelody.full.manarecover)
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.elfmelody.full.manaregen, "elfmelody")
+        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.skills.elfmelody.full.staminaregen, "elfmelody")
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "elfmelody",
+            TUNING.musha.skills.elfmelody.full.speedboost)
+        inst.stalkertrailtask = inst:DoPeriodicTask(3 * FRAMES, AddStalkerTrailFx, 2 * FRAMES)
+        inst.components.timer:StartTimer("stopelfmelody_full", TUNING.musha.skills.elfmelody.full.duration)
+    elseif data.mode == "partial" then
+        inst.components.mana:DoDelta(TUNING.musha.skills.elfmelody.partial.manarecover)
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.elfmelody.partial.manaregen, "elfmelody")
+        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.skills.elfmelody.partial.staminaregen,
+            "elfmelody")
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "elfmelody",
+            TUNING.musha.skills.elfmelody.partial.speedboost)
+        inst.components.timer:StartTimer("stopelfmelody_partial", TUNING.musha.skills.elfmelody.partial.duration)
+    end
+    CustomAttachFx(inst, "fx_book_fish")
+    inst.bloomingtrailtask = inst:DoPeriodicTask(.25, AddBloomingTrailFx)
+    inst:ListenForEvent("timerdone", StopElfMelody)
+end
+
+local function StopMelodyBuff(inst)
+    inst.components.mana.modifiers:RemoveModifier(inst, "elfmelody")
+    inst.components.stamina.modifiers:RemoveModifier(inst, "elfmelody")
+    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "elfmelody")
+    inst.SoundEmitter:KillSound("elfmelody")
+    inst.SoundEmitter:PlaySound("dontstarve/common/fireOut")
+    CustomCancelTask(inst.bloomingtrailtask)
+    CustomCancelTask(inst.stalkertrailtask)
+end
+
+local function PlayElfMelody(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_elfmelody") then
+        return
+    end
+
+    if not inst.components.timer:TimerExists("premelody") then
+        local declaration = STRINGS.musha.segmentation .. "\n"
+            .. STRINGS.musha.skills.treasuresniffing.progress1
+            .. STRINGS.musha.skills.treasuresniffing.progress2 .. "\n"
+            .. STRINGS.musha.skills.elfmelody.progress1
+            .. math.floor(inst.components.melody.current)
+            .. STRINGS.musha.skills.elfmelody.progress2 .. "\n"
+            .. STRINGS.musha.segmentation .. "\n"
+
+        if inst.components.timer:TimerExists("stopelfmelody_full") or
+            inst.components.timer:TimerExists("stopelfmelody_partial") then
+            local timeleft = inst.components.timer:GetTimeLeft("stopelfmelody_full") or
+                inst.components.timer:GetTimeLeft("stopelfmelody_partial")
+            declaration = declaration
+                .. STRINGS.musha.skills.ineffect.part1
+                .. STRINGS.musha.skills.elfmelody.name
+                .. STRINGS.musha.skills.ineffect.part2
+                .. STRINGS.musha.skills.ineffect.part3
+                .. math.ceil(timeleft)
+                .. STRINGS.musha.skills.ineffect.part4 .. "\n"
+                .. STRINGS.musha.skills.presstoconfirm
+        elseif inst.components.timer:TimerExists("cooldown_elfmelody") then
+            declaration = declaration
+                .. STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.elfmelody.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_elfmelody"))
+                .. STRINGS.musha.skills.incooldown.part4
+        elseif inst.components.melody:IsFull() then
+            declaration = declaration
+                .. STRINGS.musha.skills.elfmelody.ask_full .. "\n"
+                .. STRINGS.musha.skills.presstoconfirm
+        elseif inst.components.melody:IsReady() then
+            declaration = declaration
+                .. STRINGS.musha.skills.elfmelody.ask_part .. "\n"
+                .. STRINGS.musha.skills.presstoconfirm
+        end
+
+        inst.components.talker:Say(declaration, 4)
+        inst.components.timer:StartTimer("premelody", 4)
+    else
+        inst.components.talker:ShutUp()
+        inst.components.timer:SetTimeLeft("premelody", 0)
+        if inst.components.timer:TimerExists("stopelfmelody_full") or
+            inst.components.timer:TimerExists("stopelfmelody_partial") then
+            inst.components.timer:SetTimeLeft("stopelfmelody_full", 0)
+            inst.components.timer:SetTimeLeft("stopelfmelody_partial", 0)
+        elseif inst.components.timer:TimerExists("cooldown_elfmelody") then
+            return
+        elseif inst.components.melody:IsFull() then
+            inst.playfullelfmelody:push()
+        elseif inst.components.melody:IsReady() then
+            inst.playpartialelfmelody:push()
+        end
     end
 end
 
@@ -418,7 +613,12 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Companion Orders
+-- F1-F12 keybinds
+
+local function NyaNya(inst)
+    local emote = Emotes[math.random(#Emotes)]
+    inst:PushEvent("emote", emote)
+end
 
 -- Enable/disable hotkeys
 local function SwitchKeyBindings(inst)
@@ -436,10 +636,10 @@ end
 -- Order shadow musha to toggle follow-only mode
 local function DoShadowMushaOrder(inst)
     if not inst.companionhotkeysenabled then
-        return
+        NyaNya(inst)
     elseif inst.shadowmushafollowonly then
         inst.shadowmushafollowonly = false
-        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume)
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume, nil, true)
         UserCommands.RunTextUserCommand("rude", inst, false)
         for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") then
@@ -449,7 +649,7 @@ local function DoShadowMushaOrder(inst)
         end
     else
         inst.shadowmushafollowonly = true
-        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow)
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow, nil, true)
         UserCommands.RunTextUserCommand("happy", inst, false)
         for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
@@ -680,12 +880,18 @@ local function ToggleValkyrie(inst)
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
         end
-    elseif previousmode == 2 and not inst:HasTag("lightningstrikeready") and
-        inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
-        inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
-        LightningRecharge(inst)
     elseif previousmode == 2 then
-        inst:DecideNormalOrFull()
+        if not inst:HasTag("lightningstrikeready") then
+            if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
+                inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
+                LightningRecharge(inst)
+            else
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            end
+        else
+            inst:DecideNormalOrFull()
+        end
     end
 end
 
@@ -709,45 +915,6 @@ end
 -- Resist freeze
 local function UnfreezeOnFreeze(inst)
     inst.components.freezable:Unfreeze()
-end
-
--- Valkyrie trailing fx (Wormwood blooming)
-local PLANTS_RANGE = 1
-local MAX_PLANTS = 18
-local PLANTFX_TAGS = { "wormwood_plant_fx" }
-local function AddFullModeTrailFx(inst)
-    if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
-        return
-    end
-
-    local x, y, z = inst.Transform:GetWorldPosition()
-    if #TheSim:FindEntities(x, y, z, PLANTS_RANGE, PLANTFX_TAGS) < MAX_PLANTS then
-        local map = TheWorld.Map
-        local pt = Vector3(0, 0, 0)
-        local offset = FindValidPositionByFan(
-            math.random() * 2 * PI,
-            math.random() * PLANTS_RANGE,
-            3,
-            function(offset)
-                pt.x = x + offset.x
-                pt.z = z + offset.z
-                return map:CanPlantAtPoint(pt.x, 0, pt.z)
-                    and #TheSim:FindEntities(pt.x, 0, pt.z, .5, PLANTFX_TAGS) < 3
-                    and map:IsDeployPointClear(pt, nil, .5)
-                    and not map:IsPointNearHole(pt, .4)
-            end
-        )
-        if offset ~= nil then
-            local plant = SpawnPrefab("wormwood_plant_fx")
-            plant.Transform:SetPosition(x + offset.x, 0, z + offset.z)
-            --randomize, favoring ones that haven't been used recently
-            local rnd = math.random()
-            ---@diagnostic disable-next-line: undefined-field
-            rnd = table.remove(inst.plantpool, math.clamp(math.ceil(rnd * rnd * #inst.plantpool), 1, #inst.plantpool))
-            table.insert(inst.plantpool, rnd)
-            plant:SetVariation(rnd)
-        end
-    end
 end
 
 -- OnAttack fn for berserk mode
@@ -828,7 +995,6 @@ local function OnModeChange(inst)
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
         CustomCancelTask(inst.task_fullmodehealthregen)
-        CustomCancelTask(inst.modetrailtask)
     end
 
     if previousmode == 2 and currentmode ~= 2 then
@@ -868,6 +1034,7 @@ local function OnModeChange(inst)
         end
 
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
+        inst.emotesoundoverride = "dontstarve/characters/willow/emote"
     end
 
     -- Set new attributes for new mode
@@ -875,6 +1042,9 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_none")
         inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
+        if previousmode == 1 then
+            CustomAttachFx(inst, "balloonparty_confetti_cloud")
+        end
     end
 
     if currentmode == 1 then
@@ -892,7 +1062,9 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_full")
         inst.customidleanim = "idle_warly"
         inst.soundsname = "willow"
-        inst.modetrailtask = inst:DoPeriodicTask(.25, AddFullModeTrailFx)
+        if previousmode == 0 then
+            CustomAttachFx(inst, "balloonparty_confetti_cloud")
+        end
     end
 
     if currentmode == 2 then
@@ -941,6 +1113,7 @@ local function OnModeChange(inst)
         inst.components.skinner:SetSkinName("musha_berserk")
         inst.customidleanim = "idle_winona"
         inst.soundsname = "wendy"
+        inst.emotesoundoverride = "dontstarve/characters/wendy/emote"
         inst.modetrailtask = inst:DoPeriodicTask(6 * FRAMES, AddBerserkTrailFx, 2 * FRAMES)
     end
 
@@ -1047,31 +1220,44 @@ end
 
 -- When the character is revived to human
 local function OnBecameHuman(inst)
+    inst:AddTag("nofx")
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
     inst:DecideNormalOrFull()
     inst:DecideFatigueLevel()
 
-    -- Cancel skill cooldowns
-    local cooldowns = {
+    local timers = {
         "cooldown_thunderspell",
         "cooldown_freezingspell",
         "cooldown_manashield",
+        "cooldown_elfmelody",
+        "stopelfmelody_full",
+        "stopelfmelody_partial",
+        "premelody",
+        "lightningrecharge",
+        "cancel_manashield_areas"
     }
 
-    for _, name in pairs(cooldowns) do
-        if inst.components.timer:TimerExists(name) then
-            inst.components.timer:StopTimer(name)
-        end
+    for _, name in pairs(timers) do
+        inst.components.timer:StopTimer(name)
     end
+
+    inst:DoTaskInTime(1.5, function()
+        inst:RemoveTag("nofx")
+    end)
 end
 
 -- When the character turn into a ghost
 local function OnBecameGhost(inst)
+    inst:AddTag("nofx")
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst:RemoveEventCallback("fatiguedelta", DecideFatigueLevel)
     inst.mode:set(0)
     inst.fatiguelevel:set(0)
+
+    inst:DoTaskInTime(1.5, function()
+        inst:RemoveTag("nofx")
+    end)
 end
 
 -- When save game progress
@@ -1127,6 +1313,7 @@ local function common_postinit(inst)
     -- Common attributes
     inst.customidleanim = "idle_warly"
     inst.soundsname = "willow"
+    inst.emotesoundoverride = "dontstarve/characters/willow/emote"
 
     -- Character specific attributes
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
@@ -1134,6 +1321,8 @@ local function common_postinit(inst)
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
+    inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG
+    inst.playpartialelfmelody = net_event(inst.GUID, "playpartialelfmelody") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
@@ -1161,6 +1350,9 @@ local function master_postinit(inst)
 
     -- Cast spell to self
     inst:AddComponent("spelltarget")
+
+    -- Elf melody
+    inst:AddComponent("melody")
 
     -- Read books
     inst:AddComponent("reader")
@@ -1208,6 +1400,8 @@ local function master_postinit(inst)
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
     inst.LightningDischarge = LightningDischarge
+    inst.StartMelodyBuff = StartMelodyBuff
+    inst.StopMelodyBuff = StopMelodyBuff
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
@@ -1224,6 +1418,7 @@ AddModRPCHandler("musha", "togglevalkyrie", ToggleValkyrie)
 AddModRPCHandler("musha", "toggleberserk", ToggleBerserk)
 AddModRPCHandler("musha", "toggleshield", ToggleShield)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)
+AddModRPCHandler("musha", "playelfmelody", PlayElfMelody)
 AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)
 AddModRPCHandler("musha", "doshadowmushaorder", DoShadowMushaOrder)
 

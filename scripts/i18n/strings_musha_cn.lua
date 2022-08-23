@@ -1,5 +1,6 @@
 STRINGS.musha = {
-    segmentation = "------------------------------\n",
+    segmentation = "------------------",
+    segmentation_long = "------------------------------\n",
 
     lack_of_exp = "Musha需要更多经验值！",
     lack_of_mana = "Musha的魔力不够了！",
@@ -41,14 +42,37 @@ STRINGS.musha = {
             "姆咪缪缪。。。 >_<",
             "休息时间结束~~！",
         },
+        declarations = {
+            quality = {
+                string = "睡眠质量：[",
+                poor = "低]",
+                good = "中]",
+                perfect = "高]",
+            },
+            fatigue = {
+                string1 = "当前疲劳：[ ",
+                string2 = "% ]",
+            },
+            melody = {
+                string1 = "旋律充能：[ ",
+                string2 = "% ]",
+            },
+        },
     },
 
     skills = {
+        presstoconfirm = "（确认：再次按技能键）",
         incooldown = {
             part1 = "技能 [",
             part2 = "] 正在冷却，\n",
             part3 = "剩余冷却时间：[ ",
             part4 = " ] 秒",
+        },
+        ineffect = {
+            part1 = "技能 [",
+            part2 = "] 正在生效，\n",
+            part3 = "剩余时间：[ ",
+            part4 = " ] 秒，是否取消？",
         },
         cooldownfinished = {
             part1 = "技能 [",
@@ -91,6 +115,20 @@ STRINGS.musha = {
             backstab_perfect = "完美的背刺！",
             stop = "现身！",
             failed = "Musha被敌人发现了！",
+        },
+        elfmelody = {
+            name = "精灵旋律",
+            progress1 = "旋律充能：[ ",
+            progress2 = "% ]",
+            full = "Musha已经准备好演奏 [精灵旋律] !",
+            ask_part = "是否要消耗一部分 [精灵旋律] 进行短暂演奏？",
+            ask_full = "是否要消耗全部 [精灵旋律] 进行完美演奏？",
+        },
+        treasuresniffing = {
+            name = "宝藏嗅探",
+            progress1 = "寻宝进度：[ ",
+            progress2 = "% ]",
+            ask = "是否要发动技能 [寻宝]？",
         },
     },
 

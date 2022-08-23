@@ -3,10 +3,8 @@ TUNING.musha = {
     hunger = 200,
     sanity = 200,
 
-    -- maxmana = 50,
-    -- manaregenspeed = 1,
-    maxmana = 500,
-    manaregenspeed = 10,
+    maxmana = 200,
+    manaregenspeed = 1,
 
     maxstamina = 100,
     staminarate = 0,
@@ -68,6 +66,8 @@ TUNING.musha = {
     exprate = 1,
     exp_to_level = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
+    _exp_to_level = { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 175, 200,
+        250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 }, -- len = 30
 
     leveltounlockskill = {
         freezingspell      = 0,
@@ -128,7 +128,7 @@ TUNING.musha = {
         },
         lightningstrike = {
             manacost = 5,
-            staminacost = 20,
+            staminacost = 15,
             range = 12,
             cooldown = 5,
             damage = 20,
@@ -142,6 +142,28 @@ TUNING.musha = {
             max = 1.5,
             staminacost = -10,
             backstabbonustime = 2,
+        },
+        elfmelody = {
+            max = 100,
+            regen_small = 0.5,
+            regen_large = 0.75,
+            minrequired = 20,
+            full = {
+                manarecover = 50,
+                manaregen = 3,
+                staminaregen = 3,
+                speedboost = 1.3,
+                duration = 240,
+                cooldown = 480,
+            },
+            partial = {
+                manarecover = 30,
+                manaregen = 1,
+                staminaregen = 1,
+                speedboost = 1.15,
+                duration = 30,
+                cooldown = 60,
+            },
         },
     },
 

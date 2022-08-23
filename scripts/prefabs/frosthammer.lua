@@ -383,10 +383,10 @@ local function ontakefuel(inst, fuelvalue, fuel_obj)
         enchant_req = enchant_req - 1
         if enchant_req == 0 then
             inst.enchant_precondition[fuel] = false
-            extra_str = STRINGS.musha.segmentation
+            extra_str = STRINGS.musha.segmentation_long
                 .. STRINGS.musha.equipments.skill_unlocked .. ": "
                 .. STRINGS.musha.equipments.frosthammer.enchants[inst.enchant_ability[fuel]] .. "\n"
-                .. STRINGS.musha.segmentation
+                .. STRINGS.musha.segmentation_long
             enchant_determine(inst)
         else
             inst.enchant_precondition[fuel] = enchant_req

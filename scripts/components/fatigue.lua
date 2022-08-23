@@ -104,9 +104,9 @@ function Fatigue:Recalc(dt)
     local stamina = inst.components.stamina:GetPercent()
 
     local m = inst.sg:HasStateTag("sleeping") and
-        (inst.sg:HasStateTag("tent") and -3
-            or inst.sg:HasStateTag("bedroll") and -2
-            or inst.sg:HasStateTag("knockout") and -1
+        (inst.sg:HasStateTag("tent") and -1.5
+            or inst.sg:HasStateTag("bedroll") and -1
+            or inst.sg:HasStateTag("knockout") and -0.5
             or -1)
         or stamina == 0 and 0.25
         or stamina < 0.2 and 0.1
@@ -123,8 +123,8 @@ function Fatigue:Recalc(dt)
     self.ratelevel = (self.rate >= 0.25 and RATE_SCALE.INCREASE_HIGH) or
         (self.rate >= 0.05 and RATE_SCALE.INCREASE_MED) or
         (self.rate > 0.02 and RATE_SCALE.INCREASE_LOW) or
-        (self.rate <= -3 and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate <= -2 and RATE_SCALE.DECREASE_MED) or
+        (self.rate <= -2 and RATE_SCALE.DECREASE_HIGH) or
+        (self.rate <= -1 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 

@@ -26,6 +26,13 @@ TheInput:AddKeyDownHandler(GetModConfigData("hotkey_sleep"), function()
     end
 end)
 
+-- Hotkey: PlayElfMelody
+TheInput:AddKeyDownHandler(GetModConfigData("hotkey_elfmelody"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        SendModRPCToServer(MOD_RPC.musha.playelfmelody)
+    end
+end)
+
 -- Hotkey: switch companion order hotkey bindings
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_keybinding"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
