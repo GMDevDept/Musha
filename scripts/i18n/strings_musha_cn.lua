@@ -5,6 +5,7 @@ STRINGS.musha = {
     lack_of_exp = "Musha需要更多经验值！",
     lack_of_mana = "Musha的魔力不够了！",
     lack_of_sanity = "Musha的理智值不够了！",
+    mount_not_allowed = "Musha得先从坐骑上下来！",
 
     switchkeybindings_on = "随从命令快捷键：开启",
     switchkeybindings_off = "随从命令快捷键：关闭",
@@ -128,7 +129,8 @@ STRINGS.musha = {
             name = "宝藏嗅探",
             progress1 = "寻宝进度：[ ",
             progress2 = "% ]",
-            ask = "是否要发动技能 [寻宝]？",
+            ask = "是否要发动技能 [宝藏嗅探]？",
+            mount_not_allowed = "取消乘骑状态才可以发动技能 [宝藏嗅探]",
         },
     },
 

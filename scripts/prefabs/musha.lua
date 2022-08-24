@@ -7,9 +7,11 @@ local Musics = require("src/musics")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
-
-    -- Musha character textures
-    Asset("ANIM", "anim/musha/musha.zip"),
+    Asset("ANIM", "anim/musha/musha.zip"), -- Character texture
+    Asset("ANIM", "anim/musha/player_actions_telescope.zip"), -- Treasure sniffing: telescope
+    Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
+    Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll
+    Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
 }
 
 -- Custom starting inventory
@@ -108,6 +110,10 @@ end
 
 -- Elf melody and treasure sniffing
 
+local function SniffTreasure(inst)
+    inst.components.treasurehunter:Reset()
+end
+
 -- Trailing fx (Wormwood blooming)
 local function AddBloomingTrailFx(inst)
     if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
@@ -148,6 +154,7 @@ local function AddBloomingTrailFx(inst)
     end
 end
 
+-- Trailing fx (stalker blooming)
 local function AddStalkerTrailFx(inst)
     local BLOOM_CHOICES = {
         ["stalker_bulb"] = .5,
@@ -241,13 +248,22 @@ local function PlayElfMelody(inst)
     if not inst.components.timer:TimerExists("premelody") then
         local declaration = STRINGS.musha.segmentation .. "\n"
             .. STRINGS.musha.skills.treasuresniffing.progress1
+            .. math.floor(inst.components.treasurehunter:GetPercent() * 100)
             .. STRINGS.musha.skills.treasuresniffing.progress2 .. "\n"
             .. STRINGS.musha.skills.elfmelody.progress1
-            .. math.floor(inst.components.melody.current)
+            .. math.floor(inst.components.melody:GetPercent() * 100)
             .. STRINGS.musha.skills.elfmelody.progress2 .. "\n"
             .. STRINGS.musha.segmentation .. "\n"
 
-        if inst.components.timer:TimerExists("stopelfmelody_full") or
+        if inst.components.treasurehunter:IsReady() then
+            if inst.components.rider:IsRiding() then
+                declaration = declaration
+                    .. STRINGS.musha.skills.treasuresniffing.mount_not_allowed
+            else
+                declaration = declaration
+                    .. STRINGS.musha.skills.treasuresniffing.ask
+            end
+        elseif inst.components.timer:TimerExists("stopelfmelody_full") or
             inst.components.timer:TimerExists("stopelfmelody_partial") then
             local timeleft = inst.components.timer:GetTimeLeft("stopelfmelody_full") or
                 inst.components.timer:GetTimeLeft("stopelfmelody_partial")
@@ -282,7 +298,14 @@ local function PlayElfMelody(inst)
     else
         inst.components.talker:ShutUp()
         inst.components.timer:SetTimeLeft("premelody", 0)
-        if inst.components.timer:TimerExists("stopelfmelody_full") or
+        if inst.components.treasurehunter:IsReady() then
+            if inst.components.rider:IsRiding() then
+                inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.snifftreasure:push()
+            end
+        elseif inst.components.timer:TimerExists("stopelfmelody_full") or
             inst.components.timer:TimerExists("stopelfmelody_partial") then
             inst.components.timer:SetTimeLeft("stopelfmelody_full", 0)
             inst.components.timer:SetTimeLeft("stopelfmelody_partial", 0)
@@ -1316,13 +1339,14 @@ local function common_postinit(inst)
     inst.emotesoundoverride = "dontstarve/characters/willow/emote"
 
     -- Character specific attributes
-    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst._mode = 0 -- Store previous mode
+    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
     inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG
     inst.playpartialelfmelody = net_event(inst.GUID, "playpartialelfmelody") -- Handler set in SG
+    inst.snifftreasure = net_event(inst.GUID, "snifftreasure") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
@@ -1353,6 +1377,9 @@ local function master_postinit(inst)
 
     -- Elf melody
     inst:AddComponent("melody")
+
+    -- Treasure sniffing
+    inst:AddComponent("treasurehunter")
 
     -- Read books
     inst:AddComponent("reader")
@@ -1402,6 +1429,7 @@ local function master_postinit(inst)
     inst.LightningDischarge = LightningDischarge
     inst.StartMelodyBuff = StartMelodyBuff
     inst.StopMelodyBuff = StopMelodyBuff
+    inst.SniffTreasure = SniffTreasure
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)

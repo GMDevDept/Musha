@@ -29,10 +29,10 @@ local function SleepDeclaration(inst, quality) -- poor, good, perfect
             local declaration = STRINGS.musha.sleep.declarations.quality.string
                 .. STRINGS.musha.sleep.declarations.quality[quality] .. "\n"
                 .. STRINGS.musha.sleep.declarations.fatigue.string1
-                .. math.floor(inst.components.fatigue.current)
+                .. math.floor(inst.components.fatigue:GetPercent() * 100)
                 .. STRINGS.musha.sleep.declarations.fatigue.string2 .. "\n"
                 .. STRINGS.musha.sleep.declarations.melody.string1
-                .. math.floor(inst.components.melody.current)
+                .. math.floor(inst.components.melody:GetPercent() * 100)
                 .. STRINGS.musha.sleep.declarations.melody.string2 .. "\n"
 
             inst.components.talker:StopIgnoringAll("sleeping")
@@ -483,13 +483,13 @@ AddStategraphState("wilson", musha_berserk_pre)
 AddStategraphState("wilson_client", musha_berserk_pre_client)
 
 AddStategraphEvent("wilson", EventHandler("activateberserk",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_berserk_pre")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("activateberserk",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_berserk_pre")
     end)
 )
@@ -664,13 +664,13 @@ AddStategraphState("wilson", musha_spell)
 AddStategraphState("wilson_client", musha_spell_client)
 
 AddStategraphEvent("wilson", EventHandler("castmanaspell",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_spell")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("castmanaspell",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_spell")
     end)
 )
@@ -681,7 +681,7 @@ AddStategraphEvent("wilson_client", EventHandler("castmanaspell",
 
 local musha_elfmelody_full = State {
     name = "musha_elfmelody_full",
-    tags = { "musha_elfmelody_full", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
+    tags = { "musha_elfmelody", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -691,23 +691,17 @@ local musha_elfmelody_full = State {
         inst.AnimState:OverrideSymbol("hound_whistle01", "houndwhistle", "hound_whistle01")
         inst.AnimState:OverrideSymbol("bell01", "bell", "bell01")
         inst.AnimState:OverrideSymbol("horn01", "horn", "horn01")
-        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("flute", false)
+        inst.AnimState:PlayAnimation("flute")
         inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("whistle", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("flute", false)
-        inst.AnimState:PushAnimation("idle_onemanband1_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband1_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband1_pst", false)
         inst.AnimState:PushAnimation("idle_onemanband2_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband2_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband2_pst", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("flute", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("bell", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("horn", false)
     end,
 
@@ -812,7 +806,7 @@ local musha_elfmelody_full = State {
         TimeEvent(500 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
         end),
-        TimeEvent(535 * FRAMES, function(inst)
+        TimeEvent(527 * FRAMES, function(inst)
             CustomAttachFx(inst, "balloonparty_confetti_cloud")
             inst.SoundEmitter:PlaySound("dontstarve_DLC001/common/glommer_bell")
         end),
@@ -846,7 +840,7 @@ local musha_elfmelody_full = State {
 
 local musha_elfmelody_full_client = State {
     name = "musha_elfmelody_full",
-    tags = { "musha_elfmelody_full", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
+    tags = { "musha_elfmelody", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -854,23 +848,17 @@ local musha_elfmelody_full_client = State {
         inst.AnimState:OverrideSymbol("hound_whistle01", "houndwhistle", "hound_whistle01")
         inst.AnimState:OverrideSymbol("bell01", "bell", "bell01")
         inst.AnimState:OverrideSymbol("horn01", "horn", "horn01")
-        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("flute", false)
+        inst.AnimState:PlayAnimation("flute")
         inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("whistle", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("flute", false)
-        inst.AnimState:PushAnimation("idle_onemanband1_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband1_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband1_pst", false)
         inst.AnimState:PushAnimation("idle_onemanband2_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband2_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband2_pst", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("flute", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("bell", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("horn", false)
     end,
 
@@ -895,20 +883,20 @@ AddStategraphState("wilson", musha_elfmelody_full)
 AddStategraphState("wilson_client", musha_elfmelody_full_client)
 
 AddStategraphEvent("wilson", EventHandler("playfullelfmelody",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_elfmelody_full")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("playfullelfmelody",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_elfmelody_full")
     end)
 )
 
 local musha_elfmelody_partial = State {
     name = "musha_elfmelody_partial",
-    tags = { "musha_elfmelody_partial", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
+    tags = { "musha_elfmelody", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -916,12 +904,10 @@ local musha_elfmelody_partial = State {
         inst.AnimState:Show("ARM_normal")
         inst.AnimState:OverrideSymbol("bell01", "bell", "bell01")
         inst.AnimState:OverrideSymbol("horn01", "horn", "horn01")
-        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("bell", false)
+        inst.AnimState:PlayAnimation("bell")
         inst.AnimState:PushAnimation("idle_onemanband1_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband1_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband1_pst", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("horn", false)
     end,
 
@@ -936,7 +922,7 @@ local musha_elfmelody_partial = State {
         TimeEvent(10 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
         end),
-        TimeEvent(15 * FRAMES, function(inst)
+        TimeEvent(30 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve_DLC001/common/glommer_bell")
         end),
 
@@ -949,14 +935,8 @@ local musha_elfmelody_partial = State {
             CustomAttachFx(inst, "balloonparty_confetti_cloud")
             inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
         end),
-        TimeEvent(70 * FRAMES, function(inst)
-            inst.AnimState:OverrideSymbol("swap_body_tall", "armor_onemanband", "swap_body_tall")
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
-        end),
-        TimeEvent(75 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
-        end),
         TimeEvent(80 * FRAMES, function(inst)
+            inst.AnimState:OverrideSymbol("swap_body_tall", "armor_onemanband", "swap_body_tall")
             inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
         end),
         TimeEvent(85 * FRAMES, function(inst)
@@ -965,13 +945,19 @@ local musha_elfmelody_partial = State {
         TimeEvent(90 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
         end),
+        TimeEvent(95 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
+        end),
+        TimeEvent(100 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/onemanband")
+        end),
         TimeEvent(110 * FRAMES, function(inst)
             inst.AnimState:ClearOverrideSymbol("swap_body_tall")
         end),
-        TimeEvent(150 * FRAMES, function(inst)
+        TimeEvent(135 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/common/horn_beefalo")
         end),
-        TimeEvent(155 * FRAMES, function(inst)
+        TimeEvent(140 * FRAMES, function(inst)
             inst:StartMelodyBuff({ mode = "partial" })
         end),
     },
@@ -998,18 +984,16 @@ local musha_elfmelody_partial = State {
 
 local musha_elfmelody_partial_client = State {
     name = "musha_elfmelody_partial",
-    tags = { "musha_elfmelody_partial", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
+    tags = { "musha_elfmelody", "doing", "playing", "canrotate", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:OverrideSymbol("bell01", "bell", "bell01")
         inst.AnimState:OverrideSymbol("horn01", "horn", "horn01")
-        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("bell", false)
+        inst.AnimState:PlayAnimation("bell")
         inst.AnimState:PushAnimation("idle_onemanband1_pre", false)
         inst.AnimState:PushAnimation("idle_onemanband1_loop", false)
         inst.AnimState:PushAnimation("idle_onemanband1_pst", false)
-        inst.AnimState:PushAnimation("action_uniqueitem_pre", false)
         inst.AnimState:PushAnimation("horn", false)
     end,
 
@@ -1019,7 +1003,6 @@ local musha_elfmelody_partial_client = State {
             inst.sg:AddStateTag("musha_nointerrupt")
         end),
     },
-
 
     events =
     {
@@ -1035,13 +1018,104 @@ AddStategraphState("wilson", musha_elfmelody_partial)
 AddStategraphState("wilson_client", musha_elfmelody_partial_client)
 
 AddStategraphEvent("wilson", EventHandler("playpartialelfmelody",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_elfmelody_partial")
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("playpartialelfmelody",
-    function(inst, data)
+    function(inst)
         inst.sg:GoToState("musha_elfmelody_partial")
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Treasure sniffing
+
+local musha_treasuresniffing = State {
+    name = "musha_treasuresniffing",
+    tags = { "musha_treasuresniffing", "doing" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        local item = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if item then
+            inst.components.inventory:Unequip(EQUIPSLOTS.HANDS, true)
+            inst.components.inventory:GiveItem(item)
+        end
+        inst.AnimState:OverrideSymbol("swap_object", "swap_telescope", "swap_object")
+        inst.AnimState:OverrideSymbol("scroll", "messagebottle", "scroll")
+        inst.AnimState:PlayAnimation("telescope")
+        inst.AnimState:PushAnimation("telescope_pst", false)
+        inst.AnimState:PushAnimation("scroll", false)
+        inst.AnimState:PushAnimation("scroll_pst", false)
+    end,
+
+    timeline =
+    {
+        TimeEvent(2 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
+        end),
+        TimeEvent(20 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/smallbird/blink")
+        end),
+        TimeEvent(100 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/use_book_light")
+        end),
+        TimeEvent(150 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/use_book_close")
+        end),
+        TimeEvent(155 * FRAMES, function(inst)
+            inst:SniffTreasure()
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+}
+
+local musha_treasuresniffing_client = State {
+    name = "musha_treasuresniffing",
+    tags = { "musha_treasuresniffing", "doing" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:OverrideSymbol("swap_object", "swap_telescope", "swap_object")
+        inst.AnimState:OverrideSymbol("scroll", "messagebottle", "scroll")
+        inst.AnimState:PlayAnimation("telescope")
+        inst.AnimState:PushAnimation("telescope_pst", false)
+        inst.AnimState:PushAnimation("scroll", false)
+        inst.AnimState:PushAnimation("scroll_pst", false)
+    end,
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+}
+
+AddStategraphState("wilson", musha_treasuresniffing)
+AddStategraphState("wilson_client", musha_treasuresniffing_client)
+
+AddStategraphEvent("wilson", EventHandler("snifftreasure",
+    function(inst)
+        inst.sg:GoToState("musha_treasuresniffing")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("snifftreasure",
+    function(inst)
+        inst.sg:GoToState("musha_treasuresniffing")
     end)
 )
