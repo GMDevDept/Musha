@@ -8,21 +8,12 @@ local Musics = require("src/musics")
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
     Asset("ANIM", "anim/musha/musha.zip"), -- Character texture
-    Asset("ANIM", "anim/musha/player_actions_telescope.zip"), -- Treasure sniffing: telescope
-    Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
-    Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll
-    Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
 }
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
     "tentaclespike",
     "minotaurhorn",
-    "ice",
-    "ice",
-    "ice",
-    "ice",
-    "ice",
 }
 
 local start_inv = {}
@@ -112,6 +103,13 @@ end
 
 local function SniffTreasure(inst)
     inst.components.treasurehunter:Reset()
+end
+
+local function OnTreasureSniffingReady(inst)
+    if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
+        return
+    end
+    inst.components.talker:Say(STRINGS.musha.skills.treasuresniffing.full)
 end
 
 -- Trailing fx (Wormwood blooming)
@@ -274,7 +272,7 @@ local function PlayElfMelody(inst)
                 .. STRINGS.musha.skills.ineffect.part3
                 .. math.ceil(timeleft)
                 .. STRINGS.musha.skills.ineffect.part4 .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         elseif inst.components.timer:TimerExists("cooldown_elfmelody") then
             declaration = declaration
                 .. STRINGS.musha.skills.incooldown.part1
@@ -286,17 +284,17 @@ local function PlayElfMelody(inst)
         elseif inst.components.melody:IsFull() then
             declaration = declaration
                 .. STRINGS.musha.skills.elfmelody.ask_full .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         elseif inst.components.melody:IsReady() then
             declaration = declaration
                 .. STRINGS.musha.skills.elfmelody.ask_part .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         end
 
         inst.components.talker:Say(declaration, 4)
         inst.components.timer:StartTimer("premelody", 4)
     else
-        inst.components.talker:ShutUp()
+        inst.components.talker:Say("", nil, true)
         inst.components.timer:SetTimeLeft("premelody", 0)
         if inst.components.treasurehunter:IsReady() then
             if inst.components.rider:IsRiding() then
@@ -424,10 +422,10 @@ local function ShieldOn(inst)
         inst.bufferedspell = "SetShieldDurability"
         inst.bufferedbookfx = {
             swap_build = "swap_books",
-            swap_prefix = "book_moon",
+            swap_prefix = "book_horticulture_upgraded",
             def = {
                 fx = "fx_book_moon",
-                layer = "FX_plants_big",
+                fx_under_prefab = "fx_plants_big_under_book",
                 layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
             }
         }
@@ -1245,9 +1243,7 @@ end
 local function OnBecameHuman(inst)
     inst:AddTag("nofx")
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
-    inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
     inst:DecideNormalOrFull()
-    inst:DecideFatigueLevel()
 
     local timers = {
         "cooldown_thunderspell",
@@ -1267,20 +1263,17 @@ local function OnBecameHuman(inst)
 
     inst:DoTaskInTime(1.5, function()
         inst:RemoveTag("nofx")
+        inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
+        inst:DecideFatigueLevel()
     end)
 end
 
 -- When the character turn into a ghost
 local function OnBecameGhost(inst)
-    inst:AddTag("nofx")
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst:RemoveEventCallback("fatiguedelta", DecideFatigueLevel)
     inst.mode:set(0)
     inst.fatiguelevel:set(0)
-
-    inst:DoTaskInTime(1.5, function()
-        inst:RemoveTag("nofx")
-    end)
 end
 
 -- When save game progress
@@ -1434,6 +1427,7 @@ local function master_postinit(inst)
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
+    inst:ListenForEvent("treasurefull", OnTreasureSniffingReady)
     inst:ListenForEvent("death", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnBecameGhost)

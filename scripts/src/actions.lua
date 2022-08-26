@@ -124,10 +124,10 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             inst.bufferedspell = "FreezingSpell"
             inst.bufferedbookfx = {
                 swap_build = "swap_books",
-                swap_prefix = "book_moon",
+                swap_prefix = "book_sleep",
                 def = {
                     fx = "fx_book_temperature",
-                    layer = "FX_fish",
+                    fx_under_prefab = "fx_roots_under_book",
                     layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
                 }
             }
@@ -151,10 +151,10 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             inst.bufferedspell = "ThunderSpell"
             inst.bufferedbookfx = {
                 swap_build = "swap_books",
-                swap_prefix = "book_horticulture_upgraded",
+                swap_prefix = "book_moon",
                 def = {
                     fx = "fx_book_rain",
-                    layer = "FX_lightning",
+                    fx_over_prefab = "fx_lightning_over_book",
                     layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
                 }
             }
