@@ -2,7 +2,7 @@ STRINGS.musha = {
     segmentation = "------------------",
     segmentation_long = "------------------------------\n",
 
-    lack_of_exp = "Musha需要更多经验值!",
+    lack_of_exp = "Musha需要更多经验值来解锁这个技能。",
     lack_of_mana = "Musha的魔力不够了!",
     lack_of_sanity = "Musha的理智值不够了!",
     mount_not_allowed = "Musha得先从坐骑上下来!",
@@ -134,6 +134,10 @@ STRINGS.musha = {
             mount_not_allowed = "取消乘骑状态才可以发动技能 [宝藏嗅探]",
             find = "Musha发现了一个宝藏!",
             mark = "标记在地图上...",
+        },
+        poisonspore = {
+            name = "孢子炸弹",
+            ready = "[孢子炸弹] 准备就绪!",
         },
     },
 
