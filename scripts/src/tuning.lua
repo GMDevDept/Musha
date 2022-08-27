@@ -165,6 +165,11 @@ TUNING.musha = {
                 cooldown = 60,
             },
         },
+        treasuresniffing = {
+            max = 960, -- 2 days
+            regen = 1,
+            first = 60,
+        },
     },
 
     creatures = {

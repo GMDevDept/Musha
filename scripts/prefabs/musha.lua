@@ -7,20 +7,13 @@ local Musics = require("src/musics")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
-
-    -- Musha character textures
-    Asset("ANIM", "anim/musha/musha.zip"),
+    Asset("ANIM", "anim/musha/musha.zip"), -- Character texture
 }
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
     "tentaclespike",
     "minotaurhorn",
-    "ice",
-    "ice",
-    "ice",
-    "ice",
-    "ice",
 }
 
 local start_inv = {}
@@ -108,6 +101,17 @@ end
 
 -- Elf melody and treasure sniffing
 
+local function SniffTreasure(inst)
+    inst.components.treasurehunter:Reset()
+end
+
+local function OnTreasureSniffingReady(inst)
+    if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
+        return
+    end
+    inst.components.talker:Say(STRINGS.musha.skills.treasuresniffing.full)
+end
+
 -- Trailing fx (Wormwood blooming)
 local function AddBloomingTrailFx(inst)
     if inst.sg:HasStateTag("ghostbuild") or inst.components.health:IsDead() or not inst.entity:IsVisible() then
@@ -148,6 +152,7 @@ local function AddBloomingTrailFx(inst)
     end
 end
 
+-- Trailing fx (stalker blooming)
 local function AddStalkerTrailFx(inst)
     local BLOOM_CHOICES = {
         ["stalker_bulb"] = .5,
@@ -241,13 +246,22 @@ local function PlayElfMelody(inst)
     if not inst.components.timer:TimerExists("premelody") then
         local declaration = STRINGS.musha.segmentation .. "\n"
             .. STRINGS.musha.skills.treasuresniffing.progress1
+            .. math.floor(inst.components.treasurehunter:GetPercent() * 100)
             .. STRINGS.musha.skills.treasuresniffing.progress2 .. "\n"
             .. STRINGS.musha.skills.elfmelody.progress1
-            .. math.floor(inst.components.melody.current)
+            .. math.floor(inst.components.melody:GetPercent() * 100)
             .. STRINGS.musha.skills.elfmelody.progress2 .. "\n"
             .. STRINGS.musha.segmentation .. "\n"
 
-        if inst.components.timer:TimerExists("stopelfmelody_full") or
+        if inst.components.treasurehunter:IsReady() then
+            if inst.components.rider:IsRiding() then
+                declaration = declaration
+                    .. STRINGS.musha.skills.treasuresniffing.mount_not_allowed
+            else
+                declaration = declaration
+                    .. STRINGS.musha.skills.treasuresniffing.ask
+            end
+        elseif inst.components.timer:TimerExists("stopelfmelody_full") or
             inst.components.timer:TimerExists("stopelfmelody_partial") then
             local timeleft = inst.components.timer:GetTimeLeft("stopelfmelody_full") or
                 inst.components.timer:GetTimeLeft("stopelfmelody_partial")
@@ -258,7 +272,7 @@ local function PlayElfMelody(inst)
                 .. STRINGS.musha.skills.ineffect.part3
                 .. math.ceil(timeleft)
                 .. STRINGS.musha.skills.ineffect.part4 .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         elseif inst.components.timer:TimerExists("cooldown_elfmelody") then
             declaration = declaration
                 .. STRINGS.musha.skills.incooldown.part1
@@ -270,19 +284,26 @@ local function PlayElfMelody(inst)
         elseif inst.components.melody:IsFull() then
             declaration = declaration
                 .. STRINGS.musha.skills.elfmelody.ask_full .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         elseif inst.components.melody:IsReady() then
             declaration = declaration
                 .. STRINGS.musha.skills.elfmelody.ask_part .. "\n"
-                .. STRINGS.musha.skills.presstoconfirm
+                .. STRINGS.musha.skills.press_to_confirm
         end
 
         inst.components.talker:Say(declaration, 4)
         inst.components.timer:StartTimer("premelody", 4)
     else
-        inst.components.talker:ShutUp()
+        inst.components.talker:Say("", nil, true)
         inst.components.timer:SetTimeLeft("premelody", 0)
-        if inst.components.timer:TimerExists("stopelfmelody_full") or
+        if inst.components.treasurehunter:IsReady() then
+            if inst.components.rider:IsRiding() then
+                inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.snifftreasure:push()
+            end
+        elseif inst.components.timer:TimerExists("stopelfmelody_full") or
             inst.components.timer:TimerExists("stopelfmelody_partial") then
             inst.components.timer:SetTimeLeft("stopelfmelody_full", 0)
             inst.components.timer:SetTimeLeft("stopelfmelody_partial", 0)
@@ -401,10 +422,10 @@ local function ShieldOn(inst)
         inst.bufferedspell = "SetShieldDurability"
         inst.bufferedbookfx = {
             swap_build = "swap_books",
-            swap_prefix = "book_moon",
+            swap_prefix = "book_horticulture_upgraded",
             def = {
                 fx = "fx_book_moon",
-                layer = "FX_plants_big",
+                fx_under_prefab = "fx_plants_big_under_book",
                 layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
             }
         }
@@ -1222,9 +1243,7 @@ end
 local function OnBecameHuman(inst)
     inst:AddTag("nofx")
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
-    inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
     inst:DecideNormalOrFull()
-    inst:DecideFatigueLevel()
 
     local timers = {
         "cooldown_thunderspell",
@@ -1244,20 +1263,17 @@ local function OnBecameHuman(inst)
 
     inst:DoTaskInTime(1.5, function()
         inst:RemoveTag("nofx")
+        inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
+        inst:DecideFatigueLevel()
     end)
 end
 
 -- When the character turn into a ghost
 local function OnBecameGhost(inst)
-    inst:AddTag("nofx")
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst:RemoveEventCallback("fatiguedelta", DecideFatigueLevel)
     inst.mode:set(0)
     inst.fatiguelevel:set(0)
-
-    inst:DoTaskInTime(1.5, function()
-        inst:RemoveTag("nofx")
-    end)
 end
 
 -- When save game progress
@@ -1316,13 +1332,14 @@ local function common_postinit(inst)
     inst.emotesoundoverride = "dontstarve/characters/willow/emote"
 
     -- Character specific attributes
-    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst._mode = 0 -- Store previous mode
+    inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
     inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG
     inst.playpartialelfmelody = net_event(inst.GUID, "playpartialelfmelody") -- Handler set in SG
+    inst.snifftreasure = net_event(inst.GUID, "snifftreasure") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
@@ -1353,6 +1370,9 @@ local function master_postinit(inst)
 
     -- Elf melody
     inst:AddComponent("melody")
+
+    -- Treasure sniffing
+    inst:AddComponent("treasurehunter")
 
     -- Read books
     inst:AddComponent("reader")
@@ -1402,10 +1422,12 @@ local function master_postinit(inst)
     inst.LightningDischarge = LightningDischarge
     inst.StartMelodyBuff = StartMelodyBuff
     inst.StopMelodyBuff = StopMelodyBuff
+    inst.SniffTreasure = SniffTreasure
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
+    inst:ListenForEvent("treasurefull", OnTreasureSniffingReady)
     inst:ListenForEvent("death", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnBecameGhost)

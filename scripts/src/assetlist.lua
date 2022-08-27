@@ -42,6 +42,11 @@ Assets = {
     -- Inventory and recipes
     Asset("ATLAS", "images/inventoryimages/musha_inventoryimages2.xml"),
     Asset("IMAGE", "images/inventoryimages/musha_inventoryimages2.tex"),
+
+    Asset("ANIM", "anim/musha/player_actions_telescope.zip"), -- Treasure sniffing: telescope
+    Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
+    Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll: have to be added here or else character anim will be broken
+    Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
 }
 
 AddMinimapAtlas("images/map_icons/musha_mapicon.xml")
