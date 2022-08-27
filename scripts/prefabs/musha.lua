@@ -913,6 +913,47 @@ local function ToggleValkyrie(inst)
         else
             inst:DecideNormalOrFull()
         end
+    elseif previousmode == 3 and not inst.sg:HasStateTag("frozen") then
+        if inst:HasDebuff("poisonspore") then
+            local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
+            inst.components.debuffable:RemoveDebuff("poisonspore")
+            inst.fx_poisonspore = SpawnPrefab("poisonspore")
+            inst.fx_poisonspore.Transform:SetPosition(x, y, z)
+            inst.fx_poisonspore.components.complexprojectile:Launch(ConsoleWorldPosition(), inst)
+
+            local function PoisonSporeOnTimerDone(inst, data)
+                if data.name == "cooldown_poisonspore" then
+                    inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                        .. STRINGS.musha.skills.poisonspore.name
+                        .. STRINGS.musha.skills.cooldownfinished.part2)
+                    inst:RemoveEventCallback("timerdone", PoisonSporeOnTimerDone)
+                end
+            end
+
+            inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.poisonspore.cooldown)
+            inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
+        elseif not inst.skills.poisonspore then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.poisonspore.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_poisonspore"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.poisonspore.manacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        elseif inst.components.sanity.current < TUNING.musha.skills.poisonspore.sanitycost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+            CustomPlayFailedAnim(inst)
+        else
+            inst.components.mana:DoDelta(-TUNING.musha.skills.poisonspore.manacost)
+            inst.components.sanity:DoDelta(-TUNING.musha.skills.poisonspore.sanitycost)
+            inst:AddDebuff("poisonspore", "poisonspore")
+            inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+            inst.components.talker:Say(STRINGS.musha.skills.poisonspore.ready)
+        end
     end
 end
 
@@ -1232,7 +1273,7 @@ local function OnLevelUp(inst, data)
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
     inst.skills.sneakspeedboost    = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
-    inst.skills.sporebomb          = data.lvl >= TUNING.musha.leveltounlockskill.sporebomb and true or nil
+    inst.skills.poisonspore        = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
     inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
     inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
 end
@@ -1249,6 +1290,7 @@ local function OnBecameHuman(inst)
         "cooldown_thunderspell",
         "cooldown_freezingspell",
         "cooldown_manashield",
+        "cooldown_poisonspore",
         "cooldown_elfmelody",
         "stopelfmelody_full",
         "stopelfmelody_partial",

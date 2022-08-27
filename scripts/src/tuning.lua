@@ -80,7 +80,7 @@ TUNING.musha = {
         shadowspell        = 0,
         sneak              = 0,
         sneakspeedboost    = 0,
-        sporebomb          = 0,
+        poisonspore        = 0,
         shadowshield       = 0,
         instantcast        = 0,
     },
@@ -169,6 +169,12 @@ TUNING.musha = {
             max = 960, -- 2 days
             regen = 1,
             first = 60,
+        },
+        poisonspore = {
+            manacost = 15,
+            sanitycost = 15,
+            maxdelay = 10,
+            cooldown = 10,
         },
     },
 

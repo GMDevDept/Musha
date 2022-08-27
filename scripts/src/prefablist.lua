@@ -14,6 +14,7 @@ PrefabFiles = {
     -- FXs
     "fx_fullmode",
     "manashield",
+    "poisonspore",
 
     -- General
     "debuff_common",
