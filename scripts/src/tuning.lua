@@ -93,7 +93,7 @@ TUNING.musha = {
             rangegrowth = 0.3,
             coldness = 1,
             coldnessgrowth = 0.1,
-            cooldown = 5,
+            cooldown = 3,
         },
         thunderspell = {
             manacost = 10,
@@ -174,7 +174,7 @@ TUNING.musha = {
             manacost = 15,
             sanitycost = 15,
             maxdelay = 10,
-            cooldown = 10,
+            cooldown = 5,
         },
     },
 

@@ -18,4 +18,5 @@ PrefabFiles = {
 
     -- General
     "debuff_common",
+    "elftreasure",
 }

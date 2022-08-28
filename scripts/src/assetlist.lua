@@ -19,10 +19,6 @@ Assets = {
     Asset("IMAGE", "bigportraits/musha_berserk.tex"),
     Asset("ATLAS", "bigportraits/musha_berserk.xml"),
 
-    -- Map icon
-    Asset("IMAGE", "images/map_icons/musha_mapicon.tex"),
-    Asset("ATLAS", "images/map_icons/musha_mapicon.xml"),
-
     -- Character craft tab icon (doesn't affect tab menu)
     Asset("IMAGE", "images/avatars/avatar_musha.tex"),
     Asset("ATLAS", "images/avatars/avatar_musha.xml"),
@@ -39,14 +35,25 @@ Assets = {
     Asset("ANIM", "anim/widgets/fatigue.zip"),
     Asset("ANIM", "anim/widgets/stamina.zip"),
 
-    -- Inventory and recipes
-    Asset("ATLAS", "images/inventoryimages/musha_inventoryimages2.xml"),
-    Asset("IMAGE", "images/inventoryimages/musha_inventoryimages2.tex"),
-
+    -- Stategraphs
     Asset("ANIM", "anim/musha/player_actions_telescope.zip"), -- Treasure sniffing: telescope
     Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
     Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll: have to be added here or else character anim will be broken
     Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
+
+    -- Map icon
+    Asset("IMAGE", "images/map_icons/musha_mapicon.tex"),
+    Asset("ATLAS", "images/map_icons/musha_mapicon.xml"),
+    Asset("IMAGE", "images/map_icons/musha_treasure2.tex"),
+    Asset("ATLAS", "images/map_icons/musha_treasure2.xml"),
+
+    -- Inventory and recipes
+    Asset("ATLAS", "images/inventoryimages/musha_inventoryimages2.xml"),
+    Asset("IMAGE", "images/inventoryimages/musha_inventoryimages2.tex"),
+    Asset("ATLAS", "images/inventoryimages/frosthammer.xml"),
+    Asset("IMAGE", "images/inventoryimages/frosthammer.tex"),
 }
 
 AddMinimapAtlas("images/map_icons/musha_mapicon.xml")
+AddMinimapAtlas("images/map_icons/musha_treasure2.xml")
+AddMinimapAtlas("images/inventoryimages/frosthammer.xml")

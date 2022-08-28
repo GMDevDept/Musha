@@ -134,6 +134,7 @@ STRINGS.musha = {
             mount_not_allowed = "取消乘骑状态才可以发动技能 [宝藏嗅探]",
             find = "Musha发现了一个宝藏!",
             mark = "标记在地图上...",
+            cannot_find_pos = "宝藏似乎弄丢了...再试一次吧!",
         },
         poisonspore = {
             name = "孢子炸弹",

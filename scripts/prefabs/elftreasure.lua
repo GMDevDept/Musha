@@ -45,12 +45,25 @@ local function stashloot(inst, item)
     end
 end
 
+local function OnInit(inst)
+    if not inst.owner then
+        inst:Remove()
+    end
+end
+
 local function OnSave(inst, data)
+    data.owner = inst.owner
     data.loot = {}
     for i, k in ipairs(inst.loot) do
         table.insert(data.loot, k.GUID)
     end
     return data.loot
+end
+
+local function OnLoad(inst, data)
+    if data then
+        inst.owner = data.owner
+    end
 end
 
 local function OnLoadPostPass(inst, ents, data)
@@ -78,6 +91,8 @@ local function fn()
     inst.AnimState:SetBuild("x_marks_spot")
     inst.AnimState:PlayAnimation("idle")
 
+    inst:DoTaskInTime(0, OnInit)
+
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
@@ -89,10 +104,16 @@ local function fn()
     inst.components.workable:SetWorkLeft(1)
     inst.components.workable:SetOnWorkCallback(stash_dug)
 
+    inst:AddComponent("mapspotrevealer")
+    inst.components.mapspotrevealer:SetGetTargetFn(function()
+        return Vector3(inst.Transform:GetWorldPosition())
+    end)
+
     inst.loot = {}
     inst.stashloot = stashloot
 
     inst.OnSave = OnSave
+    inst.OnLoad = OnLoad
     inst.OnLoadPostPass = OnLoadPostPass
 
     return inst

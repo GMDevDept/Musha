@@ -76,6 +76,7 @@ local function OnExplode(inst)
     local cloud = SpawnPrefab("sporecloud")
     cloud.Transform:SetPosition(x, 0, z)
     cloud:FadeInImmediately()
+    cloud.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
 end
 
 local function OnTimerDone(inst, data)

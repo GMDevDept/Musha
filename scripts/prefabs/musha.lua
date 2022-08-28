@@ -99,10 +99,14 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Elf melody and treasure sniffing
+-- Treasure sniffing
 
 local function SniffTreasure(inst)
-    inst.components.treasurehunter:Reset()
+    local pos = Vector3(inst.Transform:GetWorldPosition())
+    local treasure = inst.components.treasurehunter:NewStash()
+    if treasure ~= nil then
+        inst.components.treasurehunter:Reset()
+    end
 end
 
 local function OnTreasureSniffingReady(inst)
@@ -111,6 +115,10 @@ local function OnTreasureSniffingReady(inst)
     end
     inst.components.talker:Say(STRINGS.musha.skills.treasuresniffing.full)
 end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Elf melody
 
 -- Trailing fx (Wormwood blooming)
 local function AddBloomingTrailFx(inst)
@@ -920,6 +928,7 @@ local function ToggleValkyrie(inst)
             inst.fx_poisonspore = SpawnPrefab("poisonspore")
             inst.fx_poisonspore.Transform:SetPosition(x, y, z)
             inst.fx_poisonspore.components.complexprojectile:Launch(ConsoleWorldPosition(), inst)
+            inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
 
             local function PoisonSporeOnTimerDone(inst, data)
                 if data.name == "cooldown_poisonspore" then
@@ -1084,6 +1093,7 @@ local function OnModeChange(inst)
         end
         inst:RemoveTag("areaattack") -- Must be removed after inst:RemoveSneakEffects()
         inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
+        inst.components.debuffable:RemoveDebuff("poisonspore")
         CustomCancelTask(inst.modetrailtask)
 
         for _, v in pairs(inst.components.petleash:GetPets()) do
