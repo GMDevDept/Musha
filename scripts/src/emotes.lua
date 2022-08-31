@@ -14,7 +14,6 @@ local emotelist = {
     { anim = "emoteXL_bonesaw" },
     { anim = "emoteXL_facepalm" },
     { anim = "emoteXL_kiss" },
-    { anim = "emote_strikepose" },
     { anim = "emote_loop_toast", loop = true },
     { anim = "emote_flex" },
     { anim = "emote_impatient" },

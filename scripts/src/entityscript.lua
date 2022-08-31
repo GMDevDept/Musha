@@ -3,7 +3,7 @@ local function ClassPostConstructFn(self)
     function self:CustomDoPeriodicTask(duration, period, fn, initialdelay, ...)
         local task = _DoPeriodicTask(self, period, fn, initialdelay, ...)
         if duration then
-            CustomCancelTask(task, duration)
+            CustomCancelTask(task, duration, self)
         end
         return task
     end

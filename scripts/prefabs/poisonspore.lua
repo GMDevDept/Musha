@@ -45,14 +45,10 @@ local function AlignToTarget(inst, target)
     inst.Transform:SetRotation(target.Transform:GetRotation())
 end
 
-local function OnChangeFollowSymbol(inst, target, followsymbol, followoffset)
-    inst.Follower:FollowSymbol(target.GUID, followsymbol, followoffset.x, followoffset.y, followoffset.z)
-end
-
-local function OnAttached(inst, target, followsymbol, followoffset)
+local function OnAttached(inst, target)
     inst.entity:SetParent(target.entity)
+    inst.Transform:SetPosition(0, 4, 0)
     inst._light.entity:SetParent(target.entity)
-    OnChangeFollowSymbol(inst, target, followsymbol, followoffset)
     if inst._followtask ~= nil then
         inst._followtask:Cancel()
     end
@@ -148,7 +144,6 @@ local function fn()
     local inst = CreateEntity()
 
     inst.entity:AddTransform()
-    inst.entity:AddFollower()
     inst.entity:AddAnimState()
     inst.entity:AddNetwork()
 
@@ -197,7 +192,6 @@ local function fn()
     inst:AddComponent("debuff")
     inst.components.debuff:SetAttachedFn(OnAttached)
     inst.components.debuff:SetDetachedFn(OnDetached)
-    inst.components.debuff:SetChangeFollowSymbolFn(OnChangeFollowSymbol)
 
     inst:AddComponent("timer")
     inst.components.timer:StartTimer("explode", TUNING.musha.skills.poisonspore.maxdelay)

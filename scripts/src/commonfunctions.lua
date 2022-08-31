@@ -18,17 +18,24 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Stop scheduled task
-GLOBAL.CustomCancelTask = function(task, delay)
+GLOBAL.CustomCancelTask = function(task, delay, inst)
     if delay then
-        TheWorld:DoTaskInTime(delay, function()
+        local entity = inst or TheWorld
+        entity:DoTaskInTime(delay, function()
             if task then
                 task:Cancel()
+                if inst then
+                    inst:PushEvent("customtaskcancled", { task = task })
+                end
                 task = nil
             end
         end)
     else
         if task then
             task:Cancel()
+            if inst then
+                inst:PushEvent("customtaskcancled", { task = task })
+            end
             task = nil
         end
     end
@@ -110,8 +117,11 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Area of effect
-GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn, offset)
     local x, y, z = center.Transform:GetWorldPosition()
+    if offset then
+        x, y, z = x + offset.x, y + offset.y, z + offset.z
+    end
     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost" }
 
     for _, v in ipairs(additional_ignore_tags) do
@@ -159,6 +169,11 @@ end
 
 -- Play skill failed anim
 GLOBAL.CustomPlayFailedAnim = function(inst)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("busy") then
+        return
+    end
+
     if inst.components.rider:IsRiding() then
         inst.sg:GoToState("repelled")
     else

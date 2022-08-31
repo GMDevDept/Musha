@@ -1,4 +1,4 @@
----@diagnostic disable: need-check-nil
+---@diagnostic disable: need-check-nil, undefined-field
 -- Add customized states to SGwison and SGwilson_client
 
 local UserCommands = require("usercommands")
@@ -348,7 +348,7 @@ AddStategraphState("wilson_client", musha_smite_client)
 AddStategraphPostInit("wilson", function(self)
     local _deststate = self.actionhandlers[ACTIONS.ATTACK].deststate
     self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
-        local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon() or nil
+        local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon()
         if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack" then
             return "musha_smite"
         else
@@ -1148,5 +1148,458 @@ AddStategraphEvent("wilson", EventHandler("snifftreasure",
 AddStategraphEvent("wilson_client", EventHandler("snifftreasure",
     function(inst)
         inst.sg:GoToState("musha_treasuresniffing")
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Setsu-Getsu-Ka
+
+local function ClearSetsuGetsuKaCounter(inst, data)
+    if data.name == "clearsetsugetsukacounter" then
+        inst.setsugetsuka_counter = nil
+        inst:RemoveEventCallback("timerdone", ClearSetsuGetsuKaCounter)
+    end
+end
+
+local function SetsuGetsuKaOnTimerDone(inst, data)
+    if data.name == "cooldown_setsugetsuka" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.setsugetsuka.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
+    end
+end
+
+local function DoThrust(inst, lightning, attachfx)
+    local radius = TUNING.musha.skills.setsugetsuka.radius
+    local must_tags = { "_combat" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
+        "companion", "musha_companion" }
+    local target = FindEntity(inst, radius, nil, must_tags, ignore_tags)
+    local weapon = inst.sg.statemem.weapon
+
+    if target ~= nil then
+        local damage = inst.components.combat:CalcDamage(target, weapon) *
+            TUNING.musha.skills.setsugetsuka.damagemultiplier
+
+        if lightning then
+            local extradamage = (TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5) *
+                TUNING.musha.skills.setsugetsuka.damagemultiplier
+            target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
+            if attachfx then CustomAttachFx(target, "shock_fx") end
+        else
+            target.components.combat:GetAttacked(inst, damage, weapon)
+        end
+    end
+end
+
+local function DoAdvent(inst)
+    local must_tags = { "_combat" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
+        "companion", "musha_companion" }
+    local radius = TUNING.musha.skills.phoenixadvent.radius
+    local offset = Vector3(radius * 0.5, 0, 0)
+    local lightning = inst:HasTag("lightningstrikeready")
+    local weapon = inst.components.combat:GetWeapon()
+
+    local function fn(target)
+        local damage = inst.components.combat:CalcDamage(target, weapon) *
+            TUNING.musha.skills.phoenixadvent.damagemultiplier
+
+        if lightning then
+            local extradamage = TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+            target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
+            CustomAttachFx(target, { "lightning", "shock_fx" })
+        else
+            target.components.combat:GetAttacked(inst, damage, weapon)
+        end
+
+        inst.components.stamina:DoDelta(TUNING.musha.skills.phoenixadvent.staminaregen)
+    end
+
+    CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn, offset)
+
+    if lightning then
+        inst:LightningDischarge()
+    end
+
+    if weapon and weapon.components.stackable then
+        weapon.components.stackable:Get():Remove()
+    end
+end
+
+local musha_setsugetsuka_pre = State {
+    name = "musha_setsugetsuka_pre",
+    tags = { "musha_setsugetsuka_pre", "doing", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust_yell")
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.sg.statemem.target = target
+        inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
+    end,
+
+    timeline =
+    {
+        TimeEvent(1 * FRAMES, function(inst)
+            CustomAttachFx(inst, "crab_king_icefx")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_setsugetsuka", { target = inst.sg.statemem.target })
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.sg.statemem.target = nil
+    end,
+}
+
+local musha_setsugetsuka_pre_client = State {
+    name = "musha_setsugetsuka_pre",
+    tags = { "musha_setsugetsuka_pre", "doing", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust_yell")
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.sg.statemem.target = target
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_setsugetsuka", { target = inst.sg.statemem.target })
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.sg.statemem.target = nil
+    end,
+}
+
+local musha_setsugetsuka = State {
+    name = "musha_setsugetsuka",
+    tags = { "musha_setsugetsuka", "busy", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        local _pos = Vector3(inst.Transform:GetWorldPosition())
+        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+        local weapon = inst.components.combat:GetWeapon()
+        local rangedweapon = weapon and
+            (weapon.components.projectile ~= nil or weapon:HasTag("projectile") or weapon:HasTag("rangedweapon"))
+        local maxdist = not rangedweapon and inst.components.combat:GetAttackRange()
+            or inst.components.combat.attackrange
+        local mult = math.min(1, maxdist / dist)
+        dist = dist * mult
+        local dx, _, dz = (target.x - _pos.x) * mult, 0, (target.z - _pos.z) * mult
+        local frame = math.clamp(math.floor(dist) * 2, 10, 20)
+
+        inst.components.timer:StopTimer("cooldown_setsugetsuka")
+        inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust")
+        inst.Transform:SetEightFaced()
+        inst:ForceFacePoint(target.x, target.y, target.z)
+
+        inst.task_setsugetsuka = inst:CustomDoPeriodicTask(frame / 30, FRAMES, function()
+            local pos = Vector3(inst.Transform:GetWorldPosition())
+            local x, _, z = pos.x + dx / frame, 0, pos.z + dz / frame
+            if TheWorld.Map:IsVisualGroundAtPoint(x, 0, z) == true then
+                inst.Transform:SetPosition(x, 0, z)
+            else
+                CustomCancelTask(inst.task_setsugetsuka)
+            end
+        end)
+
+        inst.components.timer:StopTimer("clearsetsugetsukacounter")
+        inst.setsugetsuka_counter = inst.setsugetsuka_counter and inst.setsugetsuka_counter + 1 or 1
+        inst.sg.statemem.weapon = weapon
+        inst.sg.statemem.lightningapplied = inst:HasTag("lightningstrikeready")
+
+        if inst.sg.statemem.lightningapplied then
+            inst:LightningDischarge()
+        end
+
+        if weapon and weapon.components.stackable then
+            weapon.components.stackable:Get():Remove()
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(11 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+        end),
+        TimeEvent(14 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+        end),
+        TimeEvent(17 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied, true)
+        end),
+        TimeEvent(20 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+        end),
+        TimeEvent(22 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+        end),
+        TimeEvent(24 * FRAMES, function(inst)
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+        end),
+        TimeEvent(26 * FRAMES, function(inst)
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+            inst.components.timer:StartTimer("clearsetsugetsukacounter", TUNING.musha.skills.setsugetsuka.reusewindow)
+            inst:ListenForEvent("timerdone", ClearSetsuGetsuKaCounter)
+            inst.sg:RemoveStateTag("nointerrupt")
+            inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        CustomCancelTask(inst.task_setsugetsuka)
+        inst.Transform:SetFourFaced()
+        inst.components.timer:StartTimer("cooldown_setsugetsuka", TUNING.musha.skills.setsugetsuka.cooldown)
+        inst:ListenForEvent("timerdone", SetsuGetsuKaOnTimerDone)
+        inst.sg.statemem.weapon = nil
+        inst.sg.statemem.lightningapplied = nil
+    end,
+}
+
+local musha_setsugetsuka_client = State {
+    name = "musha_setsugetsuka",
+    tags = { "musha_setsugetsuka", "busy", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        local _pos = Vector3(inst.Transform:GetWorldPosition())
+        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+        local weapon = inst.replica.combat:GetWeapon()
+        local rangedweapon = weapon and (weapon:HasTag("projectile") or weapon:HasTag("rangedweapon"))
+        local maxdist = not rangedweapon and inst.replica.combat:GetAttackRangeWithWeapon()
+            or inst.components.combat._attackrange:value()
+        local mult = math.min(1, maxdist / dist)
+        dist = dist * mult
+        local dx, _, dz = (target.x - _pos.x) * mult, 0, (target.z - _pos.z) * mult
+        local frame = math.clamp(math.floor(dist) * 2, 10, 20)
+
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust")
+        inst.Transform:SetEightFaced()
+        inst:ForceFacePoint(target.x, target.y, target.z)
+
+        inst.task_setsugetsuka = inst:CustomDoPeriodicTask(frame / 30, FRAMES, function()
+            local pos = Vector3(inst.Transform:GetWorldPosition())
+            local x, _, z = pos.x + dx / frame, 0, pos.z + dz / frame
+            if TheWorld.Map:IsVisualGroundAtPoint(x, 0, z) == true then
+                inst.Transform:SetPosition(x, 0, z)
+            else
+                CustomCancelTask(inst.task_setsugetsuka)
+            end
+        end)
+    end,
+
+    timeline =
+    {
+        TimeEvent(26 * FRAMES, function(inst)
+            inst.sg:RemoveStateTag("nointerrupt")
+            inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        CustomCancelTask(inst.task_setsugetsuka)
+        inst.Transform:SetFourFaced()
+    end,
+}
+
+local musha_phoenixadvent = State {
+    name = "musha_phoenixadvent",
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("lunge_pre")
+        inst.AnimState:PushAnimation("lunge_lag", false)
+        inst.AnimState:PushAnimation("lunge_pst", false)
+        inst:ForceFacePoint(target.x, target.y, target.z)
+
+        inst.sg.statemem.counter = inst.setsugetsuka_counter
+        inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .1)
+            inst.components.colouradder:PushColour("lunge", inst.sg.statemem.flash, inst.sg.statemem.flash, 0, 0)
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(4 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/twirl", nil, nil, true)
+        end),
+        TimeEvent(24 * FRAMES, function(inst)
+            DoAdvent(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            inst.SoundEmitter:PlaySound("dontstarve/common/lava_arena/fireball")
+            inst.components.bloomer:PushBloom("lunge", "shaders/anim.ksh", -2)
+            inst.components.colouradder:PushColour("lunge", 1, 1, 0, 0)
+            inst.sg.statemem.flash = 1
+            inst:ScreenFlash(1)
+            inst:ShakeCamera(CAMERASHAKE.FULL, .7, .02, .5)
+        end),
+        TimeEvent(36 * FRAMES, function(inst)
+            inst.components.bloomer:PopBloom("lunge")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.components.bloomer:PopBloom("lunge")
+        inst.components.colouradder:PopColour("lunge")
+        inst.sg.statemem.flash = nil
+        inst.sg.statemem.counter = nil
+    end,
+}
+
+local musha_phoenixadvent_client = State {
+    name = "musha_phoenixadvent",
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("lunge_pre")
+        inst.AnimState:PushAnimation("lunge_lag", false)
+        inst.AnimState:PushAnimation("lunge_pst", false)
+        inst:ForceFacePoint(target.x, target.y, target.z)
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+}
+
+AddStategraphState("wilson", musha_setsugetsuka_pre)
+AddStategraphState("wilson_client", musha_setsugetsuka_pre_client)
+
+AddStategraphState("wilson", musha_setsugetsuka)
+AddStategraphState("wilson_client", musha_setsugetsuka_client)
+
+AddStategraphState("wilson", musha_phoenixadvent)
+AddStategraphState("wilson_client", musha_phoenixadvent_client)
+
+AddStategraphEvent("wilson", EventHandler("startsetsugetsuka_pre",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startsetsugetsuka_pre",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
+            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
+            or ConsoleWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
+        end
+    end)
+)
+
+AddStategraphEvent("wilson", EventHandler("startsetsugetsuka",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startsetsugetsuka",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
+            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
+            or ConsoleWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka", { target = target })
+        end
+    end)
+)
+
+AddStategraphEvent("wilson", EventHandler("startphoenixadvent",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_phoenixadvent", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startphoenixadvent",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
+            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
+            or ConsoleWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_phoenixadvent", { target = target })
+        end
     end)
 )

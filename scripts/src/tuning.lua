@@ -46,7 +46,7 @@ TUNING.musha = {
 
     valkyrieattackboost = 1.2,
     valkyriedefenseboost = 0.2,
-    valkyriemanaongoingcost = -1,
+    valkyriemanaongoingmodifier = 1,
 
     activateberserkbasedamage = 5,
 
@@ -83,6 +83,12 @@ TUNING.musha = {
         poisonspore        = 0,
         shadowshield       = 0,
         instantcast        = 0,
+        setsugetsuka       = 0,
+        setsugetsukaredux  = 0,
+        phoenixadvent      = 0,
+        desolatedive       = 0,
+        magpiestep         = 0,
+        annihilation       = 0,
     },
 
     skills = {
@@ -128,7 +134,7 @@ TUNING.musha = {
         },
         lightningstrike = {
             manacost = 5,
-            staminacost = 15,
+            staminacost = 10,
             range = 12,
             cooldown = 5,
             damage = 20,
@@ -150,17 +156,17 @@ TUNING.musha = {
             minrequired = 20,
             full = {
                 manarecover = 50,
-                manaregen = 3,
-                staminaregen = 3,
+                manaregen = 5,
+                staminaregen = 5,
                 speedboost = 1.3,
                 duration = 240,
                 cooldown = 480,
             },
             partial = {
                 manarecover = 30,
-                manaregen = 1,
-                staminaregen = 1,
-                speedboost = 1.15,
+                manaregen = 3,
+                staminaregen = 3,
+                speedboost = 1.2,
                 duration = 30,
                 cooldown = 60,
             },
@@ -175,6 +181,19 @@ TUNING.musha = {
             sanitycost = 15,
             maxdelay = 10,
             cooldown = 5,
+        },
+        setsugetsuka = {
+            manacost = 10,
+            staminacost = 10,
+            damagemultiplier = 0.5,
+            radius = 3,
+            reusewindow = 1,
+            cooldown = 5,
+        },
+        phoenixadvent = {
+            damagemultiplier = 2.5,
+            radius = 3,
+            staminaregen = 20,
         },
     },
 
