@@ -57,7 +57,7 @@ local function ToggleSleep(inst)
             local must_tags = { "_combat" }
             local ignore_tags = { "player", "companion", "musha_companion" }
 
-            indanger = FindEntity(inst, 14, function(target)
+            indanger = FindEntity(inst, 8, function(target)
                 return target:HasTag("monster") or target:HasTag("hostile")
                     or (target.components.combat ~= nil and target.components.combat.target == inst)
             end, must_tags, ignore_tags)
@@ -331,10 +331,6 @@ end
 
 local function ShieldOnAttacked(inst, data)
     inst.fx_manashield:PushEvent("blocked")
-
-    if inst.components.stamina then
-        inst.components.stamina:DoDelta(TUNING.musha.skills.manashield.staminacostonhit)
-    end
 
     if inst.shielddurability and inst.shielddurability > 0 then
         local delta = TUNING.musha.skills.manashield.durabilitydamage
@@ -892,15 +888,22 @@ local function DecideNormalOrFull(inst)
 end
 
 -- Toggle valkyrie mode
-local function ToggleValkyrie(inst)
-    -- Can interrupt frozen
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("frozen")) or
-        inst.sg:HasStateTag("nomorph") then
+local function ToggleValkyrie(inst, x, y, z)
+    -- Can interrupt frozen, can recharge during setsugetsuka and phoenixadvent
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
+        or inst.sg:HasStateTag("nomorph")
+        or (inst.sg:HasStateTag("musha_nointerrupt")
+            and not (inst.sg:HasStateTag("frozen")
+                or inst.sg:HasStateTag("musha_setsugetsuka")
+                or inst.sg:HasStateTag("musha_phoenixadvent"))) then
         return
     end
 
+    local CursorPosition = Vector3(x, y, z)
+    local isfrozen = inst.sg:HasStateTag("frozen")
+    local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
     local previousmode = inst.mode:value()
+
     if previousmode == 0 or previousmode == 1 then
         if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
             inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
@@ -918,16 +921,16 @@ local function ToggleValkyrie(inst)
                 inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                 CustomPlayFailedAnim(inst)
             end
-        else
+        elseif not attacking then
             inst:DecideNormalOrFull()
         end
-    elseif previousmode == 3 and not inst.sg:HasStateTag("frozen") then
+    elseif previousmode == 3 and not isfrozen then
         if inst:HasDebuff("poisonspore") then
             local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
             inst.components.debuffable:RemoveDebuff("poisonspore")
             inst.fx_poisonspore = SpawnPrefab("poisonspore")
             inst.fx_poisonspore.Transform:SetPosition(x, y, z)
-            inst.fx_poisonspore.components.complexprojectile:Launch(ConsoleWorldPosition(), inst)
+            inst.fx_poisonspore.components.complexprojectile:Launch(CursorPosition, inst)
             inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
 
             local function PoisonSporeOnTimerDone(inst, data)
@@ -967,19 +970,54 @@ local function ToggleValkyrie(inst)
 end
 
 -- Toggle berserk mode
-local function ToggleBerserk(inst)
+local function ToggleBerserk(inst, x, y, z)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
         return
     end
 
+    local CursorPosition = Vector3(x, y, z)
     local previousmode = inst.mode:value()
+
     if previousmode == 0 or previousmode == 1 then
         inst.activateberserk:push()
     elseif previousmode == 3 and not inst:HasTag("sneaking") then
         StartSneaking(inst)
     elseif previousmode == 3 and inst:HasTag("sneaking") then
         StopSneaking(inst)
+    elseif previousmode == 2 and not inst.components.rider:IsRiding() then
+        inst.bufferedcursorpos = CursorPosition
+
+        if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
+            and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
+                or not inst.skills.setsugetsukaredux) then
+            inst.startphoenixadvent:push()
+        elseif not inst.skills.setsugetsuka then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        else
+            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.setsugetsuka_counter < 3
+                and inst.skills.setsugetsukaredux then
+                inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
+                inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
+                inst.startsetsugetsuka:push()
+            else
+                if inst.components.timer:TimerExists("cooldown_setsugetsuka") then
+                    inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                        .. STRINGS.musha.skills.setsugetsuka.name
+                        .. STRINGS.musha.skills.incooldown.part2
+                        .. STRINGS.musha.skills.incooldown.part3
+                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_setsugetsuka"))
+                        .. STRINGS.musha.skills.incooldown.part4)
+                else
+                    inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
+                    inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
+                    inst.startsetsugetsuka_pre:push()
+                end
+            end
+        end
     end
 end
 
@@ -1076,7 +1114,7 @@ local function OnModeChange(inst)
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
 
-        LightningDischarge(inst)
+        inst:LightningDischarge()
         inst.components.timer:StopTimer("lightningrecharge")
         inst:RemoveEventCallback("timerdone", LightningStrikeOnTimerDone)
 
@@ -1149,7 +1187,7 @@ local function OnModeChange(inst)
         inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.musha.valkyriedefenseboost,
             "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
-        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.valkyriemanaongoingcost, "valkyriebuff")
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.valkyriemanaongoingmodifier, "valkyriebuff")
 
         inst.components.freezable:Unfreeze()
         inst:ListenForEvent("freeze", UnfreezeOnFreeze)
@@ -1286,6 +1324,12 @@ local function OnLevelUp(inst, data)
     inst.skills.poisonspore        = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
     inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
     inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
+    inst.skills.setsugetsuka       = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
+    inst.skills.setsugetsukaredux  = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
+    inst.skills.phoenixadvent      = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
+    inst.skills.desolatedive       = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
+    inst.skills.magpiestep         = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
+    inst.skills.annihilation       = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -1302,6 +1346,7 @@ local function OnBecameHuman(inst)
         "cooldown_manashield",
         "cooldown_poisonspore",
         "cooldown_elfmelody",
+        "cooldown_setsugetsuka",
         "stopelfmelody_full",
         "stopelfmelody_partial",
         "premelody",
@@ -1325,7 +1370,9 @@ local function OnBecameGhost(inst)
     inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
     inst:RemoveEventCallback("fatiguedelta", DecideFatigueLevel)
     inst.mode:set(0)
-    inst.fatiguelevel:set(0)
+    inst.fatiguelevel:set(1)
+    inst.components.timer:SetTimeLeft("stopelfmelody_full", 0)
+    inst.components.timer:SetTimeLeft("stopelfmelody_partial", 0)
 end
 
 -- When save game progress
@@ -1392,6 +1439,9 @@ local function common_postinit(inst)
     inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG
     inst.playpartialelfmelody = net_event(inst.GUID, "playpartialelfmelody") -- Handler set in SG
     inst.snifftreasure = net_event(inst.GUID, "snifftreasure") -- Handler set in SG
+    inst.startsetsugetsuka_pre = net_event(inst.GUID, "startsetsugetsuka_pre") -- Handler set in SG
+    inst.startsetsugetsuka = net_event(inst.GUID, "startsetsugetsuka") -- Handler set in SG
+    inst.startphoenixadvent = net_event(inst.GUID, "startphoenixadvent") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
