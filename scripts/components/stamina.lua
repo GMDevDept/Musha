@@ -108,8 +108,9 @@ function Stamina:Recalc(dt)
             or 20)
         or (inst.sg:HasStateTag("working") or inst.sg:HasStateTag("attacking") or
             inst.sg:HasStateTag("abouttoattack")) and -5
-        or (inst.sg:HasStateTag("doing") or inst.sg:HasStateTag("busy")) and -2
+        or inst.sg:HasStateTag("doing") and -2
         or inst.sg:HasStateTag("fishing") and -1
+        or inst.sg:HasStateTag("busy") and 0
         or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2
         or inst.sg:HasStateTag("idle") and 5
         or 0

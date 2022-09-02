@@ -2,7 +2,7 @@ STRINGS.musha = {
     segmentation = "------------------",
     segmentation_long = "------------------------------\n",
 
-    lack_of_exp = "Musha需要更多经验值来解锁这个技能。",
+    lack_of_exp = "Musha需要更多技能点数来解锁这个技能。",
     lack_of_mana = "Musha的魔力不够了!",
     lack_of_sanity = "Musha的理智值不够了!",
     mount_not_allowed = "Musha得先从坐骑上下来!",
@@ -142,6 +142,9 @@ STRINGS.musha = {
         },
         setsugetsuka = {
             name = "雪月花",
+        },
+        annihilation = {
+            name = "歼灭锤",
         },
     },
 

@@ -1,9 +1,8 @@
 -- Hotkey: ToggleValkyrie
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_valkyrie"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
-            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
-            or ConsoleWorldPosition()
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
 
         SendModRPCToServer(MOD_RPC.musha.togglevalkyrie, CursorPosition.x, CursorPosition.y, CursorPosition.z)
     end
@@ -12,9 +11,8 @@ end)
 -- Hotkey: ToggleBerserk
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_berserk"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
-            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
-            or ConsoleWorldPosition()
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
 
         SendModRPCToServer(MOD_RPC.musha.toggleberserk, CursorPosition.x, CursorPosition.y, CursorPosition.z)
     end

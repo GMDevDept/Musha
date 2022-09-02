@@ -895,14 +895,18 @@ local function ToggleValkyrie(inst, x, y, z)
         or (inst.sg:HasStateTag("musha_nointerrupt")
             and not (inst.sg:HasStateTag("frozen")
                 or inst.sg:HasStateTag("musha_setsugetsuka")
-                or inst.sg:HasStateTag("musha_phoenixadvent"))) then
+                or inst.sg:HasStateTag("musha_phoenixadvent")
+                or inst.sg:HasStateTag("musha_annihilation"))) then
         return
     end
 
-    local CursorPosition = Vector3(x, y, z)
     local isfrozen = inst.sg:HasStateTag("frozen")
     local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
+        or inst.sg:HasStateTag("musha_annihilation")
     local previousmode = inst.mode:value()
+    local CursorPosition = Vector3(x, y, z)
+
+    inst.bufferedcursorpos = CursorPosition
 
     if previousmode == 0 or previousmode == 1 then
         if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
@@ -922,7 +926,22 @@ local function ToggleValkyrie(inst, x, y, z)
                 CustomPlayFailedAnim(inst)
             end
         elseif not attacking then
-            inst:DecideNormalOrFull()
+            if not inst.skills.annihilation then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_annihilation") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.annihilation.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_annihilation"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.mana.current < TUNING.musha.skills.annihilation.manacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.components.stamina:DoDelta(-TUNING.musha.skills.annihilation.staminacost)
+                inst.startannihilation:push()
+            end
         end
     elseif previousmode == 3 and not isfrozen then
         if inst:HasDebuff("poisonspore") then
@@ -976,8 +995,10 @@ local function ToggleBerserk(inst, x, y, z)
         return
     end
 
-    local CursorPosition = Vector3(x, y, z)
     local previousmode = inst.mode:value()
+    local CursorPosition = Vector3(x, y, z)
+
+    inst.bufferedcursorpos = CursorPosition
 
     if previousmode == 0 or previousmode == 1 then
         inst.activateberserk:push()
@@ -986,8 +1007,6 @@ local function ToggleBerserk(inst, x, y, z)
     elseif previousmode == 3 and inst:HasTag("sneaking") then
         StopSneaking(inst)
     elseif previousmode == 2 and not inst.components.rider:IsRiding() then
-        inst.bufferedcursorpos = CursorPosition
-
         if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
             and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
                 or not inst.skills.setsugetsukaredux) then
@@ -1442,6 +1461,7 @@ local function common_postinit(inst)
     inst.startsetsugetsuka_pre = net_event(inst.GUID, "startsetsugetsuka_pre") -- Handler set in SG
     inst.startsetsugetsuka = net_event(inst.GUID, "startsetsugetsuka") -- Handler set in SG
     inst.startphoenixadvent = net_event(inst.GUID, "startphoenixadvent") -- Handler set in SG
+    inst.startannihilation = net_event(inst.GUID, "startannihilation") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)

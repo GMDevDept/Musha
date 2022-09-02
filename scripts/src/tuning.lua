@@ -46,7 +46,7 @@ TUNING.musha = {
 
     valkyrieattackboost = 1.2,
     valkyriedefenseboost = 0.2,
-    valkyriemanaongoingmodifier = 1,
+    valkyriemanaongoingmodifier = 0,
 
     activateberserkbasedamage = 5,
 
@@ -57,7 +57,7 @@ TUNING.musha = {
 
     debuffparalysisattackperiodmult = 2,
     debuffparalysisattackperiodmax = 4,
-    debuffparalysisduration = 20,
+    debuffparalysisduration = 8,
     debuffparalysisperiod = 2,
     debuffparalysisdamage = 5,
 
@@ -92,6 +92,33 @@ TUNING.musha = {
     },
 
     skills = {
+        treasuresniffing = {
+            max = 960, -- 2 days
+            regen = 1,
+            first = 60,
+        },
+        elfmelody = {
+            max = 100,
+            regen_small = 0.5,
+            regen_large = 0.75,
+            minrequired = 20,
+            full = {
+                manarecover = 50,
+                manaregen = 5,
+                staminaregen = 5,
+                speedboost = 1.3,
+                duration = 240,
+                cooldown = 480,
+            },
+            partial = {
+                manarecover = 30,
+                manaregen = 3,
+                staminaregen = 3,
+                speedboost = 1.2,
+                duration = 30,
+                cooldown = 60,
+            },
+        },
         freezingspell = {
             manacost = 5,
             maxmanacost = 15,
@@ -120,7 +147,6 @@ TUNING.musha = {
             manaongoingcost = -1,
             -- cooldown = 30,
             cooldown = 5,
-            staminacostonhit = -5,
             durabilitybase = 400,
             durabilitygrowth = 40,
             durabilitydamage = 20,
@@ -132,14 +158,6 @@ TUNING.musha = {
             cooldown = 5,
             range = 18,
         },
-        lightningstrike = {
-            manacost = 5,
-            staminacost = 10,
-            range = 12,
-            cooldown = 5,
-            damage = 20,
-            damagegrowth = 1,
-        },
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
@@ -149,41 +167,22 @@ TUNING.musha = {
             staminacost = -10,
             backstabbonustime = 2,
         },
-        elfmelody = {
-            max = 100,
-            regen_small = 0.5,
-            regen_large = 0.75,
-            minrequired = 20,
-            full = {
-                manarecover = 50,
-                manaregen = 5,
-                staminaregen = 5,
-                speedboost = 1.3,
-                duration = 240,
-                cooldown = 480,
-            },
-            partial = {
-                manarecover = 30,
-                manaregen = 3,
-                staminaregen = 3,
-                speedboost = 1.2,
-                duration = 30,
-                cooldown = 60,
-            },
-        },
-        treasuresniffing = {
-            max = 960, -- 2 days
-            regen = 1,
-            first = 60,
-        },
         poisonspore = {
             manacost = 15,
             sanitycost = 15,
             maxdelay = 10,
             cooldown = 5,
         },
-        setsugetsuka = {
+        lightningstrike = {
             manacost = 10,
+            staminacost = 10,
+            range = 12,
+            cooldown = 5,
+            damage = 20,
+            damagegrowth = 1,
+        },
+        setsugetsuka = {
+            manacost = 0,
             staminacost = 10,
             damagemultiplier = 0.5,
             radius = 3,
@@ -192,8 +191,17 @@ TUNING.musha = {
         },
         phoenixadvent = {
             damagemultiplier = 2.5,
+            radius = 3.5,
+            staminaregen = 30,
+        },
+        annihilation = {
+            manacost = 0,
+            staminacost = 15,
+            damagemultiplier = 1.5,
             radius = 3,
-            staminaregen = 20,
+            maxdist = 8,
+            paralysisduration = 8,
+            cooldown = 8,
         },
     },
 

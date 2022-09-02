@@ -3,6 +3,22 @@
 
 local UserCommands = require("usercommands")
 
+local function ToggleOffPhysics(inst)
+    inst.sg.statemem.isphysicstoggle = true
+    inst.Physics:ClearCollisionMask()
+    inst.Physics:CollidesWith(COLLISION.GROUND)
+end
+
+local function ToggleOnPhysics(inst)
+    inst.sg.statemem.isphysicstoggle = nil
+    inst.Physics:ClearCollisionMask()
+    inst.Physics:CollidesWith(COLLISION.WORLD)
+    inst.Physics:CollidesWith(COLLISION.OBSTACLES)
+    inst.Physics:CollidesWith(COLLISION.SMALLOBSTACLES)
+    inst.Physics:CollidesWith(COLLISION.CHARACTERS)
+    inst.Physics:CollidesWith(COLLISION.GIANTS)
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- No interrupt states exclusively for Musha
@@ -401,6 +417,7 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(21 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
             CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
@@ -418,7 +435,6 @@ local musha_berserk_pre = State {
         end),
         TimeEvent(31 * FRAMES, function(inst)
             inst.mode:set(3)
-            inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
             CustomDoAOE(inst, 6, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
@@ -616,7 +632,6 @@ local musha_spell = State {
             inst.SoundEmitter:SetVolume("book_layer_sound", .5)
         end
 
-        inst.sg.statemem.success_fx = nil
         inst.bufferedspell = nil
         inst.bufferedbookfx = nil
     end,
@@ -1195,6 +1210,212 @@ local function DoThrust(inst, lightning, attachfx)
     end
 end
 
+local musha_setsugetsuka_pre = State {
+    name = "musha_setsugetsuka_pre",
+    tags = { "musha_setsugetsuka_pre", "doing", "busy", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust_yell")
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.sg.statemem.target = target
+        inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
+    end,
+
+    timeline =
+    {
+        TimeEvent(1 * FRAMES, function(inst)
+            inst.fx_setsugetsuka = CustomAttachFx(inst, "crab_king_icefx")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_setsugetsuka", { target = inst.sg.statemem.target })
+            end
+        end),
+    },
+}
+
+local musha_setsugetsuka_pre_client = State {
+    name = "musha_setsugetsuka_pre",
+    tags = { "musha_setsugetsuka_pre", "doing", "busy", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("multithrust_yell")
+        inst:ForceFacePoint(target.x, target.y, target.z)
+
+        inst.sg:SetTimeout(2)
+    end,
+
+    onupdate = function(inst)
+        if inst:HasTag("doing") then
+            if inst.entity:FlattenMovementPrediction() then
+                inst.sg:GoToState("idle", "noanim")
+            end
+        elseif inst.bufferedaction == nil then
+            inst.sg:GoToState("idle")
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+    end,
+}
+
+local musha_setsugetsuka = State {
+    name = "musha_setsugetsuka",
+    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+        local maxdist = math.max(inst.components.combat.attackrange, 4)
+        local mult = math.min(1, maxdist / dist)
+        local weapon = inst.components.combat:GetWeapon()
+
+        inst.components.locomotor:Stop()
+        inst.Transform:SetEightFaced()
+        inst.AnimState:PlayAnimation("multithrust")
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+
+        inst.sg.statemem.startingpos = inst:GetPosition()
+        inst.sg.statemem.targetpos = inst.sg.statemem.startingpos + (target - inst.sg.statemem.startingpos) * mult -- Numeric value must behind Vector3
+        if inst.sg.statemem.startingpos.x ~= inst.sg.statemem.targetpos.x
+            or inst.sg.statemem.startingpos.z ~= inst.sg.statemem.targetpos.z then
+            inst.sg.statemem.motorvelset = true
+            inst:ForceFacePoint(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y, inst.sg.statemem.targetpos.z)
+            inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
+                inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (13 * FRAMES), 0, 0)
+        end
+
+        inst.components.timer:StopTimer("cooldown_setsugetsuka")
+        inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
+        inst.components.timer:StopTimer("clearsetsugetsukacounter")
+        inst.setsugetsuka_counter = inst.setsugetsuka_counter and inst.setsugetsuka_counter + 1 or 1
+
+        inst.sg.statemem.weapon = weapon
+        inst.sg.statemem.lightningapplied = inst:HasTag("lightningstrikeready")
+
+        if inst.sg.statemem.lightningapplied then
+            inst:LightningDischarge()
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(1 * FRAMES, function(inst)
+            if inst.setsugetsuka_counter > 1 then
+                CustomRemoveEntity(inst.fx_setsugetsuka)
+                inst.fx_setsugetsuka = CustomAttachFx(inst, "crab_king_icefx")
+            end
+        end),
+        TimeEvent(7 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+        end),
+        TimeEvent(9 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+        end),
+        TimeEvent(11 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied, true)
+            ShakeAllCameras(CAMERASHAKE.SIDE, .5, .02, .5) -- Note: ShakeAllCameras(mode, duration, speed, scale, source_or_pt, maxDist)
+        end),
+        TimeEvent(13 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+            inst.sg.statemem.motorvelset = nil
+            inst.Physics:Stop()
+            inst.Physics:SetMotorVel(0, 0, 0)
+        end),
+        TimeEvent(15 * FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+        end),
+        TimeEvent(17 * FRAMES, function(inst)
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+        end),
+        TimeEvent(19 * FRAMES, function(inst)
+            DoThrust(inst, inst.sg.statemem.lightningapplied)
+            inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("nopredict")
+            inst.sg:RemoveStateTag("nointerrupt")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
+
+            inst.components.timer:StartTimer("clearsetsugetsukacounter", TUNING.musha.skills.setsugetsuka.reusewindow)
+            inst:ListenForEvent("timerdone", ClearSetsuGetsuKaCounter)
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        if inst.sg.statemem.motorvelset then
+            inst.Physics:Stop()
+            inst.Physics:SetMotorVel(0, 0, 0)
+        end
+        inst.Transform:SetFourFaced()
+
+        inst.components.timer:StartTimer("cooldown_setsugetsuka", TUNING.musha.skills.setsugetsuka.cooldown)
+        inst:ListenForEvent("timerdone", SetsuGetsuKaOnTimerDone)
+
+        if inst.sg.statemem.weapon and inst.sg.statemem.weapon.components.stackable then
+            inst.sg.statemem.weapon.components.stackable:Get():Remove()
+        end
+    end,
+}
+
+AddStategraphState("wilson", musha_setsugetsuka_pre)
+AddStategraphState("wilson_client", musha_setsugetsuka_pre_client)
+
+AddStategraphState("wilson", musha_setsugetsuka)
+
+AddStategraphEvent("wilson", EventHandler("startsetsugetsuka_pre",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startsetsugetsuka_pre",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
+        end
+    end)
+)
+
+AddStategraphEvent("wilson", EventHandler("startsetsugetsuka",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_setsugetsuka", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Phoenix Advent
+
 local function DoAdvent(inst)
     local must_tags = { "_combat" }
     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
@@ -1231,227 +1452,9 @@ local function DoAdvent(inst)
     end
 end
 
-local musha_setsugetsuka_pre = State {
-    name = "musha_setsugetsuka_pre",
-    tags = { "musha_setsugetsuka_pre", "doing", "nointerrupt", "musha_nointerrupt" },
-
-    onenter = function(inst, data)
-        local target = data.target
-        inst.components.locomotor:Stop()
-        inst.AnimState:PlayAnimation("multithrust_yell")
-        inst:ForceFacePoint(target.x, target.y, target.z)
-        inst.sg.statemem.target = target
-        inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
-    end,
-
-    timeline =
-    {
-        TimeEvent(1 * FRAMES, function(inst)
-            CustomAttachFx(inst, "crab_king_icefx")
-        end),
-    },
-
-    events =
-    {
-        EventHandler("animover", function(inst)
-            if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("musha_setsugetsuka", { target = inst.sg.statemem.target })
-            end
-        end),
-    },
-
-    onexit = function(inst)
-        inst.sg.statemem.target = nil
-    end,
-}
-
-local musha_setsugetsuka_pre_client = State {
-    name = "musha_setsugetsuka_pre",
-    tags = { "musha_setsugetsuka_pre", "doing", "nointerrupt", "musha_nointerrupt" },
-
-    onenter = function(inst, data)
-        local target = data.target
-        inst.components.locomotor:Stop()
-        inst.AnimState:PlayAnimation("multithrust_yell")
-        inst:ForceFacePoint(target.x, target.y, target.z)
-        inst.sg.statemem.target = target
-    end,
-
-    events =
-    {
-        EventHandler("animover", function(inst)
-            if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("musha_setsugetsuka", { target = inst.sg.statemem.target })
-            end
-        end),
-    },
-
-    onexit = function(inst)
-        inst.sg.statemem.target = nil
-    end,
-}
-
-local musha_setsugetsuka = State {
-    name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "busy", "nointerrupt", "musha_nointerrupt" },
-
-    onenter = function(inst, data)
-        local target = data.target
-        local _pos = Vector3(inst.Transform:GetWorldPosition())
-        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
-        local weapon = inst.components.combat:GetWeapon()
-        local rangedweapon = weapon and
-            (weapon.components.projectile ~= nil or weapon:HasTag("projectile") or weapon:HasTag("rangedweapon"))
-        local maxdist = not rangedweapon and inst.components.combat:GetAttackRange()
-            or inst.components.combat.attackrange
-        local mult = math.min(1, maxdist / dist)
-        dist = dist * mult
-        local dx, _, dz = (target.x - _pos.x) * mult, 0, (target.z - _pos.z) * mult
-        local frame = math.clamp(math.floor(dist) * 2, 10, 20)
-
-        inst.components.timer:StopTimer("cooldown_setsugetsuka")
-        inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
-        inst.components.locomotor:Stop()
-        inst.AnimState:PlayAnimation("multithrust")
-        inst.Transform:SetEightFaced()
-        inst:ForceFacePoint(target.x, target.y, target.z)
-
-        inst.task_setsugetsuka = inst:CustomDoPeriodicTask(frame / 30, FRAMES, function()
-            local pos = Vector3(inst.Transform:GetWorldPosition())
-            local x, _, z = pos.x + dx / frame, 0, pos.z + dz / frame
-            if TheWorld.Map:IsVisualGroundAtPoint(x, 0, z) == true then
-                inst.Transform:SetPosition(x, 0, z)
-            else
-                CustomCancelTask(inst.task_setsugetsuka)
-            end
-        end)
-
-        inst.components.timer:StopTimer("clearsetsugetsukacounter")
-        inst.setsugetsuka_counter = inst.setsugetsuka_counter and inst.setsugetsuka_counter + 1 or 1
-        inst.sg.statemem.weapon = weapon
-        inst.sg.statemem.lightningapplied = inst:HasTag("lightningstrikeready")
-
-        if inst.sg.statemem.lightningapplied then
-            inst:LightningDischarge()
-        end
-
-        if weapon and weapon.components.stackable then
-            weapon.components.stackable:Get():Remove()
-        end
-    end,
-
-    timeline =
-    {
-        TimeEvent(11 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-        end),
-        TimeEvent(14 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-        end),
-        TimeEvent(17 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            DoThrust(inst, inst.sg.statemem.lightningapplied, true)
-        end),
-        TimeEvent(20 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            DoThrust(inst, inst.sg.statemem.lightningapplied)
-        end),
-        TimeEvent(22 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            DoThrust(inst, inst.sg.statemem.lightningapplied)
-        end),
-        TimeEvent(24 * FRAMES, function(inst)
-            DoThrust(inst, inst.sg.statemem.lightningapplied)
-        end),
-        TimeEvent(26 * FRAMES, function(inst)
-            DoThrust(inst, inst.sg.statemem.lightningapplied)
-            inst.components.timer:StartTimer("clearsetsugetsukacounter", TUNING.musha.skills.setsugetsuka.reusewindow)
-            inst:ListenForEvent("timerdone", ClearSetsuGetsuKaCounter)
-            inst.sg:RemoveStateTag("nointerrupt")
-            inst.sg:RemoveStateTag("busy")
-            inst.sg:RemoveStateTag("musha_nointerrupt")
-        end),
-    },
-
-    events =
-    {
-        EventHandler("animqueueover", function(inst)
-            if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("idle")
-            end
-        end),
-    },
-
-    onexit = function(inst)
-        CustomCancelTask(inst.task_setsugetsuka)
-        inst.Transform:SetFourFaced()
-        inst.components.timer:StartTimer("cooldown_setsugetsuka", TUNING.musha.skills.setsugetsuka.cooldown)
-        inst:ListenForEvent("timerdone", SetsuGetsuKaOnTimerDone)
-        inst.sg.statemem.weapon = nil
-        inst.sg.statemem.lightningapplied = nil
-    end,
-}
-
-local musha_setsugetsuka_client = State {
-    name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "busy", "nointerrupt", "musha_nointerrupt" },
-
-    onenter = function(inst, data)
-        local target = data.target
-        local _pos = Vector3(inst.Transform:GetWorldPosition())
-        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
-        local weapon = inst.replica.combat:GetWeapon()
-        local rangedweapon = weapon and (weapon:HasTag("projectile") or weapon:HasTag("rangedweapon"))
-        local maxdist = not rangedweapon and inst.replica.combat:GetAttackRangeWithWeapon()
-            or inst.components.combat._attackrange:value()
-        local mult = math.min(1, maxdist / dist)
-        dist = dist * mult
-        local dx, _, dz = (target.x - _pos.x) * mult, 0, (target.z - _pos.z) * mult
-        local frame = math.clamp(math.floor(dist) * 2, 10, 20)
-
-        inst.components.locomotor:Stop()
-        inst.AnimState:PlayAnimation("multithrust")
-        inst.Transform:SetEightFaced()
-        inst:ForceFacePoint(target.x, target.y, target.z)
-
-        inst.task_setsugetsuka = inst:CustomDoPeriodicTask(frame / 30, FRAMES, function()
-            local pos = Vector3(inst.Transform:GetWorldPosition())
-            local x, _, z = pos.x + dx / frame, 0, pos.z + dz / frame
-            if TheWorld.Map:IsVisualGroundAtPoint(x, 0, z) == true then
-                inst.Transform:SetPosition(x, 0, z)
-            else
-                CustomCancelTask(inst.task_setsugetsuka)
-            end
-        end)
-    end,
-
-    timeline =
-    {
-        TimeEvent(26 * FRAMES, function(inst)
-            inst.sg:RemoveStateTag("nointerrupt")
-            inst.sg:RemoveStateTag("busy")
-            inst.sg:RemoveStateTag("musha_nointerrupt")
-        end),
-    },
-
-    events =
-    {
-        EventHandler("animqueueover", function(inst)
-            if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("idle")
-            end
-        end),
-    },
-
-    onexit = function(inst)
-        CustomCancelTask(inst.task_setsugetsuka)
-        inst.Transform:SetFourFaced()
-    end,
-}
-
 local musha_phoenixadvent = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1461,7 +1464,6 @@ local musha_phoenixadvent = State {
         inst.AnimState:PushAnimation("lunge_pst", false)
         inst:ForceFacePoint(target.x, target.y, target.z)
 
-        inst.sg.statemem.counter = inst.setsugetsuka_counter
         inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
     end,
 
@@ -1485,7 +1487,7 @@ local musha_phoenixadvent = State {
             inst.components.colouradder:PushColour("lunge", 1, 1, 0, 0)
             inst.sg.statemem.flash = 1
             inst:ScreenFlash(1)
-            inst:ShakeCamera(CAMERASHAKE.FULL, .7, .02, .5)
+            ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5)
         end),
         TimeEvent(36 * FRAMES, function(inst)
             inst.components.bloomer:PopBloom("lunge")
@@ -1504,14 +1506,12 @@ local musha_phoenixadvent = State {
     onexit = function(inst)
         inst.components.bloomer:PopBloom("lunge")
         inst.components.colouradder:PopColour("lunge")
-        inst.sg.statemem.flash = nil
-        inst.sg.statemem.counter = nil
     end,
 }
 
 local musha_phoenixadvent_client = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1532,56 +1532,8 @@ local musha_phoenixadvent_client = State {
     },
 }
 
-AddStategraphState("wilson", musha_setsugetsuka_pre)
-AddStategraphState("wilson_client", musha_setsugetsuka_pre_client)
-
-AddStategraphState("wilson", musha_setsugetsuka)
-AddStategraphState("wilson_client", musha_setsugetsuka_client)
-
 AddStategraphState("wilson", musha_phoenixadvent)
 AddStategraphState("wilson_client", musha_phoenixadvent_client)
-
-AddStategraphEvent("wilson", EventHandler("startsetsugetsuka_pre",
-    function(inst)
-        local target = inst.bufferedcursorpos
-        if target ~= nil then
-            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
-        end
-        inst.bufferedcursorpos = nil
-    end)
-)
-
-AddStategraphEvent("wilson_client", EventHandler("startsetsugetsuka_pre",
-    function(inst)
-        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
-            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
-            or ConsoleWorldPosition()
-        if target ~= nil then
-            inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
-        end
-    end)
-)
-
-AddStategraphEvent("wilson", EventHandler("startsetsugetsuka",
-    function(inst)
-        local target = inst.bufferedcursorpos
-        if target ~= nil then
-            inst.sg:GoToState("musha_setsugetsuka", { target = target })
-        end
-        inst.bufferedcursorpos = nil
-    end)
-)
-
-AddStategraphEvent("wilson_client", EventHandler("startsetsugetsuka",
-    function(inst)
-        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
-            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
-            or ConsoleWorldPosition()
-        if target ~= nil then
-            inst.sg:GoToState("musha_setsugetsuka", { target = target })
-        end
-    end)
-)
 
 AddStategraphEvent("wilson", EventHandler("startphoenixadvent",
     function(inst)
@@ -1595,11 +1547,231 @@ AddStategraphEvent("wilson", EventHandler("startphoenixadvent",
 
 AddStategraphEvent("wilson_client", EventHandler("startphoenixadvent",
     function(inst)
-        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse().Transform and
-            Vector3(TheInput:GetWorldEntityUnderMouse().Transform:GetWorldPosition())
-            or ConsoleWorldPosition()
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
         if target ~= nil then
             inst.sg:GoToState("musha_phoenixadvent", { target = target })
+        end
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Annihilation
+
+local function AnnihilationOnTimerDone(inst, data)
+    if data.name == "cooldown_annihilation" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.annihilation.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", AnnihilationOnTimerDone)
+    end
+end
+
+local function DoAnnihilation(inst)
+    local must_tags = { "_combat" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
+        "companion", "musha_companion" }
+    local radius = TUNING.musha.skills.annihilation.radius
+    local offset = Vector3(1.5, 0, 0)
+    local lightning = inst:HasTag("lightningstrikeready")
+    local weapon = inst.components.combat:GetWeapon()
+
+    local function fn(target)
+        local damage = inst.components.combat:CalcDamage(target, weapon) *
+            TUNING.musha.skills.annihilation.damagemultiplier
+
+        if lightning then
+            local extradamage = TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+            target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
+            target:AddDebuff("annihilation", "debuff_paralysis")
+            if target.components.debuffable:GetDebuff("annihilation") then
+                target.components.debuffable:GetDebuff("annihilation"):SetDuration(TUNING.musha.skills.annihilation.paralysisduration)
+            end
+        else
+            target.components.combat:GetAttacked(inst, damage, weapon)
+        end
+    end
+
+    CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn, offset)
+    CustomAttachFx(inst, "groundpoundring_fx")
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(-1.5, 0, 0))
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, -2.5))
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, 2.5))
+
+    if lightning then
+        inst:LightningDischarge()
+    end
+
+    if weapon and weapon.components.stackable then
+        weapon.components.stackable:Get():Remove()
+    end
+end
+
+local musha_annihilation_pre = State {
+    name = "musha_annihilation_pre",
+    tags = { "musha_annihilation_pre", "doing", "busy", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("atk_leap_pre")
+        inst.sg.statemem.target = target
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_annihilation", { target = inst.sg.statemem.target })
+            end
+        end),
+    }
+}
+
+local musha_annihilation_pre_client = State {
+    name = "musha_annihilation_pre",
+    tags = { "musha_annihilation_pre", "doing", "busy", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("atk_leap_pre")
+        inst:ForceFacePoint(target.x, target.y, target.z)
+
+        inst.sg:SetTimeout(2)
+    end,
+
+    onupdate = function(inst)
+        if inst:HasTag("doing") then
+            if inst.entity:FlattenMovementPrediction() then
+                inst.sg:GoToState("idle", "noanim")
+            end
+        elseif inst.bufferedaction == nil then
+            inst.sg:GoToState("idle")
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+    end,
+}
+
+local musha_annihilation = State {
+    name = "musha_annihilation",
+    tags = { "musha_annihilation", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+        local maxdist = TUNING.musha.skills.annihilation.maxdist
+        local mult = math.min(1, maxdist / dist)
+
+        ToggleOffPhysics(inst)
+        inst.Transform:SetEightFaced()
+        inst.AnimState:PlayAnimation("atk_leap")
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+
+        inst.sg.statemem.flash = 0
+        inst.sg.statemem.startingpos = inst:GetPosition()
+        inst.sg.statemem.targetpos = inst.sg.statemem.startingpos + (target - inst.sg.statemem.startingpos) * mult -- Numeric value must behind Vector3
+        if inst.sg.statemem.startingpos.x ~= inst.sg.statemem.targetpos.x
+            or inst.sg.statemem.startingpos.z ~= inst.sg.statemem.targetpos.z then
+            inst:ForceFacePoint(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y, inst.sg.statemem.targetpos.z)
+            inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
+                inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (12 * FRAMES), 0, 0)
+        end
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .1)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("leap", c, c, 0, 0)
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(10 * FRAMES, function(inst)
+            inst.components.colouradder:PushColour("leap", .1, .1, 0, 0)
+        end),
+        TimeEvent(11 * FRAMES, function(inst)
+            inst.components.colouradder:PushColour("leap", .2, .2, 0, 0)
+        end),
+        TimeEvent(12 * FRAMES, function(inst)
+            inst.components.colouradder:PushColour("leap", .4, .4, 0, 0)
+            ToggleOnPhysics(inst)
+            inst.Physics:Stop()
+            inst.Physics:SetMotorVel(0, 0, 0)
+            inst.Physics:Teleport(inst.sg.statemem.targetpos.x, 0, inst.sg.statemem.targetpos.z)
+        end),
+        TimeEvent(13 * FRAMES, function(inst)
+            DoAnnihilation(inst)
+            ShakeAllCameras(CAMERASHAKE.VERTICAL, .7, .015, .5, inst, 20)
+            inst.components.bloomer:PushBloom("leap", "shaders/anim.ksh", -2)
+            inst.components.colouradder:PushColour("leap", 1, 1, 0, 0)
+            inst.sg.statemem.flash = 1.3
+            inst.sg:RemoveStateTag("nointerrupt")
+        end),
+        TimeEvent(25 * FRAMES, function(inst)
+            inst.components.bloomer:PopBloom("leap")
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        if inst.sg.statemem.isphysicstoggle then
+            ToggleOnPhysics(inst)
+            inst.Physics:Stop()
+            inst.Physics:SetMotorVel(0, 0, 0)
+            local x, y, z = inst.Transform:GetWorldPosition()
+            if TheWorld.Map:IsPassableAtPoint(x, 0, z) and not TheWorld.Map:IsGroundTargetBlocked(Vector3(x, 0, z)) then
+                inst.Physics:Teleport(x, 0, z)
+            else
+                inst.Physics:Teleport(inst.sg.statemem.targetpos.x, 0, inst.sg.statemem.targetpos.z)
+            end
+        end
+        inst.Transform:SetFourFaced()
+        inst.components.bloomer:PopBloom("leap")
+        inst.components.colouradder:PopColour("leap")
+
+        inst.components.timer:StartTimer("cooldown_annihilation", TUNING.musha.skills.annihilation.cooldown)
+        inst:ListenForEvent("timerdone", AnnihilationOnTimerDone)
+    end,
+}
+
+AddStategraphState("wilson", musha_annihilation_pre)
+AddStategraphState("wilson_client", musha_annihilation_pre_client)
+
+AddStategraphState("wilson", musha_annihilation)
+
+AddStategraphEvent("wilson", EventHandler("startannihilation",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_annihilation_pre", { target = target })
+        end
+        inst.bufferedcursorpos = nil
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startannihilation",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_annihilation_pre", { target = target })
         end
     end)
 )

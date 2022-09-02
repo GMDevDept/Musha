@@ -40,6 +40,7 @@ Assets = {
     Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
     Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll: have to be added here or else character anim will be broken
     Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
+    Asset("ANIM", "anim/musha/asa_action.zip"), -- Dodge: Appreciate to Asakiri!!!
 
     -- Map icon
     Asset("IMAGE", "images/map_icons/musha_mapicon.tex"),
