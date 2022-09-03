@@ -156,6 +156,7 @@ local function fn()
     inst.AnimState:SetBank("sporebomb")
     inst.AnimState:SetBuild("sporebomb")
     inst.AnimState:PlayAnimation("sporebomb_pre")
+    inst.AnimState:PushAnimation("sporebomb_loop")
     inst.AnimState:SetLightOverride(.3)
     inst.AnimState:SetBloomEffectHandle("shaders/anim.ksh")
     inst.AnimState:SetFinalOffset(3)
@@ -179,8 +180,6 @@ local function fn()
 
         return inst
     end
-
-    inst.AnimState:PushAnimation("sporebomb_loop")
 
     inst:AddComponent("complexprojectile")
     inst.components.complexprojectile:SetHorizontalSpeed(15)

@@ -39,7 +39,7 @@ local function OnLightDirty(inst)
     OnUpdateLight(inst, 0)
 end
 
-local function OnBlocked(inst)
+local function OnAttacked(inst)
     inst.AnimState:PlayAnimation("hit")
     inst.AnimState:PushAnimation("idle_loop")
     inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
@@ -107,7 +107,7 @@ local function fn()
 
     OnLightDirty(inst)
 
-    inst:ListenForEvent("blocked", OnBlocked)
+    inst:ListenForEvent("manashieldonattacked", OnAttacked)
     inst:ListenForEvent("timerdone", OnTimerDone)
 
     if not TheWorld.ismastersim then

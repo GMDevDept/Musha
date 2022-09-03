@@ -117,11 +117,8 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Area of effect
-GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn, offset)
+GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
     local x, y, z = center.Transform:GetWorldPosition()
-    if offset then
-        x, y, z = x + offset.x, y + offset.y, z + offset.z
-    end
     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost" }
 
     for _, v in ipairs(additional_ignore_tags) do

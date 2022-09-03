@@ -330,16 +330,20 @@ end
 -- Mana Shield
 
 local function ShieldOnAttacked(inst, data)
-    inst.fx_manashield:PushEvent("blocked")
+    inst.fx_manashield:PushEvent("manashieldonattacked")
 
     if inst.shielddurability and inst.shielddurability > 0 then
         local delta = TUNING.musha.skills.manashield.durabilitydamage
-        if data.original_damage and data.original_damage > 0 then
-            delta = delta + data.original_damage
+        if data.damage and data.damage > 0 then
+            delta = delta + data.damage
         end
         inst.shielddurability = inst.shielddurability - delta
         if inst.shielddurability <= 0 then
-            inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
+            if inst:HasTag("musha") then
+                inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
+            elseif inst.components.talker then
+                inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_other)
+            end
             inst.task_shieldbrokendelay = inst:DoTaskInTime(3, function()
                 if inst:HasTag("manashieldactivated") then
                     inst:ShieldOff()
@@ -361,44 +365,48 @@ local function ShieldOnTimerDone(inst, data)
 end
 
 local function SetShieldDurability(inst)
-    inst.shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
+    local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
         TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
+
+    inst.shielddurability = shielddurability
 end
 
 local function ShieldOn(inst)
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
     inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
-    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0)) -- Put before ListenForEvent("attacked", ShieldOnAttacked)
-
-    inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
-    inst:ListenForEvent("attacked", ShieldOnAttacked) -- Caster is not really in invincible state so event is "attacked" instead of "blocked"
 
     if not inst.skills.manashield_area then
         inst:AddTag("manashieldactivated")
-        inst:SetShieldDurability()
+        inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
+        inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
         inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+        inst:SetShieldDurability()
     else
         local validtargets = 0
         local must_tags = { "_combat" }
         local ignore_tags = { "manashieldactivated" }
         local one_of_tags = { "player", "companion", "musha_companion" }
+        local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
+            TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
 
         local function cancel_manashield_area(v, data)
             if data.name == "cancel_manashield_area" then
-                v:RemoveTag("areamanashieldactivated")
                 if v == inst then -- Only be triggered by caster himself, even not by other musha players
                     v:ShieldOff()
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
-                    v:RemoveEventCallback("blocked", ShieldOnAttacked)
+                    v:RemoveEventCallback("attacked", ShieldOnAttacked)
+                    v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
                     v.fx_manashield:kill_fx()
-                    v.components.health:SetInvincible(false)
+                    inst.shielddurability = nil
                 end
+                v:RemoveTag("areamanashieldactivated")
                 v:RemoveEventCallback("timerdone", cancel_manashield_area)
             end
         end
 
-        CustomDoAOE(inst, TUNING.musha.skills.freezingspell.range, must_tags, ignore_tags, one_of_tags, function(v)
+        CustomDoAOE(inst, TUNING.musha.skills.manashield_area.range, must_tags, ignore_tags, one_of_tags, function(v)
             if not v.components.health then
                 return
             elseif not v.components.timer then
@@ -407,23 +415,25 @@ local function ShieldOn(inst)
 
             if not v:HasTag("areamanashieldactivated") then
                 v:AddTag("areamanashieldactivated")
-                if v ~= inst then
-                    v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-                    v:ListenForEvent("blocked", ShieldOnAttacked) -- For other targets except for caster, they are in truely invincible state so event is "blocked" instead of "attacked"
-                    v.components.health:SetInvincible(true)
-                end
+                v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+                v:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
+                v.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
                 v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
                 v:ListenForEvent("timerdone", cancel_manashield_area)
             else
                 v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
             end
+
+            v.shielddurability = shielddurability -- Refresh durability
+            if v.task_shieldbrokendelay then CustomCancelTask(v.task_shieldbrokendelay) end -- Cancel delayed broken effect
+
             validtargets = validtargets + 1
         end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
         inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
             TUNING.musha.skills.manashield_area.maxmanacost))
 
-        inst.bufferedspell = "SetShieldDurability"
+        inst.bufferedspell = "SetShieldDurability" -- Refresh durability (mainly for SG related, check this namespace in stategraphs.lua)
         inst.bufferedbookfx = {
             swap_build = "swap_books",
             swap_prefix = "book_horticulture_upgraded",
@@ -891,24 +901,26 @@ end
 local function ToggleValkyrie(inst, x, y, z)
     -- Can interrupt frozen, can recharge during setsugetsuka and phoenixadvent
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
-        or inst.sg:HasStateTag("nomorph")
         or (inst.sg:HasStateTag("musha_nointerrupt")
             and not (inst.sg:HasStateTag("frozen")
                 or inst.sg:HasStateTag("musha_setsugetsuka")
                 or inst.sg:HasStateTag("musha_phoenixadvent")
-                or inst.sg:HasStateTag("musha_annihilation"))) then
+                or inst.sg:HasStateTag("musha_annihilation")
+                or inst.sg:HasStateTag("musha_desolatedive")
+                or inst.sg:HasStateTag("musha_magpiestep"))) then
         return
     end
 
     local isfrozen = inst.sg:HasStateTag("frozen")
     local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
-        or inst.sg:HasStateTag("musha_annihilation")
+        or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
+        or inst.sg:HasStateTag("musha_magpiestep")
     local previousmode = inst.mode:value()
     local CursorPosition = Vector3(x, y, z)
 
     inst.bufferedcursorpos = CursorPosition
 
-    if previousmode == 0 or previousmode == 1 then
+    if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
             inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
             inst.mode:set(2)
@@ -917,7 +929,9 @@ local function ToggleValkyrie(inst, x, y, z)
             CustomPlayFailedAnim(inst)
         end
     elseif previousmode == 2 then
-        if not inst:HasTag("lightningstrikeready") then
+        if inst.components.timer:TimerExists("premagpiestep") then
+            inst.startmagpiestep:push()
+        elseif not inst:HasTag("lightningstrikeready") then
             if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
                 inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
                 LightningRecharge(inst)
@@ -991,7 +1005,7 @@ end
 -- Toggle berserk mode
 local function ToggleBerserk(inst, x, y, z)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
+        inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
@@ -1000,7 +1014,7 @@ local function ToggleBerserk(inst, x, y, z)
 
     inst.bufferedcursorpos = CursorPosition
 
-    if previousmode == 0 or previousmode == 1 then
+    if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         inst.activateberserk:push()
     elseif previousmode == 3 and not inst:HasTag("sneaking") then
         StartSneaking(inst)
@@ -1366,6 +1380,8 @@ local function OnBecameHuman(inst)
         "cooldown_poisonspore",
         "cooldown_elfmelody",
         "cooldown_setsugetsuka",
+        "cooldown_annihilation",
+        "cooldown_desolatedive",
         "stopelfmelody_full",
         "stopelfmelody_partial",
         "premelody",
@@ -1462,6 +1478,7 @@ local function common_postinit(inst)
     inst.startsetsugetsuka = net_event(inst.GUID, "startsetsugetsuka") -- Handler set in SG
     inst.startphoenixadvent = net_event(inst.GUID, "startphoenixadvent") -- Handler set in SG
     inst.startannihilation = net_event(inst.GUID, "startannihilation") -- Handler set in SG
+    inst.startmagpiestep = net_event(inst.GUID, "startmagpiestep") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)

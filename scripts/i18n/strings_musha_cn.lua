@@ -98,6 +98,7 @@ STRINGS.musha = {
         manashield = {
             name = "精灵护盾",
             broken = "敌人好凶, 护盾要碎掉了!",
+            broken_other = "[精灵护盾] 耐久已耗尽",
         },
         manashield_passive = {
             name = "精灵庇佑",

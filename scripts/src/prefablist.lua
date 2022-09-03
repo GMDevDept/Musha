@@ -12,6 +12,7 @@ PrefabFiles = {
     -- Items
 
     -- FXs
+    "musha_phantom",
     "fx_fullmode",
     "manashield",
     "poisonspore",
