@@ -20,10 +20,6 @@ local function fn()
 
     inst.persists = false
 
-    inst:DoTaskInTime(10 * FRAMES, function()
-        inst:Remove()
-    end)
-
     return inst
 end
 

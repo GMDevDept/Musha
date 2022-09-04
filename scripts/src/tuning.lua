@@ -52,6 +52,8 @@ TUNING.musha = {
 
     freezecooldowntime = 2.5,
 
+    singleclicktimewindow = 0.3,
+
     debuffslowdownmult = 0.3,
     debuffslowdownduration = 5,
 
@@ -186,6 +188,7 @@ TUNING.musha = {
             staminacost = 10,
             damagemultiplier = 0.4,
             radius = 3,
+            mindist = 4,
             usewindow = 1,
             cooldown = 5,
         },
@@ -204,6 +207,13 @@ TUNING.musha = {
             cooldown = 8,
         },
         desolatedive = {
+            staminacost = 0,
+            staminacostrate = 1,
+            radius = 10,
+            mindist = 10,
+            cooldown = 5,
+            damagemultiplier = 0.5,
+            maxchargingtime = 6,
         },
         magpiestep = {
             staminacost = 5,

@@ -4,7 +4,16 @@ TheInput:AddKeyDownHandler(GetModConfigData("hotkey_valkyrie"), function()
         local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
             or TheInput:GetWorldPosition()
 
-        SendModRPCToServer(MOD_RPC.musha.togglevalkyrie, CursorPosition.x, CursorPosition.y, CursorPosition.z)
+        SendModRPCToServer(MOD_RPC.musha.valkyriekeydown, CursorPosition.x, CursorPosition.y, CursorPosition.z)
+    end
+end)
+
+TheInput:AddKeyUpHandler(GetModConfigData("hotkey_valkyrie"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+
+        SendModRPCToServer(MOD_RPC.musha.valkyriekeyup, CursorPosition.x, CursorPosition.y, CursorPosition.z)
     end
 end)
 

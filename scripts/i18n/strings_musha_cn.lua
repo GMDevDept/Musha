@@ -5,6 +5,7 @@ STRINGS.musha = {
     lack_of_exp = "Musha需要更多技能点数来解锁这个技能。",
     lack_of_mana = "Musha的魔力不够了!",
     lack_of_sanity = "Musha的理智值不够了!",
+    lack_of_stamina = "Musha的耐力值不够了!",
     mount_not_allowed = "Musha得先从坐骑上下来!",
 
     switchkeybindings_on = "随从命令快捷键: 开启",
@@ -146,6 +147,9 @@ STRINGS.musha = {
         },
         annihilation = {
             name = "歼灭锤",
+        },
+        desolatedive = {
+            name = "荒芜俯冲",
         },
     },
 

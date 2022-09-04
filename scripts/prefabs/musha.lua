@@ -727,7 +727,9 @@ local function LightningRecharge(inst)
     inst:ListenForEvent("onattackother", LightningStrike)
     inst:AddTag("lightningstrikeready")
 
-    inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+    if not inst.sg:HasStateTag("musha_desolatedive_pst") then -- No sound on mode change
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+    end
     CustomAttachFx(inst, "electricchargedfx")
     inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
         inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", 0)
@@ -898,9 +900,10 @@ local function DecideNormalOrFull(inst)
 end
 
 -- Toggle valkyrie mode
-local function ToggleValkyrie(inst, x, y, z)
-    -- Can interrupt frozen, can recharge during setsugetsuka and phoenixadvent
+local function ValkyrieKeyDown(inst, x, y, z)
+    -- Can interrupt frozen, can recharge when using skills
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
+        or inst.valkyriekeypressed
         or (inst.sg:HasStateTag("musha_nointerrupt")
             and not (inst.sg:HasStateTag("frozen")
                 or inst.sg:HasStateTag("musha_setsugetsuka")
@@ -910,6 +913,8 @@ local function ToggleValkyrie(inst, x, y, z)
                 or inst.sg:HasStateTag("musha_magpiestep"))) then
         return
     end
+
+    inst.valkyriekeypressed = true -- Prevent continuous triggering on long press
 
     local isfrozen = inst.sg:HasStateTag("frozen")
     local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
@@ -923,7 +928,7 @@ local function ToggleValkyrie(inst, x, y, z)
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
             inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
-            inst.mode:set(2)
+            inst.startdesolatedive_pre:push()
         else
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
@@ -931,30 +936,51 @@ local function ToggleValkyrie(inst, x, y, z)
     elseif previousmode == 2 then
         if inst.components.timer:TimerExists("premagpiestep") then
             inst.startmagpiestep:push()
-        elseif not inst:HasTag("lightningstrikeready") then
-            if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
-                inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
-                LightningRecharge(inst)
-            else
-                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-                CustomPlayFailedAnim(inst)
+        else
+            local function ValkyrieKeyLongPressed(inst, data)
+                if data.name == "valkyriekeyonlongpress" then
+                    -- Delayed event, need to check again
+                    local attacking = inst.sg:HasStateTag("musha_setsugetsuka")
+                        or inst.sg:HasStateTag("musha_phoenixadvent")
+                        or inst.sg:HasStateTag("musha_annihilation")
+                        or inst.sg:HasStateTag("musha_desolatedive")
+                        or inst.sg:HasStateTag("musha_magpiestep")
+
+                    if attacking then return end
+
+                    if not inst.skills.desolatedive then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    elseif inst.components.timer:TimerExists("cooldown_desolatedive") then
+                        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                            .. STRINGS.musha.skills.desolatedive.name
+                            .. STRINGS.musha.skills.incooldown.part2
+                            .. STRINGS.musha.skills.incooldown.part3
+                            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_desolatedive"))
+                            .. STRINGS.musha.skills.incooldown.part4)
+                    elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                        CustomPlayFailedAnim(inst)
+                    else
+                        inst.startdesolatedive_pre:push()
+                    end
+                    inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
+                end
             end
-        elseif not attacking then
-            if not inst.skills.annihilation then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.timer:TimerExists("cooldown_annihilation") then
-                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                    .. STRINGS.musha.skills.annihilation.name
-                    .. STRINGS.musha.skills.incooldown.part2
-                    .. STRINGS.musha.skills.incooldown.part3
-                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_annihilation"))
-                    .. STRINGS.musha.skills.incooldown.part4)
-            elseif inst.components.mana.current < TUNING.musha.skills.annihilation.manacost then
-                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-                CustomPlayFailedAnim(inst)
-            else
-                inst.components.stamina:DoDelta(-TUNING.musha.skills.annihilation.staminacost)
-                inst.startannihilation:push()
+
+            if not inst:HasTag("lightningstrikeready") then
+                if inst.components.mana.current < TUNING.musha.skills.lightningstrike.manacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
+                    LightningRecharge(inst)
+                    inst.noannihilation = true -- No annihilation until release key and press again
+                end
+            end
+
+            if not attacking then
+                inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
+                inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
             end
         end
     elseif previousmode == 3 and not isfrozen then
@@ -1002,6 +1028,48 @@ local function ToggleValkyrie(inst, x, y, z)
     end
 end
 
+local function ValkyrieKeyUp(inst, x, y, z)
+    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+        return
+    end
+
+    local previousmode = inst.mode:value()
+    local CursorPosition = Vector3(x, y, z)
+
+    inst.bufferedcursorpos = CursorPosition
+
+    if previousmode == 0 or previousmode == 1 then
+        if inst.sg:HasStateTag("musha_desolatedive_pre") then
+            inst.startdesolatedive:push()
+        end
+    elseif previousmode == 2 then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.noannihilation then
+            if not inst.skills.annihilation then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_annihilation") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.annihilation.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_annihilation"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.mana.current < TUNING.musha.skills.annihilation.manacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.components.stamina:DoDelta(-TUNING.musha.skills.annihilation.staminacost)
+                inst.startannihilation:push()
+            end
+        elseif inst.sg:HasStateTag("musha_desolatedive_pre") then
+            inst.startdesolatedive:push()
+        end
+    end
+
+    inst.noannihilation = nil
+    inst.valkyriekeypressed = nil
+    inst.components.timer:StopTimer("valkyriekeyonlongpress")
+end
+
 -- Toggle berserk mode
 local function ToggleBerserk(inst, x, y, z)
     if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
@@ -1035,7 +1103,7 @@ local function ToggleBerserk(inst, x, y, z)
                 and inst.skills.setsugetsukaredux then
                 inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
                 inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
-                inst.startsetsugetsuka:push()
+                inst:PushEvent("startsetsugetsuka")
             else
                 if inst.components.timer:TimerExists("cooldown_setsugetsuka") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -1475,9 +1543,10 @@ local function common_postinit(inst)
     inst.playpartialelfmelody = net_event(inst.GUID, "playpartialelfmelody") -- Handler set in SG
     inst.snifftreasure = net_event(inst.GUID, "snifftreasure") -- Handler set in SG
     inst.startsetsugetsuka_pre = net_event(inst.GUID, "startsetsugetsuka_pre") -- Handler set in SG
-    inst.startsetsugetsuka = net_event(inst.GUID, "startsetsugetsuka") -- Handler set in SG
     inst.startphoenixadvent = net_event(inst.GUID, "startphoenixadvent") -- Handler set in SG
     inst.startannihilation = net_event(inst.GUID, "startannihilation") -- Handler set in SG
+    inst.startdesolatedive_pre = net_event(inst.GUID, "startdesolatedive_pre") -- Handler set in SG
+    inst.startdesolatedive = net_event(inst.GUID, "startdesolatedive") -- Handler set in SG
     inst.startmagpiestep = net_event(inst.GUID, "startmagpiestep") -- Handler set in SG
 
     -- Event handlers
@@ -1575,7 +1644,8 @@ local function master_postinit(inst)
 end
 
 -- Set up remote procedure calls for client side
-AddModRPCHandler("musha", "togglevalkyrie", ToggleValkyrie)
+AddModRPCHandler("musha", "valkyriekeydown", ValkyrieKeyDown)
+AddModRPCHandler("musha", "valkyriekeyup", ValkyrieKeyUp)
 AddModRPCHandler("musha", "toggleberserk", ToggleBerserk)
 AddModRPCHandler("musha", "toggleshield", ToggleShield)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)

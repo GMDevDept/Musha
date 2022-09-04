@@ -671,7 +671,6 @@ local musha_spell_client = State {
     end,
 
     ontimeout = function(inst)
-        inst:ClearBufferedAction()
         inst.sg:GoToState("idle")
     end,
 }
@@ -1287,7 +1286,7 @@ local musha_setsugetsuka = State {
     onenter = function(inst, data)
         local target = data.target
         local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
-        local maxdist = math.max(inst.components.combat.attackrange, 4)
+        local maxdist = math.max(inst.components.combat.attackrange, TUNING.musha.skills.setsugetsuka.mindist)
         local mult = math.min(1, maxdist / dist)
         local weapon = inst.components.combat:GetWeapon()
 
@@ -1607,10 +1606,14 @@ local function DoAnnihilation(inst)
     end
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
-    CustomAttachFx(inst, "groundpoundring_fx")
     CustomAttachFx(inst, "lightning", nil, nil, Vector3(-1.5, 0, 0))
     CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, -2.5))
     CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, 2.5))
+
+    local fx = SpawnPrefab("groundpoundring_fx")
+    local scale = 0.4 + 0.066 * radius
+    fx.Transform:SetScale(scale, scale, scale)
+    fx.Transform:SetPosition(inst:GetPosition():Get())
 
     if lightning then
         inst:LightningDischarge()
@@ -1793,7 +1796,61 @@ AddStategraphEvent("wilson_client", EventHandler("startannihilation",
 
 -- Desolate dive
 
+local function DesolateDiveOnTimerDone(inst, data)
+    if data.name == "cooldown_desolatedive" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.desolatedive.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", AnnihilationOnTimerDone)
+    end
+end
+
 local function DoDive(inst)
+    local must_tags = { "_combat" }
+    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
+        "companion", "musha_companion", "wall" }
+    local radius = TUNING.musha.skills.desolatedive.radius
+    local lightning = inst:HasTag("lightningstrikeready")
+    local weapon = inst.components.combat:GetWeapon()
+    local fx_list = {
+        { name = "groundpoundring_fx", scale = 1 },
+        { name = "antlion_sinkhole_musha", scale = 2 },
+    }
+
+    local function fn(target)
+        local damage = inst.components.combat:CalcDamage(target, weapon) *
+            TUNING.musha.skills.desolatedive.damagemultiplier
+
+        if lightning then
+            local extradamage = TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+            target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
+            CustomAttachFx(target, { "lightning", "shock_fx" })
+        else
+            target.components.combat:GetAttacked(inst, damage, weapon)
+        end
+    end
+
+    CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(-1.5, 0, 0))
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, -2.5))
+    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, 2.5))
+
+    for _, v in pairs(fx_list) do
+        local fx = SpawnPrefab(v.name)
+        local scale = v.scale
+        fx.Transform:SetScale(scale, scale, scale)
+        fx.Transform:SetPosition(inst:GetPosition():Get())
+        CustomRemoveEntity(fx, 3)
+    end
+
+    if lightning then
+        inst:LightningDischarge()
+    end
+
+    if weapon and weapon.components.stackable then
+        weapon.components.stackable:Get():Remove()
+    end
 end
 
 local musha_desolatedive_pre = State {
@@ -1803,44 +1860,59 @@ local musha_desolatedive_pre = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("superjump_pre")
-
-        local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-        if weapon ~= nil and weapon.components.aoetargeting ~= nil and weapon.components.aoetargeting.targetprefab ~= nil then
-            local buffaction = inst:GetBufferedAction()
-            if buffaction ~= nil and buffaction.pos ~= nil then
-                inst.sg.statemem.targetfx = SpawnPrefab(weapon.components.aoetargeting.targetprefab)
-                if inst.sg.statemem.targetfx ~= nil then
-                    inst.sg.statemem.targetfx.Transform:SetPosition(buffaction:GetActionPoint():Get())
-                    inst.sg.statemem.targetfx:ListenForEvent("onremove", OnRemoveCleanupTargetFX, inst)
-                end
-            end
-        end
     end,
 
     events =
     {
-        EventHandler("combat_superjump", function(inst, data)
-            inst.sg.statemem.superjump = true
-            inst.sg:GoToState("combat_superjump", {
-                targetfx = inst.sg.statemem.targetfx,
-                data = data,
-            })
+        EventHandler("startdesolatedive", function(inst)
+            if inst.sg.statemem.ready then
+                local target = inst.bufferedcursorpos
+                if target ~= nil then
+                    inst.sg:GoToState("musha_desolatedive", { target = target })
+                end
+            else
+                inst.sg:GoToState("idle")
+            end
+            inst.bufferedcursorpos = nil
         end),
         EventHandler("animover", function(inst)
             if inst.AnimState:AnimDone() then
                 if inst.AnimState:IsCurrentAnimation("superjump_pre") then
                     inst.AnimState:PlayAnimation("superjump_lag")
-                    inst:PerformBufferedAction()
-                else
-                    inst.sg:GoToState("idle")
+                elseif inst.AnimState:IsCurrentAnimation("superjump_lag") then
+                    inst.sg.statemem.ready = true
+                    inst.sg.statemem.flash = 0.8
+                    inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+                    inst:ShakeCamera(CAMERASHAKE.FULL, TUNING.musha.skills.desolatedive.maxchargingtime, .01, .1) -- Note: ShakeAllCameras(mode, duration, speed, scale, source_or_pt, maxDist)
+                    inst.sg:SetTimeout(TUNING.musha.skills.desolatedive.maxchargingtime)
                 end
             end
         end),
     },
 
+    onupdate = function(inst)
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .025)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("superjump", c, c, 0, 0)
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+
+        if inst.mode:value() == 2 then
+            inst.components.timer:StartTimer("cooldown_desolatedive", TUNING.musha.skills.desolatedive.cooldown)
+            inst:ListenForEvent("timerdone", DesolateDiveOnTimerDone)
+        end
+    end,
+
     onexit = function(inst)
-        if not inst.sg.statemem.superjump and inst.sg.statemem.targetfx ~= nil and inst.sg.statemem.targetfx:IsValid() then
-            OnRemoveCleanupTargetFX(inst)
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+        inst.components.colouradder:PopColour("superjump")
+        if TheCamera.shake ~= nil then
+            TheCamera.shake:StopShaking()
         end
     end,
 }
@@ -1852,9 +1924,9 @@ local musha_desolatedive_pre_client = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("superjump_pre")
-        inst.AnimState:PushAnimation("superjump_lag", false)
+        inst.AnimState:PushAnimation("superjump_lag", true)
 
-        inst.sg:SetTimeout(2)
+        inst.sg:SetTimeout(TUNING.musha.skills.desolatedive.maxchargingtime)
     end,
 
     onupdate = function(inst)
@@ -1868,13 +1940,253 @@ local musha_desolatedive_pre_client = State {
     end,
 
     ontimeout = function(inst)
-        inst:ClearBufferedAction()
         inst.sg:GoToState("idle")
+    end
+}
+
+local musha_desolatedive = State {
+    name = "musha_desolatedive",
+    tags = { "musha_desolatedive", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        if inst.AnimState:IsCurrentAnimation("superjump_lag") then
+            local target = data.target
+            local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+            local maxdist = math.max(inst.components.stamina.current / TUNING.musha.skills.desolatedive.staminacostrate,
+                TUNING.musha.skills.desolatedive.minrange)
+            local mult = math.min(1, maxdist / dist)
+            local fxlist = {
+                "crabking_chip_high",
+                "crabking_chip_med",
+                "crabking_chip_low"
+            }
+
+            ToggleOffPhysics(inst)
+            inst.AnimState:PlayAnimation("superjump")
+            inst.AnimState:SetMultColour(.8, .8, .8, 1)
+            inst.components.colouradder:PushColour("superjump", .1, .1, .1, 0)
+            inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt", nil, .4)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+
+            inst.sg.statemem.startingpos = inst:GetPosition()
+            inst.sg.statemem.targetpos = inst.sg.statemem.startingpos +
+                (target - inst.sg.statemem.startingpos) * mult -- Numeric value must behind Vector3
+            if inst.sg.statemem.startingpos.x ~= inst.sg.statemem.targetpos.x
+                or inst.sg.statemem.startingpos.z ~= inst.sg.statemem.targetpos.z then
+                inst:ForceFacePoint(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y,
+                    inst.sg.statemem.targetpos.z)
+            end
+
+            for _, fx in pairs(fxlist) do
+                SpawnPrefab(fx).Transform:SetPosition(inst:GetPosition():Get())
+            end
+
+            inst.components.stamina:DoDelta(-TUNING.musha.skills.desolatedive.staminacostrate * dist * mult)
+
+            inst.sg:SetTimeout(1)
+            return
+        end
+        --Failed
+        inst.sg:GoToState("idle", true)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.dalpha ~= nil and inst.sg.statemem.alpha > 0 then
+            inst.sg.statemem.dalpha = math.max(.1, inst.sg.statemem.dalpha - .1)
+            inst.sg.statemem.alpha = math.max(0, inst.sg.statemem.alpha - inst.sg.statemem.dalpha)
+            inst.AnimState:SetMultColour(0, 0, 0, inst.sg.statemem.alpha)
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(FRAMES, function(inst)
+            inst.DynamicShadow:Enable(false)
+            inst.sg:AddStateTag("noattack")
+            inst.components.health:SetInvincible(true)
+            inst.AnimState:SetMultColour(.5, .5, .5, 1)
+            inst.components.colouradder:PushColour("superjump", .3, .3, .2, 0)
+            inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
+                inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (10 * FRAMES), 0, 0)
+        end),
+        TimeEvent(2 * FRAMES, function(inst)
+            inst.AnimState:SetMultColour(0, 0, 0, 1)
+            inst.components.colouradder:PushColour("superjump", .6, .6, .4, 0)
+        end),
+        TimeEvent(3 * FRAMES, function(inst)
+            inst.sg.statemem.alpha = 1
+            inst.sg.statemem.dalpha = .5
+        end),
+        TimeEvent(11 * FRAMES, function(inst)
+            inst.Physics:Stop()
+            inst.Physics:SetMotorVel(0, 0, 0)
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst:Hide()
+                inst.Physics:Teleport(inst.sg.statemem.targetpos.x, 0, inst.sg.statemem.targetpos.z)
+            end
+        end),
+    },
+
+    ontimeout = function(inst)
+        inst.sg.statemem.superjump = true
+        inst.sg.statemem.data = {}
+        inst.sg.statemem.data.startingpos = inst.sg.statemem.startingpos
+        inst.sg.statemem.data.targetpos = inst.sg.statemem.targetpos
+        inst.sg.statemem.data.isphysicstoggle = inst.sg.statemem.isphysicstoggle
+        inst.sg:GoToState("musha_desolatedive_pst", inst.sg.statemem.data)
+    end,
+
+    onexit = function(inst)
+        if not inst.sg.statemem.superjump then
+            inst.components.health:SetInvincible(false)
+            if inst.sg.statemem.isphysicstoggle then
+                ToggleOnPhysics(inst)
+            end
+            inst.components.colouradder:PopColour("superjump")
+            inst.AnimState:SetMultColour(1, 1, 1, 1)
+            inst.DynamicShadow:Enable(true)
+        end
+        inst:Show()
+    end,
+}
+
+local musha_desolatedive_pst = State {
+    name = "musha_desolatedive_pst",
+    tags = { "musha_desolatedive_pst", "doing", "busy", "noattack", "nopredict", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        if data ~= nil then
+            inst.sg.statemem.startingpos = data.startingpos
+            inst.sg.statemem.isphysicstoggle = data.isphysicstoggle
+            if inst.sg.statemem.startingpos ~= nil and
+                data.targetpos ~= nil and
+                inst.AnimState:IsCurrentAnimation("superjump") then
+                inst.AnimState:PlayAnimation("superjump_land")
+                inst.AnimState:SetMultColour(1, 1, 1, .4)
+                inst.sg.statemem.targetpos = data.targetpos
+                inst.sg.statemem.flash = 0
+                if not inst.sg.statemem.isphysicstoggle then
+                    ToggleOffPhysics(inst)
+                end
+                inst.Physics:Teleport(data.targetpos.x, 0, data.targetpos.z)
+                inst.components.health:SetInvincible(true)
+                inst.sg:SetTimeout(22 * FRAMES)
+                return
+            end
+        end
+        --Failed
+        inst.sg:GoToState("idle", true)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .1)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("superjump", c, c, 0, 0)
+        end
+    end,
+
+    timeline =
+    {
+        TimeEvent(FRAMES, function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
+            inst.AnimState:SetMultColour(1, 1, 1, .7)
+            inst.components.colouradder:PushColour("superjump", .1, .1, 0, 0)
+        end),
+        TimeEvent(2 * FRAMES, function(inst)
+            inst.AnimState:SetMultColour(1, 1, 1, .9)
+            inst.components.colouradder:PushColour("superjump", .2, .2, 0, 0)
+        end),
+        TimeEvent(3 * FRAMES, function(inst)
+            inst.AnimState:SetMultColour(1, 1, 1, 1)
+            inst.components.colouradder:PushColour("superjump", .4, .4, 0, 0)
+            inst.DynamicShadow:Enable(true)
+        end),
+        TimeEvent(4 * FRAMES, function(inst)
+            inst.components.colouradder:PushColour("superjump", 1, 1, 0, 0)
+            inst.components.bloomer:PushBloom("superjump", "shaders/anim.ksh", -2)
+            ToggleOnPhysics(inst)
+            inst.sg.statemem.flash = 1.3
+            ShakeAllCameras(CAMERASHAKE.VERTICAL, .7, .015, .8, inst, 20)
+
+            if inst.mode:value() == 0 or inst.mode:value() == 1 then
+                inst.mode:set(2)
+            end
+
+            inst:DoTaskInTime(0, DoDive) -- Get lightning strike effect
+            inst.components.health:SetInvincible(false)
+            inst.sg:RemoveStateTag("noattack")
+            inst.sg:RemoveStateTag("nopredict")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
+
+            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+        end),
+        TimeEvent(8 * FRAMES, function(inst)
+            inst.components.bloomer:PopBloom("superjump")
+        end),
+        TimeEvent(19 * FRAMES, PlayFootstep),
+    },
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle", true)
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        if inst.sg.statemem.isphysicstoggle then
+            ToggleOnPhysics(inst)
+        end
+        inst.AnimState:SetMultColour(1, 1, 1, 1)
+        inst.DynamicShadow:Enable(true)
+        inst.components.health:SetInvincible(false)
+        inst.components.bloomer:PopBloom("superjump")
+        inst.components.colouradder:PopColour("superjump")
+
+        inst.components.timer:StartTimer("cooldown_desolatedive", TUNING.musha.skills.desolatedive.cooldown)
+        inst:ListenForEvent("timerdone", DesolateDiveOnTimerDone)
     end,
 }
 
 AddStategraphState("wilson", musha_desolatedive_pre)
 AddStategraphState("wilson_client", musha_desolatedive_pre_client)
+
+AddStategraphState("wilson", musha_desolatedive)
+
+AddStategraphState("wilson", musha_desolatedive_pst)
+
+AddStategraphEvent("wilson", EventHandler("startdesolatedive_pre",
+    function(inst)
+        inst.sg:GoToState("musha_desolatedive_pre")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startdesolatedive_pre",
+    function(inst)
+        inst.sg:GoToState("musha_desolatedive_pre")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startdesolatedive",
+    function()
+        if TheCamera.shake ~= nil then
+            TheCamera.shake:StopShaking()
+        end
+    end)
+)
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -1884,9 +2196,12 @@ local function ApplyPhantom(inst, dt)
     local fx_phantom = SpawnPrefab("musha_phantom")
     fx_phantom.Transform:SetPosition(inst.Transform:GetWorldPosition())
     fx_phantom.Transform:SetRotation(inst.Transform:GetRotation())
-    fx_phantom.AnimState:SetMultColour(dt + 0.1, 2 * dt + 0.3, 1, 4 * dt)
+    fx_phantom.AnimState:SetMultColour(3 * dt, 2 * dt + 0.4, 1, 3 * dt)
     fx_phantom.AnimState:PlayAnimation("asa_dodge")
     fx_phantom.AnimState:SetTime(dt)
+    fx_phantom:DoTaskInTime(10 * FRAMES, function()
+        fx_phantom:Remove()
+    end)
 end
 
 local musha_magpiestep = State {
@@ -1902,7 +2217,7 @@ local musha_magpiestep = State {
         ToggleOffPhysics(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("asa_dodge")
-        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+        inst.SoundEmitter:PlaySound("wanda1/wanda/jump_whoosh")
         inst.components.health:SetInvincible(true)
         inst.components.timer:StopTimer("premagpiestep")
         inst.components.timer:PauseTimer("clearsetsugetsukacounter")
@@ -1933,13 +2248,13 @@ local musha_magpiestep = State {
         end),
         TimeEvent(5 * FRAMES, function(inst)
             ApplyPhantom(inst, 5 * FRAMES)
+        end),
+        TimeEvent(6 * FRAMES, function(inst)
+            ApplyPhantom(inst, 6 * FRAMES)
             inst:ForceFacePoint(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.y,
                 inst.sg.statemem.startingpos.z)
             inst.Physics:SetMotorVel(-math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z
                 , inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
-        end),
-        TimeEvent(6 * FRAMES, function(inst)
-            ApplyPhantom(inst, 6 * FRAMES)
         end),
         TimeEvent(7 * FRAMES, function(inst)
             ApplyPhantom(inst, 7 * FRAMES)
@@ -1948,6 +2263,7 @@ local musha_magpiestep = State {
             ApplyPhantom(inst, 8 * FRAMES)
         end),
         TimeEvent(9 * FRAMES, function(inst)
+            ApplyPhantom(inst, 9 * FRAMES)
             ToggleOnPhysics(inst)
             inst.Physics:Stop()
             inst.Physics:SetMotorVel(0, 0, 0)
@@ -1994,7 +2310,7 @@ local musha_magpiestep_client = State {
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("asa_dodge")
 
-        inst.sg:SetTimeout(0.3)
+        inst.sg:SetTimeout(9 * FRAMES)
     end,
 
     onupdate = function(inst)
@@ -2008,7 +2324,6 @@ local musha_magpiestep_client = State {
     end,
 
     ontimeout = function(inst)
-        inst:ClearBufferedAction()
         inst.sg:GoToState("idle")
     end,
 }

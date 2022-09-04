@@ -16,6 +16,7 @@ PrefabFiles = {
     "fx_fullmode",
     "manashield",
     "poisonspore",
+    "antlion_sinkhole_musha",
 
     -- General
     "debuff_common",
