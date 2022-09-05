@@ -104,7 +104,7 @@ STRINGS.musha = {
         manashield_passive = {
             name = "精灵庇佑",
         },
-        valkyrie = {
+        valkyriemode = {
             name = "女武神模式",
         },
         berserk = {

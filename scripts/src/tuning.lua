@@ -28,7 +28,7 @@ TUNING.musha = {
         },
         level4 = {
             workmultiplier = 0.1,
-            speedmultiplier = 1,
+            speedmultiplier = 0.4,
         },
     },
 
@@ -160,6 +160,10 @@ TUNING.musha = {
             cooldown = 5,
             range = 18,
         },
+        valkyriemode = {
+            cooldown = 20,
+            manacost = 10,
+        },
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
@@ -172,6 +176,8 @@ TUNING.musha = {
         poisonspore = {
             manacost = 15,
             sanitycost = 15,
+            damage = 20,
+            duration = 20,
             maxdelay = 10,
             cooldown = 5,
         },
@@ -218,9 +224,9 @@ TUNING.musha = {
             cooldown = 20,
             sinkhole = {
                 destructionradius = 3.5,
-                centerdamage = 20,
-                duration = 10,
-                repairtime = { 2, 2, 6 }, -- Sum = duration
+                centerdamage = 25,
+                collapsetime = 0.25,
+                repairtime = { 2, 3, 7 }, -- Sum = duration
             },
         },
         magpiestep = {

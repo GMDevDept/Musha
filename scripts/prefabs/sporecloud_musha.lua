@@ -9,8 +9,8 @@ local prefabs =
     "sporecloud_overlay_musha",
 }
 
-local AURA_EXCLUDE_TAGS = { "toadstool", "playerghost", "ghost", "shadow", "shadowminion", "noauradamage", "INLIMBO",
-    "notarget", "noattack", "flight", "invisible" }
+local AURA_EXCLUDE_TAGS = { "playerghost", "ghost", "noauradamage", "INLIMBO", "notarget", "noattack",
+    "flight", "invisible", "companion", "musha_companion" }
 
 local FADE_FRAMES = 5
 local FADE_INTENSITY = .8
@@ -355,7 +355,7 @@ local function fn()
     end
 
     inst:AddComponent("combat")
-    inst.components.combat:SetDefaultDamage(TUNING.TOADSTOOL_SPORECLOUD_DAMAGE)
+    inst.components.combat:SetDefaultDamage(TUNING.musha.skills.poisonspore.damage)
 
     inst:AddComponent("aura")
     inst.components.aura.radius = TUNING.TOADSTOOL_SPORECLOUD_RADIUS
@@ -370,7 +370,7 @@ local function fn()
     inst:ListenForEvent("animover", OnAnimOver)
 
     inst:AddComponent("timer")
-    inst.components.timer:StartTimer("disperse", TUNING.TOADSTOOL_SPORECLOUD_LIFETIME)
+    inst.components.timer:StartTimer("disperse", TUNING.musha.skills.poisonspore.duration)
 
     inst:ListenForEvent("timerdone", OnTimerDone)
 

@@ -19,6 +19,19 @@ local function ToggleOnPhysics(inst)
     inst.Physics:CollidesWith(COLLISION.GIANTS)
 end
 
+local function ApplyPhantom(inst, anim)
+    local dt = inst.AnimState:GetCurrentAnimationTime()
+    local fx_phantom = SpawnPrefab("musha_phantom")
+    fx_phantom.Transform:SetPosition(inst.Transform:GetWorldPosition())
+    fx_phantom.Transform:SetRotation(inst.Transform:GetRotation())
+    fx_phantom.AnimState:SetMultColour(math.min(3 * dt, 1), math.min(2 * dt + 0.4, 1), 1, math.min(3 * dt, 1))
+    fx_phantom.AnimState:PlayAnimation(anim)
+    fx_phantom.AnimState:SetTime(dt)
+    fx_phantom:DoTaskInTime(10 * FRAMES, function()
+        fx_phantom:Remove()
+    end)
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- No interrupt states exclusively for Musha
@@ -42,7 +55,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["attack"].onenter
     self.states["attack"].onenter = function(inst)
         if inst:HasTag("musha") then
-            inst:DoTaskInTime(8 * FRAMES, function()
+            inst:DoTaskInTime(8 * FRAMES, function() -- ? Seems to be not necessary to cancel task on new state
                 inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             end)
         end
@@ -51,12 +64,13 @@ AddStategraphPostInit("wilson", function(self)
 end)
 
 AddStategraphPostInit("wilson", function(self)
-    local premagpiestep = TimeEvent(1 * FRAMES, function(inst)
+    local _onenter = self.states["hit"].onenter
+    self.states["hit"].onenter = function(inst)
         if inst:HasTag("musha") then
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end
-    end)
-    table.insert(self.states["hit"].timeline, premagpiestep)
+        return _onenter(inst)
+    end
 end)
 
 ---------------------------------------------------------------------------------------------------------
@@ -1804,7 +1818,7 @@ local function DesolateDiveOnTimerDone(inst, data)
         inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
             .. STRINGS.musha.skills.desolatedive.name
             .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", AnnihilationOnTimerDone)
+        inst:RemoveEventCallback("timerdone", DesolateDiveOnTimerDone)
     end
 end
 
@@ -1821,8 +1835,9 @@ local function DoDive(inst)
             TUNING.musha.skills.desolatedive.damagemultiplier
 
         if lightning then
-            local extradamage = TUNING.musha.skills.lightningstrike.damage +
-                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+            local extradamage = (TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5)
+                * TUNING.musha.skills.desolatedive.damagemultiplier
             target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
             CustomAttachFx(target, { "lightning_musha", "shock_fx" })
         else
@@ -1836,13 +1851,15 @@ local function DoDive(inst)
     fx.Transform:SetPosition(inst:GetPosition():Get())
 
     local sinkhole = SpawnPrefab("antlion_sinkhole_musha")
-    sinkhole.Transform:SetScale(1.8, 1.8, 1.8)
+    sinkhole.fx_scale = 1.8
+    sinkhole.Transform:SetScale(sinkhole.fx_scale, sinkhole.fx_scale, sinkhole.fx_scale)
     sinkhole.Transform:SetPosition(inst:GetPosition():Get())
     sinkhole:PushEvent("startcollapse")
 
     local fx_sinkhole = SpawnPrefab("antlion_sinkhole_musha")
     fx_sinkhole.Transform:SetPosition(inst:GetPosition():Get())
-    CustomRemoveEntity(fx_sinkhole, TUNING.musha.skills.desolatedive.sinkhole.duration)
+    CustomRemoveEntity(fx_sinkhole, TUNING.musha.skills.desolatedive.sinkhole.repairtime[3]
+        + 2 * TUNING.musha.skills.desolatedive.sinkhole.collapsetime)
 
     if lightning then
         CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(-1.5, 0, 0))
@@ -2193,18 +2210,6 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive",
 
 -- Magpie step
 
-local function ApplyPhantom(inst, dt)
-    local fx_phantom = SpawnPrefab("musha_phantom")
-    fx_phantom.Transform:SetPosition(inst.Transform:GetWorldPosition())
-    fx_phantom.Transform:SetRotation(inst.Transform:GetRotation())
-    fx_phantom.AnimState:SetMultColour(3 * dt, 2 * dt + 0.4, 1, 3 * dt)
-    fx_phantom.AnimState:PlayAnimation("asa_dodge")
-    fx_phantom.AnimState:SetTime(dt)
-    fx_phantom:DoTaskInTime(10 * FRAMES, function()
-        fx_phantom:Remove()
-    end)
-end
-
 local musha_magpiestep = State {
     name = "musha_magpiestep",
     tags = { "musha_magpiestep", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
@@ -2231,40 +2236,24 @@ local musha_magpiestep = State {
             inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end
+
+        inst.task_phantom = inst:DoPeriodicTask(FRAMES, function()
+            ApplyPhantom(inst, "asa_dodge")
+        end)
     end,
 
     timeline = {
         TimeEvent(1 * FRAMES, function(inst)
-            ApplyPhantom(inst, 1 * FRAMES)
             inst.sg:AddStateTag("nopredict")
         end),
-        TimeEvent(2 * FRAMES, function(inst)
-            ApplyPhantom(inst, 2 * FRAMES)
-        end),
-        TimeEvent(3 * FRAMES, function(inst)
-            ApplyPhantom(inst, 3 * FRAMES)
-        end),
-        TimeEvent(4 * FRAMES, function(inst)
-            ApplyPhantom(inst, 4 * FRAMES)
-        end),
-        TimeEvent(5 * FRAMES, function(inst)
-            ApplyPhantom(inst, 5 * FRAMES)
-        end),
         TimeEvent(6 * FRAMES, function(inst)
-            ApplyPhantom(inst, 6 * FRAMES)
             inst:ForceFacePoint(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.y,
                 inst.sg.statemem.startingpos.z)
             inst.Physics:SetMotorVel(-math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z
                 , inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end),
-        TimeEvent(7 * FRAMES, function(inst)
-            ApplyPhantom(inst, 7 * FRAMES)
-        end),
-        TimeEvent(8 * FRAMES, function(inst)
-            ApplyPhantom(inst, 8 * FRAMES)
-        end),
         TimeEvent(9 * FRAMES, function(inst)
-            ApplyPhantom(inst, 9 * FRAMES)
+            CustomCancelTask(inst.task_phantom)
             ToggleOnPhysics(inst)
             inst.Physics:Stop()
             inst.Physics:SetMotorVel(0, 0, 0)
@@ -2288,6 +2277,7 @@ local musha_magpiestep = State {
     },
 
     onexit = function(inst)
+        CustomCancelTask(inst.task_phantom)
         inst.components.health:SetInvincible(false)
         if inst.sg.statemem.isphysicstoggle then
             ToggleOnPhysics(inst)

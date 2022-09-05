@@ -885,6 +885,15 @@ end
 
 -- Character mode related
 
+local function ValkyrieModeOnTimerDone(inst, data)
+    if data.name == "cooldown_valkyriemode" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.valkyriemode.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ValkyrieModeOnTimerDone)
+    end
+end
+
 -- Decide normal mode or full mode
 local function DecideNormalOrFull(inst)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
@@ -926,12 +935,19 @@ local function ValkyrieKeyDown(inst, x, y, z)
     inst.bufferedcursorpos = CursorPosition
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
-        if inst.components.mana.current >= TUNING.musha.skills.lightningstrike.manacost then
-            inst.components.mana:DoDelta(-TUNING.musha.skills.lightningstrike.manacost)
-            inst.startdesolatedive_pre:push()
-        else
+        if inst.components.timer:TimerExists("cooldown_valkyriemode") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.valkyriemode.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_valkyriemode"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.valkyriemode.manacost then
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
+        else
+            inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
+            inst.startdesolatedive_pre:push()
         end
     elseif previousmode == 2 then
         if inst.components.timer:TimerExists("premagpiestep") then
@@ -1127,6 +1143,11 @@ end
 -- Resist freeze
 local function UnfreezeOnFreeze(inst)
     inst.components.freezable:Unfreeze()
+
+    inst:AddTag("MUSHA_fueled") -- Prevents continuous freezing (deer_ice_circle)
+    inst:DoTaskInTime(0.5, function()
+        inst:RemoveTag("MUSHA_fueled")
+    end)
 end
 
 -- OnAttack fn for berserk mode
@@ -1222,6 +1243,8 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("timerdone", LightningStrikeOnTimerDone)
 
         CustomAttachFx(inst, "electrichitsparks")
+        inst.components.timer:StartTimer("cooldown_valkyriemode", TUNING.musha.skills.valkyriemode.cooldown)
+        inst:ListenForEvent("timerdone", ValkyrieModeOnTimerDone)
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     end
 
@@ -1461,6 +1484,7 @@ local function OnBecameHuman(inst)
     inst:DecideNormalOrFull()
 
     local timers = {
+        "cooldown_valkyriemode",
         "cooldown_thunderspell",
         "cooldown_freezingspell",
         "cooldown_manashield",
