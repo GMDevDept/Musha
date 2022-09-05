@@ -28,7 +28,7 @@ TUNING.musha = {
         },
         level4 = {
             workmultiplier = 0.1,
-            speedmultiplier = 0.4,
+            speedmultiplier = 1,
         },
     },
 
@@ -44,8 +44,8 @@ TUNING.musha = {
     fullmodestaminaregen = 0.5,
     fullmodehungerdrain = 1.3,
 
-    valkyrieattackboost = 1.2,
-    valkyriedefenseboost = 0.2,
+    valkyriedamagemultiplier = 1.2,
+    valkyriedamagetakenmultiplier = 0.8,
     valkyriemanaongoingmodifier = 0,
 
     activateberserkbasedamage = 5,
@@ -187,6 +187,7 @@ TUNING.musha = {
             manacost = 0,
             staminacost = 10,
             damagemultiplier = 0.4,
+            damagetakenmultiplier = 0.5,
             radius = 3,
             mindist = 4,
             usewindow = 1,
@@ -204,16 +205,23 @@ TUNING.musha = {
             radius = 3.5,
             maxdist = 10,
             paralysisduration = 8,
-            cooldown = 8,
+            cooldown = 12,
         },
         desolatedive = {
             staminacost = 0,
             staminacostrate = 1,
             radius = 10,
             mindist = 10,
-            cooldown = 5,
             damagemultiplier = 0.5,
+            speedmultiplier = 0.25,
             maxchargingtime = 6,
+            cooldown = 20,
+            sinkhole = {
+                destructionradius = 3.5,
+                centerdamage = 20,
+                duration = 10,
+                repairtime = { 2, 2, 6 }, -- Sum = duration
+            },
         },
         magpiestep = {
             staminacost = 5,

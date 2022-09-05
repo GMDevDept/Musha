@@ -1305,6 +1305,8 @@ local musha_setsugetsuka = State {
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (13 * FRAMES), 0, 0)
         end
 
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.setsugetsuka.damagetakenmultiplier, "setsugetsuka")
         inst.components.timer:StopTimer("cooldown_setsugetsuka")
         inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
         inst.components.timer:StopTimer("clearsetsugetsukacounter")
@@ -1380,6 +1382,7 @@ local musha_setsugetsuka = State {
         end
         inst.Transform:SetFourFaced()
 
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "setsugetsuka")
         inst.components.timer:StartTimer("cooldown_setsugetsuka", TUNING.musha.skills.setsugetsuka.cooldown)
         inst:ListenForEvent("timerdone", SetsuGetsuKaOnTimerDone)
 
@@ -1444,7 +1447,7 @@ local function DoAdvent(inst)
             local extradamage = TUNING.musha.skills.lightningstrike.damage +
                 TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
             target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
-            CustomAttachFx(target, { "lightning", "shock_fx" })
+            CustomAttachFx(target, { "lightning_musha", "shock_fx" })
         else
             target.components.combat:GetAttacked(inst, damage, weapon)
         end
@@ -1606,9 +1609,6 @@ local function DoAnnihilation(inst)
     end
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(-1.5, 0, 0))
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, -2.5))
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, 2.5))
 
     local fx = SpawnPrefab("groundpoundring_fx")
     local scale = 0.4 + 0.066 * radius
@@ -1616,6 +1616,9 @@ local function DoAnnihilation(inst)
     fx.Transform:SetPosition(inst:GetPosition():Get())
 
     if lightning then
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(-1.5, 0, 0))
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(2, 0, -2.5))
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(2, 0, 2.5))
         inst:LightningDischarge()
     end
 
@@ -1812,10 +1815,6 @@ local function DoDive(inst)
     local radius = TUNING.musha.skills.desolatedive.radius
     local lightning = inst:HasTag("lightningstrikeready")
     local weapon = inst.components.combat:GetWeapon()
-    local fx_list = {
-        { name = "groundpoundring_fx", scale = 1 },
-        { name = "antlion_sinkhole_musha", scale = 2 },
-    }
 
     local function fn(target)
         local damage = inst.components.combat:CalcDamage(target, weapon) *
@@ -1825,26 +1824,30 @@ local function DoDive(inst)
             local extradamage = TUNING.musha.skills.lightningstrike.damage +
                 TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
             target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
-            CustomAttachFx(target, { "lightning", "shock_fx" })
+            CustomAttachFx(target, { "lightning_musha", "shock_fx" })
         else
             target.components.combat:GetAttacked(inst, damage, weapon)
         end
     end
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(-1.5, 0, 0))
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, -2.5))
-    CustomAttachFx(inst, "lightning", nil, nil, Vector3(2, 0, 2.5))
 
-    for _, v in pairs(fx_list) do
-        local fx = SpawnPrefab(v.name)
-        local scale = v.scale
-        fx.Transform:SetScale(scale, scale, scale)
-        fx.Transform:SetPosition(inst:GetPosition():Get())
-        CustomRemoveEntity(fx, 3)
-    end
+    local fx = SpawnPrefab("groundpoundring_fx")
+    fx.Transform:SetPosition(inst:GetPosition():Get())
+
+    local sinkhole = SpawnPrefab("antlion_sinkhole_musha")
+    sinkhole.Transform:SetScale(1.8, 1.8, 1.8)
+    sinkhole.Transform:SetPosition(inst:GetPosition():Get())
+    sinkhole:PushEvent("startcollapse")
+
+    local fx_sinkhole = SpawnPrefab("antlion_sinkhole_musha")
+    fx_sinkhole.Transform:SetPosition(inst:GetPosition():Get())
+    CustomRemoveEntity(fx_sinkhole, TUNING.musha.skills.desolatedive.sinkhole.duration)
 
     if lightning then
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(-1.5, 0, 0))
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(2, 0, -2.5))
+        CustomAttachFx(inst, "lightning_musha", nil, nil, Vector3(2, 0, 2.5))
         inst:LightningDischarge()
     end
 
@@ -1953,7 +1956,7 @@ local musha_desolatedive = State {
             local target = data.target
             local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
             local maxdist = math.max(inst.components.stamina.current / TUNING.musha.skills.desolatedive.staminacostrate,
-                TUNING.musha.skills.desolatedive.minrange)
+                TUNING.musha.skills.desolatedive.mindist)
             local mult = math.min(1, maxdist / dist)
             local fxlist = {
                 "crabking_chip_high",
@@ -2002,7 +2005,6 @@ local musha_desolatedive = State {
     {
         TimeEvent(FRAMES, function(inst)
             inst.DynamicShadow:Enable(false)
-            inst.sg:AddStateTag("noattack")
             inst.components.health:SetInvincible(true)
             inst.AnimState:SetMultColour(.5, .5, .5, 1)
             inst.components.colouradder:PushColour("superjump", .3, .3, .2, 0)
@@ -2058,7 +2060,7 @@ local musha_desolatedive = State {
 
 local musha_desolatedive_pst = State {
     name = "musha_desolatedive_pst",
-    tags = { "musha_desolatedive_pst", "doing", "busy", "noattack", "nopredict", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pst", "doing", "busy", "nopredict", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         if data ~= nil then
@@ -2121,7 +2123,6 @@ local musha_desolatedive_pst = State {
 
             inst:DoTaskInTime(0, DoDive) -- Get lightning strike effect
             inst.components.health:SetInvincible(false)
-            inst.sg:RemoveStateTag("noattack")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("musha_nointerrupt")
 

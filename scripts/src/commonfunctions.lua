@@ -166,7 +166,7 @@ end
 
 -- Play skill failed anim
 GLOBAL.CustomPlayFailedAnim = function(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("busy") then
         return
     end

@@ -18,19 +18,13 @@ local prefabs =
 }
 
 local NUM_CRACKING_STAGES = 3
-local COLLAPSE_STAGE_DURATION = 1
+local COLLAPSE_STAGE_DURATION = 5 * FRAMES
 
 local function UpdateOverrideSymbols(inst, state)
     if state == NUM_CRACKING_STAGES then
         inst.AnimState:ClearOverrideSymbol("cracks1")
-        if inst.components.unevenground ~= nil then
-            inst.components.unevenground:Enable()
-        end
     else
         inst.AnimState:OverrideSymbol("cracks1", "antlion_sinkhole", "cracks_pre" .. tostring(state))
-        if inst.components.unevenground ~= nil then
-            inst.components.unevenground:Disable()
-        end
     end
 end
 
@@ -58,14 +52,12 @@ local function OnTimerDone(inst, data)
     if data ~= nil and data.name == "nextrepair" then
         inst.remainingrepairs = inst.remainingrepairs - 1
         if inst.remainingrepairs <= 0 then
-            inst.components.unevenground:Disable()
             inst.persists = false
             ErodeAway(inst)
         else
             UpdateOverrideSymbols(inst, inst.remainingrepairs)
             inst.components.timer:StartTimer("nextrepair",
-                TUNING.ANTLION_SINKHOLE.REPAIR_TIME[inst.remainingrepairs] +
-                (math.random() * TUNING.ANTLION_SINKHOLE.REPAIR_TIME_VARIANCE))
+                TUNING.musha.skills.desolatedive.sinkhole.repairtime[inst.remainingrepairs])
         end
 
         if not inst:IsAsleep() then
@@ -85,8 +77,8 @@ local COLLAPSIBLE_TAGS = { "_combat", "pickable", "NPC_workable" }
 for k, v in pairs(COLLAPSIBLE_WORK_ACTIONS) do
     table.insert(COLLAPSIBLE_TAGS, k .. "_workable")
 end
-local NON_COLLAPSIBLE_TAGS = { "flying", "bird", "ghost", "playerghost", "FX", "NOCLICK", "DECOR", "INLIMBO" }
-local NON_COLLAPSIBLE_TAGS_FIRST = { "flying", "bird", "ghost", "locomotor", "FX", "NOCLICK", "DECOR", "INLIMBO" }
+local NON_COLLAPSIBLE_TAGS = { "player", "companion", "musha_companion", "flying", "bird", "ghost", "playerghost", "FX",
+    "NOCLICK", "DECOR", "INLIMBO" }
 
 local function SmallLaunch(inst, launcher, basespeed)
     local hp = inst:GetPosition()
@@ -101,12 +93,26 @@ end
 local TOSS_MUST_TAGS = { "_inventoryitem" }
 local TOSS_CANT_TAGS = { "locomotor", "INLIMBO" }
 
+local SLOWDOWN_MUST_TAGS = { "locomotor" }
+local SLOWDOWN_CANT_TAGS = { "player", "flying", "playerghost", "INLIMBO" }
+
+local function SlowDownTaskUpdate(inst, x, y, z)
+    for i, v in ipairs(TheSim:FindEntities(x, y, z, TUNING.musha.skills.desolatedive.radius, SLOWDOWN_MUST_TAGS,
+        SLOWDOWN_CANT_TAGS)) do
+        local is_follower = v.components.follower ~= nil and v.components.follower.leader ~= nil and
+            v.components.follower.leader:HasTag("player")
+        if v.components.locomotor ~= nil and not is_follower then
+            v.components.locomotor:PushTempGroundSpeedMultiplier(TUNING.musha.skills.desolatedive.speedmultiplier,
+                WORLD_TILES.MUD)
+        end
+    end
+end
+
 local function start_repairs(inst, repairdata)
     inst.remainingrepairs = (repairdata and repairdata.num_stages) or NUM_CRACKING_STAGES
 
     local repairtime = (repairdata and repairdata.time) or
-        TUNING.ANTLION_SINKHOLE.REPAIR_TIME[NUM_CRACKING_STAGES] +
-        (math.random() * TUNING.ANTLION_SINKHOLE.REPAIR_TIME_VARIANCE)
+        TUNING.musha.skills.desolatedive.sinkhole.repairtime[NUM_CRACKING_STAGES]
     inst.components.timer:StartTimer("nextrepair", repairtime)
 end
 
@@ -119,11 +125,21 @@ local function donextcollapse(inst)
         inst.collapsetask:Cancel()
         inst.collapsetask = nil
 
+        if inst.slowdowntask ~= nil then
+            inst.slowdowntask:Cancel()
+        end
+
+        local x, y, z = inst.Transform:GetWorldPosition()
+        inst.slowdowntask = inst:DoPeriodicTask(0, SlowDownTaskUpdate, nil, x, y, z)
+        SlowDownTaskUpdate(inst, x, y, z)
+
         inst:RemoveTag("scarytoprey")
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .03, .15, inst, TUNING.ANTLION_SINKHOLE.RADIUS * 6)
+        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .03, .15, inst,
+            TUNING.musha.skills.desolatedive.radius * 1.5)
         start_repairs(inst)
     else
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .015, .15, inst, TUNING.ANTLION_SINKHOLE.RADIUS * 4)
+        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .015, .15, inst,
+            TUNING.musha.skills.desolatedive.radius)
     end
 
     UpdateOverrideSymbols(inst, inst.collapsestage)
@@ -131,8 +147,8 @@ local function donextcollapse(inst)
     SpawnFx(inst, inst.collapsestage, .8)
 
     local x, y, z = inst.Transform:GetWorldPosition()
-    local ents = TheSim:FindEntities(x, 0, z, TUNING.ANTLION_SINKHOLE.RADIUS + 1, nil,
-        inst.collapsestage > 1 and NON_COLLAPSIBLE_TAGS or NON_COLLAPSIBLE_TAGS_FIRST, COLLAPSIBLE_TAGS)
+    local ents = TheSim:FindEntities(x, 0, z, TUNING.musha.skills.desolatedive.sinkhole.destructionradius, nil,
+        NON_COLLAPSIBLE_TAGS, COLLAPSIBLE_TAGS)
     for i, v in ipairs(ents) do
         if v:IsValid() then
             local isworkable = false
@@ -174,15 +190,14 @@ local function donextcollapse(inst)
             elseif v.components.combat ~= nil
                 and v.components.health ~= nil
                 and not v.components.health:IsDead() then
-                if isfinalstage and v.components.locomotor == nil then
-                    v.components.health:Kill()
-                elseif v.components.combat:CanBeAttacked() then
-                    v.components.combat:GetAttacked(inst, TUNING.ANTLION_SINKHOLE.DAMAGE)
+                if v.components.combat:CanBeAttacked() then
+                    v.components.combat:GetAttacked(inst, TUNING.musha.skills.desolatedive.sinkhole.centerdamage)
                 end
             end
         end
     end
-    local totoss = TheSim:FindEntities(x, 0, z, TUNING.ANTLION_SINKHOLE.RADIUS, TOSS_MUST_TAGS, TOSS_CANT_TAGS)
+    local totoss = TheSim:FindEntities(x, 0, z, TUNING.musha.skills.desolatedive.sinkhole.destructionradius,
+        TOSS_MUST_TAGS, TOSS_CANT_TAGS)
     for i, v in ipairs(totoss) do
         if v.components.mine ~= nil then
             v.components.mine:Deactivate()
@@ -261,9 +276,6 @@ local function fn()
 
     inst:AddComponent("timer")
     inst:ListenForEvent("timerdone", OnTimerDone)
-
-    inst:AddComponent("unevenground")
-    inst.components.unevenground.radius = TUNING.ANTLION_SINKHOLE.UNEVENGROUND_RADIUS
 
     inst.OnSave = OnSave
     inst.OnLoad = OnLoad

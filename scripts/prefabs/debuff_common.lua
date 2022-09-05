@@ -1,4 +1,4 @@
-local assets =
+local assets = -- Reference
 {
     Asset("ANIM", "anim/general/debuff_slowdown.zip"),
     Asset("ANIM", "anim/general/debuff_poison.zip"),
@@ -114,7 +114,7 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
         end, target)
 
         if onattachedfn ~= nil then
-            onattachedfn(inst, target)
+            onattachedfn(inst, target) -- Note: components.debuff.onattachedfn(self.inst, target, followsymbol, followoffset, data)
         end
     end
 
@@ -122,13 +122,13 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
         inst.components.timer:SetTimeLeft("buffover", defaultduration)
 
         if onextendedfn ~= nil then
-            onextendedfn(inst, target)
+            onextendedfn(inst, target) -- Note: components.debuff.onextendedfn(self.inst, self.target, followsymbol, followoffset, data)
         end
     end
 
     local function OnDetached(inst, target)
         if ondetachedfn ~= nil then
-            ondetachedfn(inst, target)
+            ondetachedfn(inst, target) -- Note: components.debuff.ondetachedfn(self.inst, target)
         end
 
         inst.AnimState:PushAnimation("level2_pst", false)

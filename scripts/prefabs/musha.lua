@@ -38,7 +38,7 @@ end
 
 local function ToggleSleep(inst)
     -- Can interrupt sleep (wake up)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("sleeping")) then
         return
     end
@@ -246,7 +246,7 @@ local function StopMelodyBuff(inst)
 end
 
 local function PlayElfMelody(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_elfmelody") then
         return
     end
@@ -466,7 +466,7 @@ end
 
 local function ToggleShield(inst)
     -- Can interrupt wake up state
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("waking")) then
         return
     end
@@ -571,7 +571,7 @@ local function ThunderSpell(inst)
             if v.components.debuffable:GetDebuff("thunderspell") then
                 v.components.debuffable:GetDebuff("thunderspell"):SetDuration(duration)
             end
-            CustomAttachFx(v, "lightning")
+            CustomAttachFx(v, "lightning_musha")
         end)
         validtargets = validtargets + 1
     end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
@@ -708,7 +708,7 @@ local function LightningStrike(inst, data)
         TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
 
     target.components.combat:GetAttacked(inst, damage, inst.components.combat:GetWeapon(), "electric")
-    CustomAttachFx(target, { "lightning", "shock_fx" })
+    CustomAttachFx(target, { "lightning_musha", "shock_fx" })
     inst:LightningDischarge()
 end
 
@@ -887,7 +887,7 @@ end
 
 -- Decide normal mode or full mode
 local function DecideNormalOrFull(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
         return
     end
@@ -902,7 +902,7 @@ end
 -- Toggle valkyrie mode
 local function ValkyrieKeyDown(inst, x, y, z)
     -- Can interrupt frozen, can recharge when using skills
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
         or inst.valkyriekeypressed
         or (inst.sg:HasStateTag("musha_nointerrupt")
             and not (inst.sg:HasStateTag("frozen")
@@ -946,7 +946,8 @@ local function ValkyrieKeyDown(inst, x, y, z)
                         or inst.sg:HasStateTag("musha_desolatedive")
                         or inst.sg:HasStateTag("musha_magpiestep")
 
-                    if attacking then return end
+                    if attacking or inst.components.health:IsDead() or inst:HasTag("playerghost") or
+                        inst.sg:HasStateTag("ghostbuild") then return end
 
                     if not inst.skills.desolatedive then
                         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -963,6 +964,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
                     else
                         inst.startdesolatedive_pre:push()
                     end
+
                     inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
                 end
             end
@@ -987,7 +989,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
         if inst:HasDebuff("poisonspore") then
             local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
             inst.components.debuffable:RemoveDebuff("poisonspore")
-            inst.fx_poisonspore = SpawnPrefab("poisonspore")
+            inst.fx_poisonspore = SpawnPrefab("sporebomb_musha")
             inst.fx_poisonspore.Transform:SetPosition(x, y, z)
             inst.fx_poisonspore.components.complexprojectile:Launch(CursorPosition, inst)
             inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
@@ -1021,7 +1023,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
         else
             inst.components.mana:DoDelta(-TUNING.musha.skills.poisonspore.manacost)
             inst.components.sanity:DoDelta(-TUNING.musha.skills.poisonspore.sanitycost)
-            inst:AddDebuff("poisonspore", "poisonspore")
+            inst:AddDebuff("poisonspore", "sporebomb_musha")
             inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
             inst.components.talker:Say(STRINGS.musha.skills.poisonspore.ready)
         end
@@ -1029,7 +1031,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
 end
 
 local function ValkyrieKeyUp(inst, x, y, z)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") then
         return
     end
 
@@ -1072,7 +1074,7 @@ end
 
 -- Toggle berserk mode
 local function ToggleBerserk(inst, x, y, z)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
@@ -1210,7 +1212,7 @@ local function OnModeChange(inst)
     if previousmode == 2 and currentmode ~= 2 then
         inst:RemoveTag("stronggrip")
         inst.components.combat.externaldamagemultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
-        inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "valkyriebuff")
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
@@ -1283,10 +1285,10 @@ local function OnModeChange(inst)
 
         inst:AddTag("stronggrip")
 
-        inst.components.combat.externaldamagemultipliers:SetModifier(inst, TUNING.musha.valkyrieattackboost,
-            "valkyriebuff")
-        inst.components.health.externalabsorbmodifiers:SetModifier(inst, TUNING.musha.valkyriedefenseboost,
-            "valkyriebuff")
+        inst.components.combat.externaldamagemultipliers:SetModifier(inst,
+            TUNING.musha.valkyriedamagemultiplier, "valkyriebuff")
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.valkyriedamagetakenmultiplier, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
         inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.valkyriemanaongoingmodifier, "valkyriebuff")
 
@@ -1335,8 +1337,14 @@ end
 
 -- Fatigue level related
 
+local function SetCarefulWalkingAlwaysOn(inst, data)
+    if data and not data.careful then
+        inst.player_classified.iscarefulwalking:set(true)
+    end
+end
+
 local function DecideFatigueLevel(inst)
-    if inst:HasTag("playerghost") or inst.components.health:IsDead() or inst.sg:HasStateTag("ghostbuild")
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
         or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
@@ -1357,6 +1365,7 @@ local function DecideFatigueLevel(inst)
 end
 
 local function OnFatigueLevelChange(inst)
+    local _fatiguelevel = inst._fatiguelevel
     local fatiguelevel = inst.fatiguelevel:value()
 
     CustomRemoveEntity(inst.fx_fatiguelevel)
@@ -1364,6 +1373,11 @@ local function OnFatigueLevelChange(inst)
     inst.components.workmultiplier:RemoveMultiplier(ACTIONS.MINE, inst)
     inst.components.workmultiplier:RemoveMultiplier(ACTIONS.HAMMER, inst)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
+
+    if _fatiguelevel == 4 and fatiguelevel ~= 4 then
+        inst:RemoveEventCallback("carefulwalking", SetCarefulWalkingAlwaysOn)
+        inst.player_classified.iscarefulwalking:set(false)
+    end
 
     if fatiguelevel == 0 then
         local workmultiplier = TUNING.musha.fatiguelevel.level0.workmultiplier
@@ -1405,7 +1419,12 @@ local function OnFatigueLevelChange(inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+
+        inst.player_classified.iscarefulwalking:set(true)
+        inst:ListenForEvent("carefulwalking", SetCarefulWalkingAlwaysOn)
     end
+
+    inst._fatiguelevel = fatiguelevel -- Update previous fatiguelevel
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -1535,6 +1554,7 @@ local function common_postinit(inst)
 
     -- Character specific attributes
     inst._mode = 0 -- Store previous mode
+    inst._fatiguelevel = 0 -- Store previous fatigue level
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG

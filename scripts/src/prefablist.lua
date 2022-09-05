@@ -15,7 +15,9 @@ PrefabFiles = {
     "musha_phantom",
     "fx_fullmode",
     "manashield",
-    "poisonspore",
+    "lightning_musha",
+    "sporebomb_musha",
+    "sporecloud_musha",
     "antlion_sinkhole_musha",
 
     -- General

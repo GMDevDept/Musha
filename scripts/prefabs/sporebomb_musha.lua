@@ -5,7 +5,7 @@ local assets =
 
 local prefabs =
 {
-    "sporecloud",
+    "sporecloud_musha",
 }
 
 local FADE_FRAMES = 5
@@ -69,7 +69,7 @@ local function OnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
-    local cloud = SpawnPrefab("sporecloud")
+    local cloud = SpawnPrefab("sporecloud_musha")
     cloud.Transform:SetPosition(x, 0, z)
     cloud:FadeInImmediately()
     cloud.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
@@ -199,4 +199,4 @@ local function fn()
     return inst
 end
 
-return Prefab("poisonspore", fn, assets, prefabs)
+return Prefab("sporebomb_musha", fn, assets, prefabs)
