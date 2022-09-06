@@ -760,6 +760,64 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Element burst
+
+-- Poison
+local function LaunchPoisonSpore(inst, data)
+    local CursorPosition = data.CursorPosition
+    if inst:HasDebuff("poisonspore") then
+        local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
+        inst.components.debuffable:RemoveDebuff("poisonspore")
+        inst.fx_poisonspore = SpawnPrefab("frostball_projectile_musha")
+        -- inst.fx_poisonspore = SpawnPrefab("sporebomb_musha")
+        inst.fx_poisonspore.Transform:SetPosition(x, y, z)
+        inst.fx_poisonspore.components.complexprojectile:Launch(CursorPosition, inst)
+        inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
+
+        local function PoisonSporeOnTimerDone(inst, data)
+            if data.name == "cooldown_poisonspore" then
+                inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                    .. STRINGS.musha.skills.poisonspore.name
+                    .. STRINGS.musha.skills.cooldownfinished.part2)
+                inst:RemoveEventCallback("timerdone", PoisonSporeOnTimerDone)
+            end
+        end
+
+        inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.poisonspore.cooldown)
+        inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
+    elseif not inst.skills.poisonspore then
+        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+    elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
+        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.poisonspore.name
+            .. STRINGS.musha.skills.incooldown.part2
+            .. STRINGS.musha.skills.incooldown.part3
+            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_poisonspore"))
+            .. STRINGS.musha.skills.incooldown.part4)
+    elseif inst.components.mana.current < TUNING.musha.skills.poisonspore.manacost then
+        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+        CustomPlayFailedAnim(inst)
+    elseif inst.components.sanity.current < TUNING.musha.skills.poisonspore.sanitycost then
+        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+        CustomPlayFailedAnim(inst)
+    else
+        inst.components.mana:DoDelta(-TUNING.musha.skills.poisonspore.manacost)
+        inst.components.sanity:DoDelta(-TUNING.musha.skills.poisonspore.sanitycost)
+        inst:AddDebuff("poisonspore", "frostball_projectile_musha")
+        -- inst:AddDebuff("poisonspore", "sporebomb_musha")
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+        inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
+        inst.components.talker:Say(STRINGS.musha.skills.poisonspore.ready)
+    end
+end
+
+-- Magma
+local function LaunchMagmaBomb(inst, data)
+
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sneak
 
 local function ResetSneakSpeedMultiplier(inst)
@@ -946,7 +1004,6 @@ local function ValkyrieKeyDown(inst, x, y, z)
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
         else
-            inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
             inst.startdesolatedive_pre:push()
         end
     elseif previousmode == 2 then
@@ -1002,47 +1059,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
             end
         end
     elseif previousmode == 3 and not isfrozen then
-        if inst:HasDebuff("poisonspore") then
-            local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
-            inst.components.debuffable:RemoveDebuff("poisonspore")
-            inst.fx_poisonspore = SpawnPrefab("sporebomb_musha")
-            inst.fx_poisonspore.Transform:SetPosition(x, y, z)
-            inst.fx_poisonspore.components.complexprojectile:Launch(CursorPosition, inst)
-            inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
-
-            local function PoisonSporeOnTimerDone(inst, data)
-                if data.name == "cooldown_poisonspore" then
-                    inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-                        .. STRINGS.musha.skills.poisonspore.name
-                        .. STRINGS.musha.skills.cooldownfinished.part2)
-                    inst:RemoveEventCallback("timerdone", PoisonSporeOnTimerDone)
-                end
-            end
-
-            inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.poisonspore.cooldown)
-            inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
-        elseif not inst.skills.poisonspore then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
-            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                .. STRINGS.musha.skills.poisonspore.name
-                .. STRINGS.musha.skills.incooldown.part2
-                .. STRINGS.musha.skills.incooldown.part3
-                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_poisonspore"))
-                .. STRINGS.musha.skills.incooldown.part4)
-        elseif inst.components.mana.current < TUNING.musha.skills.poisonspore.manacost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-            CustomPlayFailedAnim(inst)
-        elseif inst.components.sanity.current < TUNING.musha.skills.poisonspore.sanitycost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-            CustomPlayFailedAnim(inst)
-        else
-            inst.components.mana:DoDelta(-TUNING.musha.skills.poisonspore.manacost)
-            inst.components.sanity:DoDelta(-TUNING.musha.skills.poisonspore.sanitycost)
-            inst:AddDebuff("poisonspore", "sporebomb_musha")
-            inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
-            inst.components.talker:Say(STRINGS.musha.skills.poisonspore.ready)
-        end
+        LaunchPoisonSpore(inst, { CursorPosition = CursorPosition })
     end
 end
 

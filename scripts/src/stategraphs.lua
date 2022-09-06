@@ -2135,6 +2135,7 @@ local musha_desolatedive_pst = State {
             ShakeAllCameras(CAMERASHAKE.VERTICAL, .7, .015, .8, inst, 20)
 
             if inst.mode:value() == 0 or inst.mode:value() == 1 then
+                inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
                 inst.mode:set(2)
             end
 

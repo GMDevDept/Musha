@@ -147,8 +147,7 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = -1,
-            -- cooldown = 30,
-            cooldown = 5,
+            cooldown = 30,
             durabilitybase = 400,
             durabilitygrowth = 40,
             durabilitydamage = 20,
@@ -172,6 +171,24 @@ TUNING.musha = {
             max = 1.5,
             staminacost = -10,
             backstabbonustime = 2,
+        },
+        elementburst = {
+            magma = {
+                manacost = 15,
+                damage = 25,
+                radius = 4,
+                cooldown = 5,
+                duration = 8,
+            },
+            frost = {
+                manacost = 15,
+                speedmultiplier = 0.1,
+                coldnessperhit = 0.03,
+                damageperhit = 2 / 3,
+                radius = 4,
+                cooldown = 5,
+                duration = 12,
+            },
         },
         poisonspore = {
             manacost = 15,

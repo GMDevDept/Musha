@@ -18,6 +18,8 @@ PrefabFiles = {
     "lightning_musha",
     "sporebomb_musha",
     "sporecloud_musha",
+    "deer_fx_musha",
+    "fireball_projectile_musha",
     "antlion_sinkhole_musha",
 
     -- General

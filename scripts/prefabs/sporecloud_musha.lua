@@ -6,7 +6,7 @@ local assets =
 
 local prefabs =
 {
-    "sporecloud_overlay_musha",
+    "sporecloud_overlay",
 }
 
 local AURA_EXCLUDE_TAGS = { "playerghost", "ghost", "noauradamage", "INLIMBO", "notarget", "noattack",
@@ -84,7 +84,7 @@ local function SpawnOverlayFX(inst, i, set, isnew)
         end
     end
 
-    local fx = SpawnPrefab("sporecloud_overlay_musha")
+    local fx = SpawnPrefab("sporecloud_overlay")
     fx.entity:SetParent(inst.entity)
     fx.Transform:SetPosition(set[1] * .85, 0, set[3] * .85)
     fx.Transform:SetScale(set[4], set[4], set[4])
@@ -387,36 +387,4 @@ local function fn()
     return inst
 end
 
-local function overlayfn()
-    local inst = CreateEntity()
-
-    inst.entity:AddTransform()
-    inst.entity:AddAnimState()
-    inst.entity:AddNetwork()
-
-    inst:AddTag("FX")
-    inst:AddTag("NOCLICK")
-
-    inst.Transform:SetTwoFaced()
-
-    inst.AnimState:SetBank("sporecloud")
-    inst.AnimState:SetBuild("sporecloud")
-    inst.AnimState:SetLightOverride(.2)
-
-    inst.AnimState:PlayAnimation("sporecloud_overlay_pre")
-
-    inst.entity:SetPristine()
-
-    if not TheWorld.ismastersim then
-        return inst
-    end
-
-    inst:ListenForEvent("animover", OnOverlayAnimOver)
-
-    inst.persists = false
-
-    return inst
-end
-
-return Prefab("sporecloud_musha", fn, assets, prefabs),
-    Prefab("sporecloud_overlay_musha", overlayfn, assets)
+return Prefab("sporecloud_musha", fn, assets, prefabs)
