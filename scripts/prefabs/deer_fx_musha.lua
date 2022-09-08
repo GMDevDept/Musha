@@ -147,7 +147,7 @@ local function OnUpdateIceCircle(inst, x, z)
             local nodamage = v:HasTag("player") or v:HasTag("companion") or v:HasTag("musha_companion")
 
             if v.components.locomotor ~= nil then
-                v.components.locomotor:PushTempGroundSpeedMultiplier(TUNING.musha.skills.elementburst.frost.speedmultiplier)
+                v.components.locomotor:PushTempGroundSpeedMultiplier(TUNING.musha.skills.launchelement.whitefrost.speedmultiplier)
             end
 
             if v.components.burnable ~= nil and v.components.fueled == nil then
@@ -164,11 +164,13 @@ local function OnUpdateIceCircle(inst, x, z)
                     if inst._track2[v] == nil then
                         if not v:HasTag("freeze_cooldown") then
                             if v.components.combat ~= nil and not nodamage then
-                                v.components.combat:GetAttacked(inst, TUNING.musha.skills.elementburst.frost.damageperhit)
+                                v.components.combat:GetAttacked(inst,
+                                    TUNING.musha.skills.launchelement.whitefrost.damageperhit)
                             end
-                            v.components.freezable:AddColdness(TUNING.musha.skills.elementburst.frost.coldnessperhit, 1) -- Must be called after GetAttacked
+                            v.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.coldnessperhit
+                                , 1) -- Must be called after GetAttacked
                         elseif v.components.health ~= nil and not nodamage then -- For targets in freeze cooldown, only do delta to health to prevent freezing and attacked stun
-                            v.components.health:DoDelta(-TUNING.musha.skills.elementburst.frost.damageperhit)
+                            v.components.health:DoDelta(-TUNING.musha.skills.launchelement.whitefrost.damageperhit)
                         end
                     elseif v.components.freezable.coldness < v.components.freezable:ResolveResistance() * .7
                         and not v:HasTag("freeze_cooldown") then

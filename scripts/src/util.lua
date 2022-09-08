@@ -86,6 +86,10 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     fx.Transform:SetScale(a, b, c)
     fx.Transform:SetPosition(x, y, z)
 
+    if fx_name == "mossling_spin_fx" then
+        fx.AnimState:SetSortOrder(3)
+    end
+
     if dur ~= 0 then
         target:DoTaskInTime(dur, function()
             if fx_name == "balloonparty_confetti_cloud" then
@@ -175,5 +179,16 @@ GLOBAL.CustomPlayFailedAnim = function(inst)
         inst.sg:GoToState("repelled")
     else
         inst.sg:GoToState("mindcontrolled_pst")
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Find key by value
+GLOBAL.CustomFindKeyByValue = function(table, value)
+    for k, v in pairs(table) do
+        if v == value then
+            return k
+        end
     end
 end

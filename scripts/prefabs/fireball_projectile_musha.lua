@@ -19,11 +19,11 @@ local function FireballOnExplode(inst)
 
     local must_tags = { "_combat" }
     local ignore_tags = { "companion", "musha_companion", "player" }
-    local range = TUNING.musha.skills.elementburst.magma.radius
-    local damage = TUNING.musha.skills.elementburst.magma.damage
+    local range = TUNING.musha.skills.launchelement.rollingmagma.radius
+    local damage = TUNING.musha.skills.launchelement.rollingmagma.damage
 
     CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
-        v.components.combat:GetAttacked(inst, damage)
+        v.components.combat:GetAttacked(inst.owner, damage)
     end)
 
     local fx = SpawnPrefab("lavaarena_firebomb_proc_fx")
@@ -35,7 +35,7 @@ local function FireballOnExplode(inst)
     postprefab.Transform:SetPosition(x, 0, z)
     postprefab.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
     postprefab:DoTaskInTime(25 * FRAMES, postprefab.TriggerFX)
-    postprefab:DoTaskInTime(TUNING.musha.skills.elementburst.magma.duration, postprefab.KillFX)
+    postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.rollingmagma.duration, postprefab.KillFX)
 end
 
 local function FrostOnExplode(inst)
@@ -56,7 +56,7 @@ local function FrostOnExplode(inst)
     postprefab.Transform:SetPosition(x, 0, z)
     postprefab.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/frozen")
     postprefab:DoTaskInTime(3, postprefab.TriggerFX)
-    postprefab:DoTaskInTime(TUNING.musha.skills.elementburst.frost.duration, postprefab.KillFX)
+    postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.whitefrost.duration, postprefab.KillFX)
 end
 
 local function HealingOnExplode(inst)
@@ -159,7 +159,8 @@ local function OnUpdateProjectileTail(inst, bank, build, speed, lightoverride, a
     end
 end
 
-local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour, multcolour, hitfx, onexplodefn)
+local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour, multcolour, hitfx,
+                              onexplodefn, horizontalspeed, gravity)
     local assets =
     {
         Asset("ANIM", "anim/" .. build .. ".zip"),
@@ -199,6 +200,8 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
                 , hitfx, {})
         end
 
+        inst.persists = false
+
         inst.entity:SetPristine()
 
         if not TheWorld.ismastersim then
@@ -206,8 +209,8 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
         end
 
         inst:AddComponent("complexprojectile")
-        inst.components.complexprojectile:SetHorizontalSpeed(15)
-        inst.components.complexprojectile:SetGravity(-35)
+        inst.components.complexprojectile:SetHorizontalSpeed(horizontalspeed)
+        inst.components.complexprojectile:SetGravity(gravity)
         inst.components.complexprojectile:SetLaunchOffset(Vector3(.25, 1, 0))
         inst.components.complexprojectile:SetOnLaunch(OnThrown)
         inst.components.complexprojectile:SetOnHit(OnHit)
@@ -217,7 +220,7 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
         inst.components.debuff:SetDetachedFn(OnDetached)
 
         inst:AddComponent("timer")
-        inst.components.timer:StartTimer("explode", TUNING.musha.skills.poisonspore.maxdelay)
+        inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.poisonspore.maxdelay)
         inst:ListenForEvent("timerdone", OnTimerDone)
 
         inst.OnExplode = onexplodefn
@@ -231,8 +234,8 @@ end
 --------------------------------------------------------------------------
 
 return MakeProjectile("fireball_projectile_musha", "fireball_fx", "fireball_2_fx", 15, 1, nil, nil, "fireball_hit_fx",
-    FireballOnExplode),
+    FireballOnExplode, 20, -30),
     MakeProjectile("blossom_projectile_musha", "lavaarena_heal_projectile", "lavaarena_heal_projectile", 15, 0,
-        { 0, .2, .1, 0 }, nil, "blossom_hit_fx", HealingOnExplode),
+        { 0, .2, .1, 0 }, nil, "blossom_hit_fx", HealingOnExplode, 15, -35),
     MakeProjectile("frostball_projectile_musha", "gooball_fx", "gooball_fx", 20, 1, nil, { .9, .9, .9, 1 },
-        "gooball_hit_fx", FrostOnExplode)
+        "gooball_hit_fx", FrostOnExplode, 18, -40)

@@ -71,7 +71,7 @@ function Mana:SetPercent(p, overtime)
 
     if old > 0 then
         if self.current <= 0 then
-            self.inst:PushEvent("startmanadepleted")
+            self.inst:PushEvent("manadepleted")
             ProfileStatsSet("started_manadepleted", true)
         end
     elseif self.current > 0 then
@@ -130,7 +130,7 @@ function Mana:DoDelta(delta, overtime, follow_invincible)
 
     if old > 0 then
         if self.current <= 0 then
-            self.inst:PushEvent("startmanadepleted")
+            self.inst:PushEvent("manadepleted")
             ProfileStatsSet("started_manadepleted", true)
         end
     elseif self.current > 0 then

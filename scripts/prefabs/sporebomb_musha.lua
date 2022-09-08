@@ -182,7 +182,7 @@ local function fn()
     end
 
     inst:AddComponent("complexprojectile")
-    inst.components.complexprojectile:SetHorizontalSpeed(15)
+    inst.components.complexprojectile:SetHorizontalSpeed(10)
     inst.components.complexprojectile:SetGravity(-35)
     inst.components.complexprojectile:SetLaunchOffset(Vector3(.25, 1, 0))
     inst.components.complexprojectile:SetOnLaunch(OnThrown)
@@ -193,7 +193,7 @@ local function fn()
     inst.components.debuff:SetDetachedFn(OnDetached)
 
     inst:AddComponent("timer")
-    inst.components.timer:StartTimer("explode", TUNING.musha.skills.poisonspore.maxdelay)
+    inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.poisonspore.maxdelay)
     inst:ListenForEvent("timerdone", OnTimerDone)
 
     return inst

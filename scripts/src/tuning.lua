@@ -50,11 +50,11 @@ TUNING.musha = {
 
     activateberserkbasedamage = 5,
 
-    freezecooldowntime = 2.5,
+    freezecooldowntime = 5,
 
     singleclicktimewindow = 0.3,
 
-    debuffslowdownmult = 0.3,
+    debuffslowdownmult = 0.25,
     debuffslowdownduration = 5,
 
     debuffparalysisattackperiodmult = 2,
@@ -82,6 +82,8 @@ TUNING.musha = {
         shadowspell        = 0,
         sneak              = 0,
         sneakspeedboost    = 0,
+        rollingmagma       = 0,
+        whitefrost         = 0,
         poisonspore        = 0,
         shadowshield       = 0,
         instantcast        = 0,
@@ -148,6 +150,7 @@ TUNING.musha = {
             manacost = 10,
             manaongoingcost = -1,
             cooldown = 30,
+            brokendelay = 3,
             durabilitybase = 400,
             durabilitygrowth = 40,
             durabilitydamage = 20,
@@ -172,31 +175,31 @@ TUNING.musha = {
             staminacost = -10,
             backstabbonustime = 2,
         },
-        elementburst = {
-            magma = {
-                manacost = 15,
-                damage = 25,
+        launchelement = {
+            rollingmagma = {
+                manacost = 5,
+                damage = 45,
                 radius = 4,
-                cooldown = 5,
-                duration = 8,
+                cooldown = 3,
+                duration = 3,
             },
-            frost = {
+            whitefrost = {
                 manacost = 15,
-                speedmultiplier = 0.1,
+                speedmultiplier = 0.25,
                 coldnessperhit = 0.03,
                 damageperhit = 2 / 3,
                 radius = 4,
-                cooldown = 5,
-                duration = 12,
+                cooldown = 10,
+                duration = 10,
             },
-        },
-        poisonspore = {
-            manacost = 15,
-            sanitycost = 15,
-            damage = 20,
-            duration = 20,
-            maxdelay = 10,
-            cooldown = 5,
+            poisonspore = {
+                manacost = 15,
+                sanitycost = 15,
+                damage = 20,
+                duration = 20,
+                maxdelay = 10,
+                cooldown = 10,
+            },
         },
         lightningstrike = {
             manacost = 10,

@@ -2023,6 +2023,7 @@ local musha_desolatedive = State {
         TimeEvent(FRAMES, function(inst)
             inst.DynamicShadow:Enable(false)
             inst.components.health:SetInvincible(true)
+            inst:RemoveTag("scarytoprey")
             inst.AnimState:SetMultColour(.5, .5, .5, 1)
             inst.components.colouradder:PushColour("superjump", .3, .3, .2, 0)
             inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
@@ -2064,6 +2065,7 @@ local musha_desolatedive = State {
     onexit = function(inst)
         if not inst.sg.statemem.superjump then
             inst.components.health:SetInvincible(false)
+            inst:AddTag("scarytoprey")
             if inst.sg.statemem.isphysicstoggle then
                 ToggleOnPhysics(inst)
             end
@@ -2095,6 +2097,7 @@ local musha_desolatedive_pst = State {
                 end
                 inst.Physics:Teleport(data.targetpos.x, 0, data.targetpos.z)
                 inst.components.health:SetInvincible(true)
+                inst:RemoveTag("scarytoprey")
                 inst.sg:SetTimeout(22 * FRAMES)
                 return
             end
@@ -2141,6 +2144,7 @@ local musha_desolatedive_pst = State {
 
             inst:DoTaskInTime(0, DoDive) -- Get lightning strike effect
             inst.components.health:SetInvincible(false)
+            inst:AddTag("scarytoprey")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("musha_nointerrupt")
 

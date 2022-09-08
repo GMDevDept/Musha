@@ -100,6 +100,7 @@ STRINGS.musha = {
             name = "精灵护盾",
             broken = "敌人好凶, 护盾要碎掉了!",
             broken_other = "[精灵护盾] 耐久已耗尽",
+            broken_manadepleted = "Musha已经没有足够的魔力来维持护盾了。",
         },
         manashield_passive = {
             name = "精灵庇佑",
@@ -138,9 +139,19 @@ STRINGS.musha = {
             mark = "标记在地图上...",
             cannot_find_pos = "宝藏似乎弄丢了...再试一次吧!",
         },
-        poisonspore = {
-            name = "孢子炸弹",
-            ready = "[孢子炸弹] 准备就绪!",
+        launchelement = {
+            rollingmagma = {
+                name = "沸滚熔岩",
+                cast = "[沸滚熔岩] 准备就绪!",
+            },
+            whitefrost = {
+                name = "奔涌白霜",
+                cast = "[奔涌白霜] 准备就绪!",
+            },
+            poisonspore = {
+                name = "孢子炸弹",
+                ready = "[孢子炸弹] 准备就绪!",
+            },
         },
         setsugetsuka = {
             name = "雪月花",

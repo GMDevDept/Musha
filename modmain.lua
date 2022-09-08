@@ -28,7 +28,7 @@ AddReplicableComponent("fatigue")
 
 -- Run scripts
 modimport("scripts/src/tuning.lua") -- Settings, values and parameters
-modimport("scripts/src/commonfunctions.lua") -- Define global functions used in this mod
+modimport("scripts/src/util.lua") -- Define global functions used in this mod
 modimport("scripts/src/prefablist.lua") -- Prefab list
 modimport("scripts/src/assetlist.lua") -- Asset list
 modimport("scripts/src/skinbuild.lua") -- Redefine skin register functions

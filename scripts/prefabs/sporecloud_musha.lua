@@ -190,7 +190,7 @@ local function DoDisperse(inst)
     inst.AnimState:PlayAnimation("sporecloud_pst")
     inst.SoundEmitter:KillSound("spore_loop")
     inst.persists = false
-    inst:DoTaskInTime(3, inst.Remove) --anim len + 1.5 sec
+    inst:DoTaskInTime(1.5, inst.Remove)
 
     if inst._basefx ~= nil then
         inst._basefx.AnimState:PlayAnimation("sporecloud_base_pst")
@@ -219,54 +219,6 @@ local function FinishImmediately(inst)
     if inst.components.timer:TimerExists("disperse") then
         inst.components.timer:StopTimer("disperse")
         DoDisperse(inst)
-    end
-end
-
-local function OnLoad(inst, data)
-    --Not a brand new cloud, cancel initial sound and pre-anims
-    if inst._inittask ~= nil then
-        inst._inittask:Cancel()
-        inst._inittask = nil
-    end
-
-    inst:RemoveEventCallback("animover", OnAnimOver)
-
-    if inst._overlaytasks ~= nil then
-        for k, v in pairs(inst._overlaytasks) do
-            v:Cancel()
-        end
-        inst._overlaytasks = nil
-    end
-    if inst._overlayfx ~= nil then
-        for i, v in ipairs(inst._overlayfx) do
-            v:Remove()
-        end
-        inst._overlayfx = nil
-    end
-
-    local t = inst.components.timer:GetTimeLeft("disperse")
-    if t == nil or t <= 0 then
-        DisableCloud(inst)
-        inst._state:set(2)
-        FadeOutImmediately(inst)
-        inst.SoundEmitter:KillSound("spore_loop")
-        inst:Hide()
-        inst.persists = false
-        inst:DoTaskInTime(0, inst.Remove)
-    else
-        inst._state:set(1)
-        FadeInImmediately(inst)
-        inst.AnimState:PlayAnimation("sporecloud_loop", true)
-
-        --Dedicated server does not need to spawn the local fx
-        if not TheNet:IsDedicated() then
-            inst._basefx = CreateBase(false)
-            inst._basefx.entity:SetParent(inst.entity)
-        end
-
-        for i, v in ipairs(OVERLAY_COORDS) do
-            SpawnOverlayFX(inst, nil, v, false)
-        end
     end
 end
 
@@ -345,6 +297,8 @@ local function fn()
 
     inst._inittask = inst:DoTaskInTime(0, InitFX)
 
+    inst.persists = false
+
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
@@ -355,7 +309,7 @@ local function fn()
     end
 
     inst:AddComponent("combat")
-    inst.components.combat:SetDefaultDamage(TUNING.musha.skills.poisonspore.damage)
+    inst.components.combat:SetDefaultDamage(TUNING.musha.skills.launchelement.poisonspore.damage)
 
     inst:AddComponent("aura")
     inst.components.aura.radius = TUNING.TOADSTOOL_SPORECLOUD_RADIUS
@@ -370,11 +324,9 @@ local function fn()
     inst:ListenForEvent("animover", OnAnimOver)
 
     inst:AddComponent("timer")
-    inst.components.timer:StartTimer("disperse", TUNING.musha.skills.poisonspore.duration)
+    inst.components.timer:StartTimer("disperse", TUNING.musha.skills.launchelement.poisonspore.duration)
 
     inst:ListenForEvent("timerdone", OnTimerDone)
-
-    inst.OnLoad = OnLoad
 
     inst.FadeInImmediately = FadeInImmediately
     inst.FinishImmediately = FinishImmediately

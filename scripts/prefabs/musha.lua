@@ -24,6 +24,13 @@ end
 -- Character required prefabs
 local prefabs = FlattenTree(start_inv, true)
 
+-- Element projectile list
+local elementlist = {
+    rollingmagma = 1,
+    whitefrost = 2,
+    poisonspore = 3,
+}
+
 ---------------------------------------------------------------------------------------------------------
 
 -- Bonus damage
@@ -344,7 +351,7 @@ local function ShieldOnAttacked(inst, data)
             elseif inst.components.talker then
                 inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_other)
             end
-            inst.task_shieldbrokendelay = inst:DoTaskInTime(3, function()
+            inst.task_shieldbrokendelay = inst:DoTaskInTime(TUNING.musha.skills.manashield.brokendelay, function()
                 if inst:HasTag("manashieldactivated") then
                     inst:ShieldOff()
                 elseif inst:HasTag("areamanashieldactivated") then
@@ -364,6 +371,15 @@ local function ShieldOnTimerDone(inst, data)
     end
 end
 
+local function ShieldOnManaDepleted(inst)
+    inst.fx_manashield:PushEvent("manashieldonattacked")
+    inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_manadepleted)
+    inst.task_shieldbrokendelay = inst:DoTaskInTime(TUNING.musha.skills.manashield.brokendelay, function()
+        inst:ShieldOff()
+    end)
+    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
+end
+
 local function SetShieldDurability(inst)
     local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
         TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
@@ -378,10 +394,11 @@ local function ShieldOn(inst)
     if not inst.skills.manashield_area then
         inst:AddTag("manashieldactivated")
         inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
         inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
         inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
         inst:SetShieldDurability()
+        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
+        inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
     else
         local validtargets = 0
         local must_tags = { "_combat" }
@@ -396,7 +413,7 @@ local function ShieldOn(inst)
                     v:ShieldOff()
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
-                    v:RemoveEventCallback("attacked", ShieldOnAttacked)
+                    v:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
                     v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
                     v.fx_manashield:kill_fx()
                     inst.shielddurability = nil
@@ -451,7 +468,8 @@ local function ShieldOff(inst)
     inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
     inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
     inst.shielddurability = nil
-    inst:RemoveEventCallback("attacked", ShieldOnAttacked)
+    inst:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
+    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
     CustomCancelTask(inst.task_shieldbrokendelay)
 
     inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
@@ -760,60 +778,218 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Element burst
+-- Launch element
+
+-- Magma
+local function RollingMagma(inst, data)
+    if inst:HasDebuff("elementloaded") then
+        local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+        local projectile = SpawnPrefab("fireball_projectile_musha")
+        projectile.owner = inst
+        projectile.Transform:SetPosition(x, y, z)
+        projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
+        inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
+
+        local function RollingMagmaOnTimerDone(inst, data)
+            if data.name == "cooldown_rollingmagma" then
+                inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                    .. STRINGS.musha.skills.launchelement.rollingmagma.name
+                    .. STRINGS.musha.skills.cooldownfinished.part2)
+                inst:RemoveEventCallback("timerdone", RollingMagmaOnTimerDone)
+            end
+        end
+
+        inst.components.timer:StartTimer("cooldown_rollingmagma", TUNING.musha.skills.launchelement.rollingmagma.cooldown)
+        inst:ListenForEvent("timerdone", RollingMagmaOnTimerDone)
+
+        return true
+    elseif not inst.skills.rollingmagma then
+        return false, STRINGS.musha.lack_of_exp
+    elseif inst.components.timer:TimerExists("cooldown_rollingmagma") then
+        local reason = STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.launchelement.rollingmagma.name
+            .. STRINGS.musha.skills.incooldown.part2
+            .. STRINGS.musha.skills.incooldown.part3
+            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_rollingmagma"))
+            .. STRINGS.musha.skills.incooldown.part4
+        return false, reason
+    elseif inst.components.mana.current < TUNING.musha.skills.launchelement.rollingmagma.manacost then
+        return false, STRINGS.musha.lack_of_mana
+    else
+        inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.rollingmagma.manacost)
+        inst:AddDebuff("elementloaded", "fireball_projectile_musha")
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+        inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
+        inst.components.talker:Say(STRINGS.musha.skills.launchelement.rollingmagma.ready)
+
+        return true
+    end
+end
+
+-- Frost
+local function WhiteFrost(inst, data)
+    if inst:HasDebuff("elementloaded") then
+        local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+        local projectile = SpawnPrefab("frostball_projectile_musha")
+        projectile.owner = inst
+        projectile.Transform:SetPosition(x, y, z)
+        projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
+        inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
+
+        local function WhiteFrostOnTimerDone(inst, data)
+            if data.name == "cooldown_whitefrost" then
+                inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                    .. STRINGS.musha.skills.launchelement.whitefrost.name
+                    .. STRINGS.musha.skills.cooldownfinished.part2)
+                inst:RemoveEventCallback("timerdone", WhiteFrostOnTimerDone)
+            end
+        end
+
+        inst.components.timer:StartTimer("cooldown_whitefrost", TUNING.musha.skills.launchelement.whitefrost.cooldown)
+        inst:ListenForEvent("timerdone", WhiteFrostOnTimerDone)
+
+        return true
+    elseif not inst.skills.whitefrost then
+        return false, STRINGS.musha.lack_of_exp
+    elseif inst.components.timer:TimerExists("cooldown_whitefrost") then
+        local reason = STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.launchelement.whitefrost.name
+            .. STRINGS.musha.skills.incooldown.part2
+            .. STRINGS.musha.skills.incooldown.part3
+            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_whitefrost"))
+            .. STRINGS.musha.skills.incooldown.part4
+        return false, reason
+    elseif inst.components.mana.current < TUNING.musha.skills.launchelement.whitefrost.manacost then
+        return false, STRINGS.musha.lack_of_mana
+    else
+        inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.whitefrost.manacost)
+        inst:AddDebuff("elementloaded", "frostball_projectile_musha")
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+        inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
+        inst.components.talker:Say(STRINGS.musha.skills.launchelement.whitefrost.ready)
+
+        return true
+    end
+end
 
 -- Poison
-local function LaunchPoisonSpore(inst, data)
-    local CursorPosition = data.CursorPosition
-    if inst:HasDebuff("poisonspore") then
-        local x, y, z = inst.components.debuffable:GetDebuff("poisonspore").Transform:GetWorldPosition()
-        inst.components.debuffable:RemoveDebuff("poisonspore")
-        inst.fx_poisonspore = SpawnPrefab("frostball_projectile_musha")
-        -- inst.fx_poisonspore = SpawnPrefab("sporebomb_musha")
-        inst.fx_poisonspore.Transform:SetPosition(x, y, z)
-        inst.fx_poisonspore.components.complexprojectile:Launch(CursorPosition, inst)
+local function PoisonSpore(inst, data)
+    if inst:HasDebuff("elementloaded") then
+        local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+        local projectile = SpawnPrefab("sporebomb_musha")
+        projectile.owner = inst
+        projectile.Transform:SetPosition(x, y, z)
+        projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
         inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
 
         local function PoisonSporeOnTimerDone(inst, data)
             if data.name == "cooldown_poisonspore" then
                 inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-                    .. STRINGS.musha.skills.poisonspore.name
+                    .. STRINGS.musha.skills.launchelement.poisonspore.name
                     .. STRINGS.musha.skills.cooldownfinished.part2)
                 inst:RemoveEventCallback("timerdone", PoisonSporeOnTimerDone)
             end
         end
 
-        inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.poisonspore.cooldown)
+        inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.launchelement.poisonspore.cooldown)
         inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
+
+        return true
     elseif not inst.skills.poisonspore then
-        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        return false, STRINGS.musha.lack_of_exp
     elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
-        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-            .. STRINGS.musha.skills.poisonspore.name
+        local reason = STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.launchelement.poisonspore.name
             .. STRINGS.musha.skills.incooldown.part2
             .. STRINGS.musha.skills.incooldown.part3
             .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_poisonspore"))
-            .. STRINGS.musha.skills.incooldown.part4)
-    elseif inst.components.mana.current < TUNING.musha.skills.poisonspore.manacost then
-        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-        CustomPlayFailedAnim(inst)
-    elseif inst.components.sanity.current < TUNING.musha.skills.poisonspore.sanitycost then
-        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-        CustomPlayFailedAnim(inst)
+            .. STRINGS.musha.skills.incooldown.part4
+        return false, reason
+    elseif inst.components.mana.current < TUNING.musha.skills.launchelement.poisonspore.manacost then
+        return false, STRINGS.musha.lack_of_mana
+    elseif inst.components.sanity.current < TUNING.musha.skills.launchelement.poisonspore.sanitycost then
+        return false, STRINGS.musha.lack_of_sanity
     else
-        inst.components.mana:DoDelta(-TUNING.musha.skills.poisonspore.manacost)
-        inst.components.sanity:DoDelta(-TUNING.musha.skills.poisonspore.sanitycost)
-        inst:AddDebuff("poisonspore", "frostball_projectile_musha")
-        -- inst:AddDebuff("poisonspore", "sporebomb_musha")
+        inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.manacost)
+        inst.components.sanity:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.sanitycost)
+        inst:AddDebuff("elementloaded", "sporebomb_musha")
         inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
         inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
-        inst.components.talker:Say(STRINGS.musha.skills.poisonspore.ready)
+        inst.components.talker:Say(STRINGS.musha.skills.launchelement.poisonspore.ready)
+
+        return true
     end
 end
 
--- Magma
-local function LaunchMagmaBomb(inst, data)
+local function ElementTakeTurns(inst, data)
+    local availables = {}
+    local max = 0
 
+    for k, v in pairs(TUNING.musha.skills.launchelement) do
+        if inst.skills[k] then
+            table.insert(availables, k)
+        end
+        max = max + 1
+    end
+
+    if #availables == 0 then
+        return false, "noskill"
+    end
+
+    if #availables == 1 then
+        if elementlist[availables[1]] == inst.elementmode then
+            return false, "noalter"
+        else
+            inst.elementmode = elementlist[availables[1]]
+            return true
+        end
+    else
+        local success
+        local _elementmode = inst.elementmode
+        inst.elementmode = inst.elementmode < max and inst.elementmode + 1 or 1
+
+        while inst.elementmode ~= _elementmode do
+            if CustomFindKeyByValue(elementlist, inst.elementmode)
+                and CustomFindKeyByValue(availables, CustomFindKeyByValue(elementlist, inst.elementmode)) then
+                success = inst:LaunchElement(data, true)
+                if success then return false, "complete" end
+            end
+            inst.elementmode = inst.elementmode < max and inst.elementmode + 1 or 1
+        end
+
+        return false, "noalter"
+    end
+end
+
+local function LaunchElement(inst, data, norecur)
+    local success, reason1, reason2
+
+    if inst.elementmode == 1 then
+        success, reason1 = RollingMagma(inst, data)
+    elseif inst.elementmode == 2 then
+        success, reason1 = WhiteFrost(inst, data)
+    elseif inst.elementmode == 3 then
+        success, reason1 = PoisonSpore(inst, data)
+    end
+
+    if norecur then return success end
+
+    if success then return end
+
+    success, reason2 = ElementTakeTurns(inst, data)
+
+    if success then
+        LaunchElement(inst, data)
+    elseif reason2 == "noskill" then
+        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+    elseif reason2 == "noalter" then
+        inst.components.talker:Say(reason1)
+    elseif reason2 == "complete" then
+        return
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -943,15 +1119,6 @@ end
 
 -- Character mode related
 
-local function ValkyrieModeOnTimerDone(inst, data)
-    if data.name == "cooldown_valkyriemode" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.valkyriemode.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", ValkyrieModeOnTimerDone)
-    end
-end
-
 -- Decide normal mode or full mode
 local function DecideNormalOrFull(inst)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
@@ -966,14 +1133,59 @@ local function DecideNormalOrFull(inst)
     end
 end
 
--- Toggle valkyrie mode
+-- Hotkey: valkyrie
+
+local function ValkyrieModeOnTimerDone(inst, data)
+    if data.name == "cooldown_valkyriemode" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.valkyriemode.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ValkyrieModeOnTimerDone)
+    end
+end
+
+local function ValkyrieKeyLongPressed(inst, data)
+    if data.name == "valkyriekeyonlongpress" then
+        if inst.mode:value() == 2 then
+            -- Delayed event, need to check again
+            local attacking = inst.sg:HasStateTag("musha_setsugetsuka")
+                or inst.sg:HasStateTag("musha_phoenixadvent")
+                or inst.sg:HasStateTag("musha_annihilation")
+                or inst.sg:HasStateTag("musha_desolatedive")
+                or inst.sg:HasStateTag("musha_magpiestep")
+
+            if attacking or inst.components.health:IsDead() or inst:HasTag("playerghost") or
+                inst.sg:HasStateTag("ghostbuild") then return end
+
+            if not inst.skills.desolatedive then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_desolatedive") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.desolatedive.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_desolatedive"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.startdesolatedive_pre:push()
+            end
+        elseif inst.mode:value() == 3 then
+
+        end
+
+        inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
+    end
+end
+
 local function ValkyrieKeyDown(inst, x, y, z)
-    -- Can interrupt frozen, can recharge when using skills
+    -- Can recharge when using skills
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
         or inst.valkyriekeypressed
         or (inst.sg:HasStateTag("musha_nointerrupt")
-            and not (inst.sg:HasStateTag("frozen")
-                or inst.sg:HasStateTag("musha_setsugetsuka")
+            and not (inst.sg:HasStateTag("musha_setsugetsuka")
                 or inst.sg:HasStateTag("musha_phoenixadvent")
                 or inst.sg:HasStateTag("musha_annihilation")
                 or inst.sg:HasStateTag("musha_desolatedive")
@@ -983,16 +1195,13 @@ local function ValkyrieKeyDown(inst, x, y, z)
 
     inst.valkyriekeypressed = true -- Prevent continuous triggering on long press
 
-    local isfrozen = inst.sg:HasStateTag("frozen")
     local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
         or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
         or inst.sg:HasStateTag("musha_magpiestep")
-    local previousmode = inst.mode:value()
-    local CursorPosition = Vector3(x, y, z)
 
-    inst.bufferedcursorpos = CursorPosition
+    inst.bufferedcursorpos = Vector3(x, y, z)
 
-    if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
+    if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("nomorph") then
         if inst.components.timer:TimerExists("cooldown_valkyriemode") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                 .. STRINGS.musha.skills.valkyriemode.name
@@ -1006,42 +1215,10 @@ local function ValkyrieKeyDown(inst, x, y, z)
         else
             inst.startdesolatedive_pre:push()
         end
-    elseif previousmode == 2 then
+    elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("premagpiestep") then
             inst.startmagpiestep:push()
         else
-            local function ValkyrieKeyLongPressed(inst, data)
-                if data.name == "valkyriekeyonlongpress" then
-                    -- Delayed event, need to check again
-                    local attacking = inst.sg:HasStateTag("musha_setsugetsuka")
-                        or inst.sg:HasStateTag("musha_phoenixadvent")
-                        or inst.sg:HasStateTag("musha_annihilation")
-                        or inst.sg:HasStateTag("musha_desolatedive")
-                        or inst.sg:HasStateTag("musha_magpiestep")
-
-                    if attacking or inst.components.health:IsDead() or inst:HasTag("playerghost") or
-                        inst.sg:HasStateTag("ghostbuild") then return end
-
-                    if not inst.skills.desolatedive then
-                        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-                    elseif inst.components.timer:TimerExists("cooldown_desolatedive") then
-                        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                            .. STRINGS.musha.skills.desolatedive.name
-                            .. STRINGS.musha.skills.incooldown.part2
-                            .. STRINGS.musha.skills.incooldown.part3
-                            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_desolatedive"))
-                            .. STRINGS.musha.skills.incooldown.part4)
-                    elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
-                        inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
-                        CustomPlayFailedAnim(inst)
-                    else
-                        inst.startdesolatedive_pre:push()
-                    end
-
-                    inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
-                end
-            end
-
             if not inst:HasTag("lightningstrikeready") then
                 if inst.components.mana.current < TUNING.musha.skills.lightningstrike.manacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_mana)
@@ -1058,8 +1235,9 @@ local function ValkyrieKeyDown(inst, x, y, z)
                 inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
             end
         end
-    elseif previousmode == 3 and not isfrozen then
-        LaunchPoisonSpore(inst, { CursorPosition = CursorPosition })
+    elseif inst.mode:value() == 3 then
+        inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
+        inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     end
 end
 
@@ -1068,16 +1246,13 @@ local function ValkyrieKeyUp(inst, x, y, z)
         return
     end
 
-    local previousmode = inst.mode:value()
-    local CursorPosition = Vector3(x, y, z)
+    inst.bufferedcursorpos = Vector3(x, y, z)
 
-    inst.bufferedcursorpos = CursorPosition
-
-    if previousmode == 0 or previousmode == 1 then
+    if inst.mode:value() == 0 or inst.mode:value() == 1 then
         if inst.sg:HasStateTag("musha_desolatedive_pre") then
             inst.startdesolatedive:push()
         end
-    elseif previousmode == 2 then
+    elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.noannihilation then
             if not inst.skills.annihilation then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -1098,6 +1273,10 @@ local function ValkyrieKeyUp(inst, x, y, z)
         elseif inst.sg:HasStateTag("musha_desolatedive_pre") then
             inst.startdesolatedive:push()
         end
+    elseif inst.mode:value() == 3 then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+        end
     end
 
     inst.noannihilation = nil
@@ -1113,16 +1292,39 @@ local function ToggleBerserk(inst, x, y, z)
     end
 
     local previousmode = inst.mode:value()
-    local CursorPosition = Vector3(x, y, z)
 
-    inst.bufferedcursorpos = CursorPosition
+    inst.bufferedcursorpos = Vector3(x, y, z)
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         inst.activateberserk:push()
-    elseif previousmode == 3 and not inst:HasTag("sneaking") then
-        StartSneaking(inst)
-    elseif previousmode == 3 and inst:HasTag("sneaking") then
-        StopSneaking(inst)
+    elseif previousmode == 3 then
+        if inst:HasDebuff("elementloaded") then
+            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+
+            inst:RemoveDebuff("elementloaded")
+            if TUNING.musha.skills.launchelement[element].manacost then
+                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
+            end
+            if TUNING.musha.skills.launchelement[element].sanitycost then
+                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
+            end
+
+            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
+
+            if success then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "noskill" then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif reason == "noalter" then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "complete" then
+                return
+            end
+        elseif not inst:HasTag("sneaking") then
+            StartSneaking(inst)
+        else
+            StopSneaking(inst)
+        end
     elseif previousmode == 2 and not inst.components.rider:IsRiding() then
         if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
             and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
@@ -1274,7 +1476,7 @@ local function OnModeChange(inst)
         end
         inst:RemoveTag("areaattack") -- Must be removed after inst:RemoveSneakEffects()
         inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
-        inst.components.debuffable:RemoveDebuff("poisonspore")
+        inst.components.debuffable:RemoveDebuff("elementloaded")
         CustomCancelTask(inst.modetrailtask)
 
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -1481,6 +1683,8 @@ local function OnLevelUp(inst, data)
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
     inst.skills.sneakspeedboost    = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
+    inst.skills.rollingmagma       = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
+    inst.skills.whitefrost         = data.lvl >= TUNING.musha.leveltounlockskill.whitefrost and true or nil
     inst.skills.poisonspore        = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
     inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
     inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
@@ -1505,6 +1709,8 @@ local function OnBecameHuman(inst)
         "cooldown_thunderspell",
         "cooldown_freezingspell",
         "cooldown_manashield",
+        "cooldown_rollingmagma",
+        "cooldown_whitefrost",
         "cooldown_poisonspore",
         "cooldown_elfmelody",
         "cooldown_setsugetsuka",
@@ -1680,6 +1886,7 @@ local function master_postinit(inst)
     inst.skills = {}
     inst.companionhotkeysenabled = true
     inst.shadowmushafollowonly = false
+    inst.elementmode = 1 -- 1: magma, 2: frost, 3: poison
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
@@ -1692,6 +1899,7 @@ local function master_postinit(inst)
     inst.StartMelodyBuff = StartMelodyBuff
     inst.StopMelodyBuff = StopMelodyBuff
     inst.SniffTreasure = SniffTreasure
+    inst.LaunchElement = LaunchElement
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
