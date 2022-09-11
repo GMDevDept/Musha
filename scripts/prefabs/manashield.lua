@@ -116,6 +116,8 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst.kill_fx = kill_fx
 
     return inst

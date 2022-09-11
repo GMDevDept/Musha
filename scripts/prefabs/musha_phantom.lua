@@ -18,6 +18,10 @@ local function fn()
 
     inst.Transform:SetFourFaced()
 
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
     inst.persists = false
 
     return inst

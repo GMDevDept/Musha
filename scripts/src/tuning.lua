@@ -28,7 +28,7 @@ TUNING.musha = {
         },
         level4 = {
             workmultiplier = 0.1,
-            speedmultiplier = 1,
+            speedmultiplier = 0.4,
         },
     },
 
@@ -50,11 +50,11 @@ TUNING.musha = {
 
     activateberserkbasedamage = 5,
 
-    freezecooldowntime = 2.5,
+    freezecooldowntime = 5,
 
-    singleclicktimewindow = 0.3,
+    singleclicktimewindow = 0.5,
 
-    debuffslowdownmult = 0.3,
+    debuffslowdownmult = 0.25,
     debuffslowdownduration = 5,
 
     debuffparalysisattackperiodmult = 2,
@@ -82,6 +82,8 @@ TUNING.musha = {
         shadowspell        = 0,
         sneak              = 0,
         sneakspeedboost    = 0,
+        rollingmagma       = 0,
+        whitefrost         = 0,
         poisonspore        = 0,
         shadowshield       = 0,
         instantcast        = 0,
@@ -124,8 +126,8 @@ TUNING.musha = {
         freezingspell = {
             manacost = 5,
             maxmanacost = 15,
-            range = 9,
-            rangegrowth = 0.3,
+            range = 12,
+            rangegrowth = 0.2,
             coldness = 1,
             coldnessgrowth = 0.1,
             cooldown = 3,
@@ -133,8 +135,7 @@ TUNING.musha = {
         thunderspell = {
             manacost = 10,
             maxmanacost = 30,
-            range = 6,
-            rangegrowth = 0.2,
+            range = 12,
             damage = 20,
             damagegrowth = 1,
             cooldown = 10,
@@ -147,8 +148,8 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = -1,
-            -- cooldown = 30,
-            cooldown = 5,
+            cooldown = 30,
+            brokendelay = 3,
             durabilitybase = 400,
             durabilitygrowth = 40,
             durabilitydamage = 20,
@@ -160,6 +161,10 @@ TUNING.musha = {
             cooldown = 5,
             range = 18,
         },
+        valkyriemode = {
+            cooldown = 20,
+            manacost = 10,
+        },
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
@@ -169,11 +174,62 @@ TUNING.musha = {
             staminacost = -10,
             backstabbonustime = 2,
         },
-        poisonspore = {
-            manacost = 15,
-            sanitycost = 15,
+        launchelement = {
             maxdelay = 10,
-            cooldown = 5,
+            rollingmagma = {
+                manacost = 5,
+                damage = 45,
+                radius = 4,
+                forceignitecounter = 3,
+                igniteframe = 10,
+                cooldown = 3,
+                duration = 3,
+                charged = {
+                    extramanacost = 25,
+                    range = 10,
+                    chargetime = 3,
+                    mincount = 15,
+                    maxcount = 20,
+                    cooldown = 3,
+                },
+            },
+            whitefrost = {
+                manacost = 15,
+                speedmultiplier = 0.25,
+                initialspeedmultiplier = 0.4,
+                coldnessperhit = 0.03,
+                damageperhit = 2 / 3,
+                radius = 4,
+                cooldown = 10,
+                duration = 10,
+                slowdownduration = 3, -- Time before burst
+                charged = {
+                    extramanacost = 15,
+                    chargetime = 3,
+                    range = 10,
+                    casttime = 10,
+                    frosttime = 10,
+                    temperaturedecrease = 50,
+                    tickperiod = 2,
+                    coldnessontick = 0.4,
+                    speedmultiplier = 0.25,
+                    basedamage = 100,
+                    percentdamage = 0.2,
+                    maxdamage = 1500,
+                    cooldown = 20,
+                },
+            },
+            poisonspore = {
+                manacost = 10,
+                sanitycost = 20,
+                radius = 3.5,
+                damage = 40,
+                rot = 0.2,
+                cooldown = 10,
+                duration = 20,
+                tickperiod = 2,
+                chargetime = 3,
+            },
         },
         lightningstrike = {
             manacost = 10,
@@ -218,9 +274,9 @@ TUNING.musha = {
             cooldown = 20,
             sinkhole = {
                 destructionradius = 3.5,
-                centerdamage = 20,
-                duration = 10,
-                repairtime = { 2, 2, 6 }, -- Sum = duration
+                centerdamage = 25,
+                collapsetime = 0.1,
+                repairtime = { 2, 3, 7 }, -- Sum = duration
             },
         },
         magpiestep = {

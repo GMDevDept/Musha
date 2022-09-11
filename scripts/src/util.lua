@@ -86,6 +86,10 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     fx.Transform:SetScale(a, b, c)
     fx.Transform:SetPosition(x, y, z)
 
+    if fx_name == "mossling_spin_fx" then
+        fx.AnimState:SetSortOrder(3)
+    end
+
     if dur ~= 0 then
         target:DoTaskInTime(dur, function()
             if fx_name == "balloonparty_confetti_cloud" then
@@ -121,8 +125,10 @@ GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags,
     local x, y, z = center.Transform:GetWorldPosition()
     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost" }
 
-    for _, v in ipairs(additional_ignore_tags) do
-        table.insert(ignore_tags, v)
+    if additional_ignore_tags then
+        for _, v in ipairs(additional_ignore_tags) do
+            table.insert(ignore_tags, v)
+        end
     end
 
     local targets = TheSim:FindEntities(x, y, z, radius, must_tags, ignore_tags, one_of_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags, one_of_tags), including inst itself
@@ -177,3 +183,47 @@ GLOBAL.CustomPlayFailedAnim = function(inst)
         inst.sg:GoToState("mindcontrolled_pst")
     end
 end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Find key by value
+GLOBAL.CustomFindKeyByValue = function(table, value)
+    for k, v in pairs(table) do
+        if v == value then
+            return k
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Reset mana, stamina, fatigue and cooldowns on c_supergodmode
+local Timers = require("src/timers")
+GLOBAL.c_mushagodmode = function(player)
+    if TheWorld ~= nil and not TheWorld.ismastersim then
+        c_remote("c_mushagodmode()")
+        return
+    end
+
+    player = ConsoleCommandPlayer()
+    if player ~= nil and not player:HasTag("playerghost") then
+        if player.components.mana then
+            player.components.mana:SetPercent(1)
+        end
+        if player.components.stamina then
+            player.components.stamina:SetPercent(1)
+        end
+        if player.components.fatigue then
+            player.components.fatigue:SetPercent(0)
+        end
+        if player:HasTag("musha") then
+            for _, name in pairs(Timers) do
+                player.components.timer:SetTimeLeft(name, 0)
+            end
+        end
+    end
+
+    return c_supergodmode(player)
+end
+
+---------------------------------------------------------------------------------------------------------

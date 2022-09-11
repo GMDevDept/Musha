@@ -18,7 +18,11 @@ PrefabFiles = {
     "lightning_musha",
     "sporebomb_musha",
     "sporecloud_musha",
+    "deer_fx_musha",
+    "fireball_projectile_musha",
+    "crabking_feeze_musha",
     "antlion_sinkhole_musha",
+    "dummyplaceholder",
 
     -- General
     "debuff_common",

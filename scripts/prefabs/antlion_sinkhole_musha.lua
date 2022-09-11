@@ -18,7 +18,7 @@ local prefabs =
 }
 
 local NUM_CRACKING_STAGES = 3
-local COLLAPSE_STAGE_DURATION = 5 * FRAMES
+local COLLAPSE_STAGE_DURATION = TUNING.musha.skills.desolatedive.sinkhole.collapsetime
 
 local function UpdateOverrideSymbols(inst, state)
     if state == NUM_CRACKING_STAGES then
@@ -52,7 +52,6 @@ local function OnTimerDone(inst, data)
     if data ~= nil and data.name == "nextrepair" then
         inst.remainingrepairs = inst.remainingrepairs - 1
         if inst.remainingrepairs <= 0 then
-            inst.persists = false
             ErodeAway(inst)
         else
             UpdateOverrideSymbols(inst, inst.remainingrepairs)
@@ -134,12 +133,7 @@ local function donextcollapse(inst)
         SlowDownTaskUpdate(inst, x, y, z)
 
         inst:RemoveTag("scarytoprey")
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .03, .15, inst,
-            TUNING.musha.skills.desolatedive.radius * 1.5)
         start_repairs(inst)
-    else
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .015, .15, inst,
-            TUNING.musha.skills.desolatedive.radius)
     end
 
     UpdateOverrideSymbols(inst, inst.collapsestage)
@@ -219,29 +213,6 @@ end
 
 -------------------------------------------------------------------------------
 
-local function OnSave(inst, data)
-    if inst.collapsetask ~= nil then
-        data.collapsestage = inst.collapsestage
-    else
-        data.remainingrepairs = inst.remainingrepairs
-    end
-end
-
-local function OnLoad(inst, data)
-    if data ~= nil then
-        if data.collapsestage ~= nil then
-            inst.collapsestage = data.collapsestage
-            UpdateOverrideSymbols(inst, inst.collapsestage)
-            inst.collapsetask = inst:DoPeriodicTask(COLLAPSE_STAGE_DURATION, donextcollapse)
-        elseif data.remainingrepairs ~= nil then
-            inst.remainingrepairs = data.remainingrepairs
-            UpdateOverrideSymbols(inst, inst.remainingrepairs)
-        end
-    end
-end
-
--------------------------------------------------------------------------------
-
 local function fn()
     local inst = CreateEntity()
 
@@ -274,11 +245,10 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst:AddComponent("timer")
     inst:ListenForEvent("timerdone", OnTimerDone)
-
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
 
     inst:ListenForEvent("startcollapse", onstartcollapse)
     inst:ListenForEvent("startrepair", start_repairs)

@@ -6,11 +6,11 @@ local assets =
 
 local prefabs =
 {
-    "sporecloud_overlay_musha",
+    "sporecloud_overlay",
 }
 
-local AURA_EXCLUDE_TAGS = { "toadstool", "playerghost", "ghost", "shadow", "shadowminion", "noauradamage", "INLIMBO",
-    "notarget", "noattack", "flight", "invisible" }
+local AURA_EXCLUDE_TAGS = { "playerghost", "ghost", "noauradamage", "INLIMBO", "notarget", "noattack",
+    "flight", "invisible", "companion", "musha_companion", "wall" }
 
 local FADE_FRAMES = 5
 local FADE_INTENSITY = .8
@@ -84,7 +84,7 @@ local function SpawnOverlayFX(inst, i, set, isnew)
         end
     end
 
-    local fx = SpawnPrefab("sporecloud_overlay_musha")
+    local fx = SpawnPrefab("sporecloud_overlay")
     fx.entity:SetParent(inst.entity)
     fx.Transform:SetPosition(set[1] * .85, 0, set[3] * .85)
     fx.Transform:SetScale(set[4], set[4], set[4])
@@ -189,8 +189,7 @@ local function DoDisperse(inst)
 
     inst.AnimState:PlayAnimation("sporecloud_pst")
     inst.SoundEmitter:KillSound("spore_loop")
-    inst.persists = false
-    inst:DoTaskInTime(3, inst.Remove) --anim len + 1.5 sec
+    inst:DoTaskInTime(1.5, inst.Remove)
 
     if inst._basefx ~= nil then
         inst._basefx.AnimState:PlayAnimation("sporecloud_base_pst")
@@ -217,56 +216,7 @@ end
 
 local function FinishImmediately(inst)
     if inst.components.timer:TimerExists("disperse") then
-        inst.components.timer:StopTimer("disperse")
-        DoDisperse(inst)
-    end
-end
-
-local function OnLoad(inst, data)
-    --Not a brand new cloud, cancel initial sound and pre-anims
-    if inst._inittask ~= nil then
-        inst._inittask:Cancel()
-        inst._inittask = nil
-    end
-
-    inst:RemoveEventCallback("animover", OnAnimOver)
-
-    if inst._overlaytasks ~= nil then
-        for k, v in pairs(inst._overlaytasks) do
-            v:Cancel()
-        end
-        inst._overlaytasks = nil
-    end
-    if inst._overlayfx ~= nil then
-        for i, v in ipairs(inst._overlayfx) do
-            v:Remove()
-        end
-        inst._overlayfx = nil
-    end
-
-    local t = inst.components.timer:GetTimeLeft("disperse")
-    if t == nil or t <= 0 then
-        DisableCloud(inst)
-        inst._state:set(2)
-        FadeOutImmediately(inst)
-        inst.SoundEmitter:KillSound("spore_loop")
-        inst:Hide()
-        inst.persists = false
-        inst:DoTaskInTime(0, inst.Remove)
-    else
-        inst._state:set(1)
-        FadeInImmediately(inst)
-        inst.AnimState:PlayAnimation("sporecloud_loop", true)
-
-        --Dedicated server does not need to spawn the local fx
-        if not TheNet:IsDedicated() then
-            inst._basefx = CreateBase(false)
-            inst._basefx.entity:SetParent(inst.entity)
-        end
-
-        for i, v in ipairs(OVERLAY_COORDS) do
-            SpawnOverlayFX(inst, nil, v, false)
-        end
+        inst.components.timer:SetTimeLeft("disperse", 0)
     end
 end
 
@@ -296,7 +246,7 @@ local function TryPerish(item)
             return
         end
     end
-    item.components.perishable:ReducePercent(TUNING.TOADSTOOL_SPORECLOUD_ROT)
+    item.components.perishable:ReducePercent(TUNING.musha.skills.launchelement.poisonspore.rot)
 end
 
 local SPOIL_CANT_TAGS = { "small_livestock" }
@@ -354,12 +304,14 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst:AddComponent("combat")
-    inst.components.combat:SetDefaultDamage(TUNING.TOADSTOOL_SPORECLOUD_DAMAGE)
+    inst.components.combat:SetDefaultDamage(TUNING.musha.skills.launchelement.poisonspore.damage)
 
     inst:AddComponent("aura")
-    inst.components.aura.radius = TUNING.TOADSTOOL_SPORECLOUD_RADIUS
-    inst.components.aura.tickperiod = TUNING.TOADSTOOL_SPORECLOUD_TICK
+    inst.components.aura.radius = TUNING.musha.skills.launchelement.poisonspore.radius
+    inst.components.aura.tickperiod = TUNING.musha.skills.launchelement.poisonspore.tickperiod
     inst.components.aura.auraexcludetags = AURA_EXCLUDE_TAGS
     inst.components.aura:Enable(true)
 
@@ -370,11 +322,9 @@ local function fn()
     inst:ListenForEvent("animover", OnAnimOver)
 
     inst:AddComponent("timer")
-    inst.components.timer:StartTimer("disperse", TUNING.TOADSTOOL_SPORECLOUD_LIFETIME)
+    inst.components.timer:StartTimer("disperse", TUNING.musha.skills.launchelement.poisonspore.duration)
 
     inst:ListenForEvent("timerdone", OnTimerDone)
-
-    inst.OnLoad = OnLoad
 
     inst.FadeInImmediately = FadeInImmediately
     inst.FinishImmediately = FinishImmediately
@@ -387,36 +337,4 @@ local function fn()
     return inst
 end
 
-local function overlayfn()
-    local inst = CreateEntity()
-
-    inst.entity:AddTransform()
-    inst.entity:AddAnimState()
-    inst.entity:AddNetwork()
-
-    inst:AddTag("FX")
-    inst:AddTag("NOCLICK")
-
-    inst.Transform:SetTwoFaced()
-
-    inst.AnimState:SetBank("sporecloud")
-    inst.AnimState:SetBuild("sporecloud")
-    inst.AnimState:SetLightOverride(.2)
-
-    inst.AnimState:PlayAnimation("sporecloud_overlay_pre")
-
-    inst.entity:SetPristine()
-
-    if not TheWorld.ismastersim then
-        return inst
-    end
-
-    inst:ListenForEvent("animover", OnOverlayAnimOver)
-
-    inst.persists = false
-
-    return inst
-end
-
-return Prefab("sporecloud_musha", fn, assets, prefabs),
-    Prefab("sporecloud_overlay_musha", overlayfn, assets)
+return Prefab("sporecloud_musha", fn, assets, prefabs)

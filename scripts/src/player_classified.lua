@@ -33,7 +33,7 @@ local function PrefabPostInitFn(inst)
             inst._parent:PushEvent("manadelta", data)
             if oldpercent > 0 then
                 if percent <= 0 then
-                    inst._parent:PushEvent("startmanadepleted")
+                    inst._parent:PushEvent("manadepleted")
                 end
             elseif percent > 0 then
                 inst._parent:PushEvent("stopmanadepleted")
