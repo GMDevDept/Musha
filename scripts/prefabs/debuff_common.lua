@@ -10,16 +10,17 @@ local assets = -- Reference
 
 --Slowdown
 
-local function slowdown_attach(inst, target)
+local function slowdown_attach(inst, target, followsymbol, followoffset, data)
     if target.components and target.components.locomotor then
-        target.components.locomotor:SetExternalSpeedMultiplier(inst, inst.GUID, TUNING.musha.debuffslowdownmult) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier) set source as self to avoid duplicate effect
+        local speedmultiplier = data and data.speedmultiplier or TUNING.musha.debuffslowdownmult
+        target.components.locomotor:SetExternalSpeedMultiplier(inst, inst.GUID, speedmultiplier) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier) set source as self to avoid duplicate effect
         CustomAttachFx(target, "splash")
     else
         inst.components.debuff:Stop()
     end
 end
 
-local function slowdown_extend(inst, target)
+local function slowdown_extend(inst, target, followsymbol, followoffset, data)
     CustomAttachFx(target, "splash")
 end
 
@@ -27,6 +28,11 @@ local function slowdown_detach(inst, target)
     if target.components and target.components.locomotor then
         target.components.locomotor:RemoveExternalSpeedMultiplier(inst, inst.GUID)
     end
+
+    inst.AnimState:PushAnimation("level2_pst", false)
+    inst:ListenForEvent("animqueueover", function()
+        inst:Remove()
+    end)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -40,7 +46,7 @@ local function ParalysisDamageReflection(inst, data)
     end
 end
 
-local function paralysis_attach(inst, target)
+local function paralysis_attach(inst, target, followsymbol, followoffset, data)
     if target.components and target.components.combat then
         -- Periodic get damage and prolong attack period
         inst.task_debuff_paralysis = inst:DoPeriodicTask(TUNING.musha.debuffparalysisperiod, function()
@@ -56,7 +62,7 @@ local function paralysis_attach(inst, target)
                 target.components.combat:SetAttackPeriod(math.max((target._min_attack_period *
                     TUNING.musha.debuffparalysisattackperiodmult), TUNING.musha.debuffparalysisattackperiodmax))
             end
-        end, 0.1) -- Set 0.1s initial delay to limit total hits
+        end)
 
         -- Get damage when attack
         -- ? How to handle multiple paralysis debuff? -- Currently will reset when trigger paralysis_extend()
@@ -68,7 +74,7 @@ local function paralysis_attach(inst, target)
     end
 end
 
-local function paralysis_extend(inst, target)
+local function paralysis_extend(inst, target, followsymbol, followoffset, data)
     target:RemoveEventCallback("onattackother", ParalysisDamageReflection)
     target:ListenForEvent("onattackother", ParalysisDamageReflection)
     CustomAttachFx(target, "electrichitsparks")
@@ -83,6 +89,11 @@ local function paralysis_detach(inst, target)
         CustomCancelTask(inst.task_debuff_paralysis)
         target:RemoveEventCallback("onattackother", ParalysisDamageReflection)
     end
+
+    inst.AnimState:PushAnimation("level2_pst", false)
+    inst:ListenForEvent("animqueueover", function()
+        inst:Remove()
+    end)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -97,14 +108,14 @@ local function SetDuration(inst, duration)
     if duration and duration > 0 then
         inst.components.timer:SetTimeLeft("buffover", duration)
     else
-        inst.components.timer:StopTimer("buffover")
+        inst.components.timer:SetTimeLeft("buffover", 0)
     end
 end
 
 ---------------------------------------------------------------------------------------------------------
 
 local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultduration)
-    local function OnAttached(inst, target)
+    local function OnAttached(inst, target, followsymbol, followoffset, data)
         inst.entity:SetParent(target.entity)
         local radius = target:GetPhysicsRadius(0) + 1
         inst.Transform:SetScale(radius * 0.7, radius * 0.6, radius * 0.7)
@@ -113,16 +124,24 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
             inst.components.debuff:Stop()
         end, target)
 
+        if data and data.duration then
+            inst:SetDuration(data.duration)
+        end
+
         if onattachedfn ~= nil then
-            onattachedfn(inst, target) -- Note: components.debuff.onattachedfn(self.inst, target, followsymbol, followoffset, data)
+            onattachedfn(inst, target, followsymbol, followoffset, data) -- Note: components.debuff.onattachedfn(self.inst, target, followsymbol, followoffset, data)
         end
     end
 
-    local function OnExtended(inst, target)
-        inst.components.timer:SetTimeLeft("buffover", defaultduration)
+    local function OnExtended(inst, target, followsymbol, followoffset, data)
+        if data and data.duration then
+            inst:SetDuration(data.duration)
+        else
+            inst:SetDuration(defaultduration)
+        end
 
         if onextendedfn ~= nil then
-            onextendedfn(inst, target) -- Note: components.debuff.onextendedfn(self.inst, self.target, followsymbol, followoffset, data)
+            onextendedfn(inst, target, followsymbol, followoffset, data) -- Note: components.debuff.onextendedfn(self.inst, self.target, followsymbol, followoffset, data)
         end
     end
 
@@ -130,11 +149,6 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
         if ondetachedfn ~= nil then
             ondetachedfn(inst, target) -- Note: components.debuff.ondetachedfn(self.inst, target)
         end
-
-        inst.AnimState:PushAnimation("level2_pst", false)
-        inst:ListenForEvent("animqueueover", function()
-            inst:Remove()
-        end)
     end
 
     local function fn()
@@ -142,8 +156,6 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
 
         inst:AddTag("FX")
         inst:AddTag("NOCLICK")
-
-        inst.persists = false
 
         inst.entity:AddTransform()
         inst.entity:AddAnimState()
@@ -160,6 +172,8 @@ local function MakeBuff(name, onattachedfn, onextendedfn, ondetachedfn, defaultd
         if not TheWorld.ismastersim then
             return inst
         end
+
+        inst.persists = false
 
         inst:AddComponent("debuff")
         inst.components.debuff:SetAttachedFn(OnAttached)

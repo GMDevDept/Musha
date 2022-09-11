@@ -125,8 +125,10 @@ GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags,
     local x, y, z = center.Transform:GetWorldPosition()
     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost" }
 
-    for _, v in ipairs(additional_ignore_tags) do
-        table.insert(ignore_tags, v)
+    if additional_ignore_tags then
+        for _, v in ipairs(additional_ignore_tags) do
+            table.insert(ignore_tags, v)
+        end
     end
 
     local targets = TheSim:FindEntities(x, y, z, radius, must_tags, ignore_tags, one_of_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags, one_of_tags), including inst itself
@@ -192,3 +194,36 @@ GLOBAL.CustomFindKeyByValue = function(table, value)
         end
     end
 end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Reset mana, stamina, fatigue and cooldowns on c_supergodmode
+local Timers = require("src/timers")
+GLOBAL.c_mushagodmode = function(player)
+    if TheWorld ~= nil and not TheWorld.ismastersim then
+        c_remote("c_mushagodmode()")
+        return
+    end
+
+    player = ConsoleCommandPlayer()
+    if player ~= nil and not player:HasTag("playerghost") then
+        if player.components.mana then
+            player.components.mana:SetPercent(1)
+        end
+        if player.components.stamina then
+            player.components.stamina:SetPercent(1)
+        end
+        if player.components.fatigue then
+            player.components.fatigue:SetPercent(0)
+        end
+        if player:HasTag("musha") then
+            for _, name in pairs(Timers) do
+                player.components.timer:SetTimeLeft(name, 0)
+            end
+        end
+    end
+
+    return c_supergodmode(player)
+end
+
+---------------------------------------------------------------------------------------------------------

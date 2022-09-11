@@ -2,6 +2,7 @@ local MakePlayerCharacter = require("prefabs/player_common")
 local UserCommands = require("usercommands")
 local Emotes = require("src/emotes")
 local Musics = require("src/musics")
+local Timers = require("src/timers")
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -37,6 +38,19 @@ local elementlist = {
 local function BonusDamageFn(inst, target, damage, weapon)
     -- return (target:HasTag("") and TUNING.EXTRADAMAGE) or 0
     return 0
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Push event when debuff is added or removed
+-- ? Maybe Klei will add this event officially in the future?
+
+local function OnDebuffAdded(inst, name, debuff, data)
+    inst:PushEvent("debuffadded", { name = name, debuff = debuff, data = data })
+end
+
+local function OnDebuffRemoved(inst, name, debuff)
+    inst:PushEvent("debuffremoved", { name = name, debuff = debuff })
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -575,8 +589,7 @@ local function ThunderSpell(inst)
     local validtargets = 0
     local must_tags = { "_combat" }
     local ignore_tags = { "companion", "musha_companion", "player" }
-    local range = TUNING.musha.skills.thunderspell.range +
-        TUNING.musha.skills.thunderspell.rangegrowth * inst.components.leveler.lvl
+    local range = TUNING.musha.skills.thunderspell.range
     local damage = TUNING.musha.skills.thunderspell.damage +
         TUNING.musha.skills.thunderspell.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
     local duration = TUNING.musha.skills.thunderspell.duration +
@@ -784,8 +797,17 @@ end
 local function RollingMagma(inst, data)
     if inst:HasDebuff("elementloaded") then
         local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        local prefab = inst.components.debuffable:GetDebuff("elementloaded").prefab
+
         inst.components.debuffable:RemoveDebuff("elementloaded")
-        local projectile = SpawnPrefab("fireball_projectile_musha")
+
+        local cooldownoverride = nil
+        local projectile = SpawnPrefab(prefab)
+
+        if prefab == "deer_fire_charge_musha" then
+            projectile.nosound = true
+            cooldownoverride = TUNING.musha.skills.launchelement.rollingmagma.charged.cooldown
+        end
         projectile.owner = inst
         projectile.Transform:SetPosition(x, y, z)
         projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
@@ -800,7 +822,8 @@ local function RollingMagma(inst, data)
             end
         end
 
-        inst.components.timer:StartTimer("cooldown_rollingmagma", TUNING.musha.skills.launchelement.rollingmagma.cooldown)
+        inst.components.timer:StartTimer("cooldown_rollingmagma",
+            cooldownoverride or TUNING.musha.skills.launchelement.rollingmagma.cooldown)
         inst:ListenForEvent("timerdone", RollingMagmaOnTimerDone)
 
         return true
@@ -827,12 +850,26 @@ local function RollingMagma(inst, data)
     end
 end
 
+local function ChargedRollingMagma(inst)
+    inst.components.debuffable:RemoveDebuff("elementloaded")
+    inst:AddDebuff("elementloaded", "deer_fire_charge_musha")
+end
+
 -- Frost
 local function WhiteFrost(inst, data)
     if inst:HasDebuff("elementloaded") then
         local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        local prefab = inst.components.debuffable:GetDebuff("elementloaded").prefab
+
         inst.components.debuffable:RemoveDebuff("elementloaded")
-        local projectile = SpawnPrefab("frostball_projectile_musha")
+
+        local cooldownoverride = nil
+        local projectile = SpawnPrefab(prefab)
+
+        if prefab == "deer_ice_charge_musha" then
+            projectile.nosound = true
+            cooldownoverride = TUNING.musha.skills.launchelement.whitefrost.charged.cooldown
+        end
         projectile.owner = inst
         projectile.Transform:SetPosition(x, y, z)
         projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
@@ -847,7 +884,8 @@ local function WhiteFrost(inst, data)
             end
         end
 
-        inst.components.timer:StartTimer("cooldown_whitefrost", TUNING.musha.skills.launchelement.whitefrost.cooldown)
+        inst.components.timer:StartTimer("cooldown_whitefrost",
+            cooldownoverride or TUNING.musha.skills.launchelement.whitefrost.cooldown)
         inst:ListenForEvent("timerdone", WhiteFrostOnTimerDone)
 
         return true
@@ -872,6 +910,11 @@ local function WhiteFrost(inst, data)
 
         return true
     end
+end
+
+local function ChargedWhiteFrost(inst)
+    inst.components.debuffable:RemoveDebuff("elementloaded")
+    inst:AddDebuff("elementloaded", "deer_ice_charge_musha")
 end
 
 -- Poison
@@ -977,18 +1020,33 @@ local function LaunchElement(inst, data, norecur)
 
     if norecur then return success end
 
-    if success then return end
+    if success then return true end
 
     success, reason2 = ElementTakeTurns(inst, data)
 
     if success then
-        LaunchElement(inst, data)
+        return LaunchElement(inst, data)
     elseif reason2 == "noskill" then
         inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        return false
     elseif reason2 == "noalter" then
         inst.components.talker:Say(reason1)
+        return false
     elseif reason2 == "complete" then
-        return
+        return true
+    end
+end
+
+local function OnElementCharged(inst, data)
+    if data.name == "chargingelement" then
+        if inst:HasDebuff("elementloaded") then
+            if inst.elementmode == 1 then
+                ChargedRollingMagma(inst)
+            elseif inst.elementmode == 2 then
+                ChargedWhiteFrost(inst)
+            end
+        end
+        inst:RemoveEventCallback("timerdone", OnElementCharged)
     end
 end
 
@@ -1072,21 +1130,15 @@ local function StartSneaking(inst)
             if not inst:HasTag("sneaking") then return end
             inst:AddTag("notarget")
 
-            local x, y, z = inst.Transform:GetWorldPosition()
-            local must_tags = { "_combat" }
-            local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
-            local targets = TheSim:FindEntities(x, y, z, 12, must_tags, ignore_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags)
-            if targets then
-                for _, v in pairs(targets) do
-                    if v.components.combat and v.components.combat.target == inst then
-                        v.components.combat.target = nil
-                    end
+            CustomDoAOE(inst, 25, { "_combat" }, nil, nil, function(v)
+                if v.components.combat and v.components.combat.target == inst then
+                    v.components.combat.target = nil
                 end
-            end
+            end)
 
             inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst:ListenForEvent("onattackother", BackStab)
-            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
+            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 0.7 }, 0)
             CustomAttachFx(inst, "statue_transition")
         end)
 
@@ -1173,7 +1225,41 @@ local function ValkyrieKeyLongPressed(inst, data)
                 inst.startdesolatedive_pre:push()
             end
         elseif inst.mode:value() == 3 then
+            if inst:HasDebuff("elementloaded") then
+                local element = CustomFindKeyByValue(elementlist, inst.elementmode)
 
+                if not TUNING.musha.skills.launchelement[element].charged then
+                    return
+                elseif TUNING.musha.skills.launchelement[element].charged.extramanacost and
+                    inst.components.mana.current < TUNING.musha.skills.launchelement[element].charged.extramanacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                    CustomPlayFailedAnim(inst)
+                elseif TUNING.musha.skills.launchelement[element].charged.extrasanitycost and
+                    inst.components.sanity.current < TUNING.musha.skills.launchelement[element].charged.extrasanitycost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.components.mana:DoDelta(-
+                        (TUNING.musha.skills.launchelement[element].charged.extramanacost or 0))
+                    inst.components.sanity:DoDelta(-
+                        (TUNING.musha.skills.launchelement[element].charged.extrasanitycost or 0))
+
+                    local function ElementRemoved(inst, data)
+                        if data.name == "elementloaded" then
+                            inst:RemoveEventCallback("timerdone", OnElementCharged)
+                            inst.components.timer:SetTimeLeft("chargingelement", 0) -- After RemoveEventCallback
+                            inst.SoundEmitter:KillSound("charging")
+                            inst:RemoveEventCallback("debuffremoved", ElementRemoved)
+                        end
+                    end
+
+                    local chargetime = TUNING.musha.skills.launchelement[element].charged.chargetime
+                    inst.components.timer:StartTimer("chargingelement", chargetime)
+                    inst:ListenForEvent("timerdone", OnElementCharged)
+                    inst:ListenForEvent("debuffremoved", ElementRemoved)
+                    inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
+                end
+            end
         end
 
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
@@ -1238,6 +1324,11 @@ local function ValkyrieKeyDown(inst, x, y, z)
     elseif inst.mode:value() == 3 then
         inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
         inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
+
+        if not inst:HasDebuff("elementloaded") then
+            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            inst.nolaunchelement = true -- No launching element until long pressed or release key and press again
+        end
     end
 end
 
@@ -1274,14 +1365,18 @@ local function ValkyrieKeyUp(inst, x, y, z)
             inst.startdesolatedive:push()
         end
     elseif inst.mode:value() == 3 then
-        if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.nolaunchelement then
+            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+        elseif not inst.components.timer:TimerExists("valkyriekeyonlongpress") and inst:HasDebuff("elementloaded") then
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
         end
     end
 
     inst.noannihilation = nil
+    inst.nolaunchelement = nil
     inst.valkyriekeypressed = nil
     inst.components.timer:StopTimer("valkyriekeyonlongpress")
+    inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
 end
 
 -- Toggle berserk mode
@@ -1297,34 +1392,6 @@ local function ToggleBerserk(inst, x, y, z)
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         inst.activateberserk:push()
-    elseif previousmode == 3 then
-        if inst:HasDebuff("elementloaded") then
-            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
-
-            inst:RemoveDebuff("elementloaded")
-            if TUNING.musha.skills.launchelement[element].manacost then
-                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
-            end
-            if TUNING.musha.skills.launchelement[element].sanitycost then
-                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
-            end
-
-            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
-
-            if success then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "noskill" then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif reason == "noalter" then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "complete" then
-                return
-            end
-        elseif not inst:HasTag("sneaking") then
-            StartSneaking(inst)
-        else
-            StopSneaking(inst)
-        end
     elseif previousmode == 2 and not inst.components.rider:IsRiding() then
         if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
             and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
@@ -1355,6 +1422,35 @@ local function ToggleBerserk(inst, x, y, z)
                     inst.startsetsugetsuka_pre:push()
                 end
             end
+        end
+    elseif previousmode == 3 then
+        if inst:HasDebuff("elementloaded") then
+            inst:RemoveDebuff("elementloaded")
+
+            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+
+            if TUNING.musha.skills.launchelement[element].manacost then
+                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
+            end
+            if TUNING.musha.skills.launchelement[element].sanitycost then
+                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
+            end
+
+            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
+
+            if success then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "noskill" then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif reason == "noalter" then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "complete" then
+                return
+            end
+        elseif not inst:HasTag("sneaking") then
+            StartSneaking(inst)
+        else
+            StopSneaking(inst)
         end
     end
 end
@@ -1704,29 +1800,6 @@ local function OnBecameHuman(inst)
     inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
     inst:DecideNormalOrFull()
 
-    local timers = {
-        "cooldown_valkyriemode",
-        "cooldown_thunderspell",
-        "cooldown_freezingspell",
-        "cooldown_manashield",
-        "cooldown_rollingmagma",
-        "cooldown_whitefrost",
-        "cooldown_poisonspore",
-        "cooldown_elfmelody",
-        "cooldown_setsugetsuka",
-        "cooldown_annihilation",
-        "cooldown_desolatedive",
-        "stopelfmelody_full",
-        "stopelfmelody_partial",
-        "premelody",
-        "lightningrecharge",
-        "cancel_manashield_areas"
-    }
-
-    for _, name in pairs(timers) do
-        inst.components.timer:StopTimer(name)
-    end
-
     inst:DoTaskInTime(1.5, function()
         inst:RemoveTag("nofx")
         inst:ListenForEvent("fatiguedelta", DecideFatigueLevel)
@@ -1758,6 +1831,10 @@ local function OnLoad(inst)
         OnBecameGhost(inst)
     else
         OnBecameHuman(inst)
+    end
+
+    for _, name in pairs(Timers) do
+        inst.components.timer:StopTimer(name)
     end
 
     OnLevelUp(inst, inst.components.leveler)
@@ -1861,6 +1938,10 @@ local function master_postinit(inst)
     inst.components.combat.damagemultiplier = TUNING.musha.damagemultiplier
     inst.components.combat.areahitdamagepercent = TUNING.musha.areahitdamagepercent
     inst.components.combat.bonusdamagefn = BonusDamageFn
+
+    -- Debuffable
+    inst.components.debuffable.ondebuffadded = OnDebuffAdded
+    inst.components.debuffable.ondebuffremoved = OnDebuffRemoved
 
     -- Petleash
     inst._onpetlost = function(pet) inst.components.sanity:RemoveSanityPenalty(pet) end

@@ -69,26 +69,39 @@ local function OnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
+    local must_tags = { "_combat" }
+    local ignore_tags = { "player", "companion", "musha_companion", "wall" }
+    local range = TUNING.musha.skills.launchelement.poisonspore.radius
+    local damage = TUNING.musha.skills.launchelement.poisonspore.damage
+
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
+        v.components.combat:GetAttacked(inst.owner, damage)
+    end)
+
     local cloud = SpawnPrefab("sporecloud_musha")
+    cloud.owner = inst.owner
     cloud.Transform:SetPosition(x, 0, z)
     cloud:FadeInImmediately()
     cloud.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
+
+    ShakeAllCameras(CAMERASHAKE.FULL, .2, .02, .5, inst, 40)
 end
 
 local function OnTimerDone(inst, data)
     if data.name == "explode" then
-        inst.components.debuff:Stop()
         OnExplode(inst)
+        inst.components.debuff:Stop()
+        inst:Remove()
     end
 end
 
 local function OnHit(inst, attacker, target)
-    inst:Remove()
     OnExplode(inst)
+    inst.components.debuff:Stop()
+    inst:Remove()
 end
 
 local function OnThrown(inst)
-    inst.persists = false
     inst.Physics:SetMass(1)
     inst.Physics:SetFriction(0)
     inst.Physics:SetDamping(0)
@@ -181,6 +194,8 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst:AddComponent("complexprojectile")
     inst.components.complexprojectile:SetHorizontalSpeed(10)
     inst.components.complexprojectile:SetGravity(-35)
@@ -193,8 +208,10 @@ local function fn()
     inst.components.debuff:SetDetachedFn(OnDetached)
 
     inst:AddComponent("timer")
-    inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.poisonspore.maxdelay)
+    inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.maxdelay)
     inst:ListenForEvent("timerdone", OnTimerDone)
+
+    inst.owner = nil -- Assigned when projectile is launched
 
     return inst
 end

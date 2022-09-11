@@ -52,7 +52,6 @@ local function OnTimerDone(inst, data)
     if data ~= nil and data.name == "nextrepair" then
         inst.remainingrepairs = inst.remainingrepairs - 1
         if inst.remainingrepairs <= 0 then
-            inst.persists = false
             ErodeAway(inst)
         else
             UpdateOverrideSymbols(inst, inst.remainingrepairs)
@@ -134,12 +133,7 @@ local function donextcollapse(inst)
         SlowDownTaskUpdate(inst, x, y, z)
 
         inst:RemoveTag("scarytoprey")
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .03, .15, inst,
-            TUNING.musha.skills.desolatedive.radius * 1.5)
         start_repairs(inst)
-    else
-        ShakeAllCameras(CAMERASHAKE.FULL, COLLAPSE_STAGE_DURATION, .015, .15, inst,
-            TUNING.musha.skills.desolatedive.radius)
     end
 
     UpdateOverrideSymbols(inst, inst.collapsestage)
@@ -245,13 +239,13 @@ local function fn()
 
     inst:SetDeployExtraSpacing(4)
 
-    inst.persists = false
-
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
         return inst
     end
+
+    inst.persists = false
 
     inst:AddComponent("timer")
     inst:ListenForEvent("timerdone", OnTimerDone)

@@ -433,6 +433,7 @@ local musha_berserk_pre = State {
     timeline =
     {
         TimeEvent(15 * FRAMES, function(inst)
+            ShakeAllCameras(CAMERASHAKE.FULL, 1, .02, .5, inst, 40)
             CustomDoAOE(inst, 3, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
@@ -1295,7 +1296,7 @@ local musha_setsugetsuka_pre_client = State {
 
 local musha_setsugetsuka = State {
     name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "noattack", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1324,6 +1325,7 @@ local musha_setsugetsuka = State {
         inst.components.timer:StopTimer("cooldown_setsugetsuka")
         inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
         inst.components.timer:StopTimer("clearsetsugetsukacounter")
+        inst:RemoveEventCallback("timerdone", ClearSetsuGetsuKaCounter)
         inst.setsugetsuka_counter = inst.setsugetsuka_counter and inst.setsugetsuka_counter + 1 or 1
 
         inst.sg.statemem.weapon = weapon
@@ -1351,7 +1353,7 @@ local musha_setsugetsuka = State {
         TimeEvent(11 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
             DoThrust(inst, inst.sg.statemem.lightningapplied, true)
-            ShakeAllCameras(CAMERASHAKE.SIDE, .5, .02, .5) -- Note: ShakeAllCameras(mode, duration, speed, scale, source_or_pt, maxDist)
+            ShakeAllCameras(CAMERASHAKE.FULL, .5, .02, .5, inst, 40) -- Note: ShakeAllCameras(mode, duration, speed, scale, source_or_pt, maxDist)
         end),
         TimeEvent(13 * FRAMES, function(inst)
             inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
@@ -1370,6 +1372,7 @@ local musha_setsugetsuka = State {
         TimeEvent(19 * FRAMES, function(inst)
             DoThrust(inst, inst.sg.statemem.lightningapplied)
             inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("noattack")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("nointerrupt")
             inst.sg:RemoveStateTag("musha_nointerrupt")
@@ -1475,6 +1478,8 @@ local function DoAdvent(inst)
         inst:LightningDischarge()
     end
 
+    ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5, inst, 40) -- Renew camera shaking effect caused by lightnings
+
     if weapon and weapon.components.stackable then
         weapon.components.stackable:Get():Remove()
     end
@@ -1515,7 +1520,6 @@ local musha_phoenixadvent = State {
             inst.components.colouradder:PushColour("lunge", 1, 1, 0, 0)
             inst.sg.statemem.flash = 1
             inst:ScreenFlash(1)
-            ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5)
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
         TimeEvent(36 * FRAMES, function(inst)
@@ -1636,6 +1640,8 @@ local function DoAnnihilation(inst)
         inst:LightningDischarge()
     end
 
+    ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5, inst, 40) -- Renew camera shaking effect caused by lightnings
+
     if weapon and weapon.components.stackable then
         weapon.components.stackable:Get():Remove()
     end
@@ -1742,7 +1748,6 @@ local musha_annihilation = State {
         end),
         TimeEvent(13 * FRAMES, function(inst)
             DoAnnihilation(inst)
-            ShakeAllCameras(CAMERASHAKE.VERTICAL, .7, .015, .5, inst, 20)
             inst.components.bloomer:PushBloom("leap", "shaders/anim.ksh", -2)
             inst.components.colouradder:PushColour("leap", 1, 1, 0, 0)
             inst.sg.statemem.flash = 1.3
@@ -1868,6 +1873,8 @@ local function DoDive(inst)
         inst:LightningDischarge()
     end
 
+    ShakeAllCameras(CAMERASHAKE.FULL, 1, .02, .8, inst, 40) -- Renew camera shaking effect caused by lightnings
+
     if weapon and weapon.components.stackable then
         weapon.components.stackable:Get():Remove()
     end
@@ -1903,7 +1910,7 @@ local musha_desolatedive_pre = State {
                     inst.sg.statemem.ready = true
                     inst.sg.statemem.flash = 0.8
                     inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
-                    inst:ShakeCamera(CAMERASHAKE.FULL, TUNING.musha.skills.desolatedive.maxchargingtime, .01, .1) -- Note: ShakeAllCameras(mode, duration, speed, scale, source_or_pt, maxDist)
+                    inst:ShakeCamera(CAMERASHAKE.FULL, TUNING.musha.skills.desolatedive.maxchargingtime, .01, .1)
                     inst.sg:SetTimeout(TUNING.musha.skills.desolatedive.maxchargingtime)
                 end
             end
@@ -2135,7 +2142,6 @@ local musha_desolatedive_pst = State {
             inst.components.bloomer:PushBloom("superjump", "shaders/anim.ksh", -2)
             ToggleOnPhysics(inst)
             inst.sg.statemem.flash = 1.3
-            ShakeAllCameras(CAMERASHAKE.VERTICAL, .7, .015, .8, inst, 20)
 
             if inst.mode:value() == 0 or inst.mode:value() == 1 then
                 inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
@@ -2217,7 +2223,7 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive",
 
 local musha_magpiestep = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "doing", "busy", "noattack", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -2230,7 +2236,7 @@ local musha_magpiestep = State {
         inst.AnimState:PlayAnimation("asa_dodge")
         inst.SoundEmitter:PlaySound("wanda1/wanda/jump_whoosh")
         inst.components.health:SetInvincible(true)
-        inst.components.timer:StopTimer("premagpiestep")
+        inst.components.timer:SetTimeLeft("premagpiestep", 0)
         inst.components.timer:PauseTimer("clearsetsugetsukacounter")
 
         inst.sg.statemem.startingpos = inst:GetPosition()

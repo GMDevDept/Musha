@@ -95,10 +95,11 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst:DoTaskInTime(0, StartFX) -- so we can use the position to affect the screen flash
 
     inst.entity:SetCanSleep(false)
-    inst.persists = false
     inst:DoTaskInTime(.5, inst.Remove)
 
     return inst

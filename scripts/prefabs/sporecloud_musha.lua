@@ -10,7 +10,7 @@ local prefabs =
 }
 
 local AURA_EXCLUDE_TAGS = { "playerghost", "ghost", "noauradamage", "INLIMBO", "notarget", "noattack",
-    "flight", "invisible", "companion", "musha_companion" }
+    "flight", "invisible", "companion", "musha_companion", "wall" }
 
 local FADE_FRAMES = 5
 local FADE_INTENSITY = .8
@@ -189,7 +189,6 @@ local function DoDisperse(inst)
 
     inst.AnimState:PlayAnimation("sporecloud_pst")
     inst.SoundEmitter:KillSound("spore_loop")
-    inst.persists = false
     inst:DoTaskInTime(1.5, inst.Remove)
 
     if inst._basefx ~= nil then
@@ -217,8 +216,7 @@ end
 
 local function FinishImmediately(inst)
     if inst.components.timer:TimerExists("disperse") then
-        inst.components.timer:StopTimer("disperse")
-        DoDisperse(inst)
+        inst.components.timer:SetTimeLeft("disperse", 0)
     end
 end
 
@@ -248,7 +246,7 @@ local function TryPerish(item)
             return
         end
     end
-    item.components.perishable:ReducePercent(TUNING.TOADSTOOL_SPORECLOUD_ROT)
+    item.components.perishable:ReducePercent(TUNING.musha.skills.launchelement.poisonspore.rot)
 end
 
 local SPOIL_CANT_TAGS = { "small_livestock" }
@@ -297,8 +295,6 @@ local function fn()
 
     inst._inittask = inst:DoTaskInTime(0, InitFX)
 
-    inst.persists = false
-
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
@@ -308,12 +304,14 @@ local function fn()
         return inst
     end
 
+    inst.persists = false
+
     inst:AddComponent("combat")
     inst.components.combat:SetDefaultDamage(TUNING.musha.skills.launchelement.poisonspore.damage)
 
     inst:AddComponent("aura")
-    inst.components.aura.radius = TUNING.TOADSTOOL_SPORECLOUD_RADIUS
-    inst.components.aura.tickperiod = TUNING.TOADSTOOL_SPORECLOUD_TICK
+    inst.components.aura.radius = TUNING.musha.skills.launchelement.poisonspore.radius
+    inst.components.aura.tickperiod = TUNING.musha.skills.launchelement.poisonspore.tickperiod
     inst.components.aura.auraexcludetags = AURA_EXCLUDE_TAGS
     inst.components.aura:Enable(true)
 

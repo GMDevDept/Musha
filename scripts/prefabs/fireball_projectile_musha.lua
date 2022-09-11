@@ -17,25 +17,48 @@ local function FireballOnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
-    local must_tags = { "_combat" }
+    local validground = TheWorld.Map:IsAboveGroundAtPoint(x, 0, z, true) and not TheWorld.Map:IsOceanAtPoint(x, y, z)
+    local one_of_tags = { "_combat", "canlight" }
     local ignore_tags = { "companion", "musha_companion", "player" }
     local range = TUNING.musha.skills.launchelement.rollingmagma.radius
     local damage = TUNING.musha.skills.launchelement.rollingmagma.damage
 
-    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
-        v.components.combat:GetAttacked(inst.owner, damage)
+    CustomDoAOE(inst, range, nil, ignore_tags, one_of_tags, function(v)
+        if v.components.combat ~= nil then
+            v.components.combat:GetAttacked(inst.owner, damage)
+        end
+        if validground and v.components.burnable ~= nil then
+            if not v.components.burnable:IsBurning() then
+                if not v._ignitecounter then
+                    v._ignitecounter = 1
+                else
+                    v._ignitecounter = v._ignitecounter + 1
+                end
+
+                if v._ignitecounter >= TUNING.musha.skills.launchelement.rollingmagma.forceignitecounter then
+                    v.components.burnable:Ignite(true, inst.owner)
+                    v._ignitecounter = nil
+                end
+            else
+                v.components.burnable:ExtendBurning()
+            end
+        end
     end)
 
-    local fx = SpawnPrefab("lavaarena_firebomb_proc_fx")
-    fx.Transform:SetPosition(x, 0, z)
-    fx.Transform:SetScale(1.5, 1.5, 1.5)
-    CustomRemoveEntity(fx, 3)
+    if validground then
+        local postprefab = SpawnPrefab("deer_fire_circle_musha")
+        postprefab.owner = inst.owner
+        postprefab.Transform:SetPosition(x, 0, z)
+        postprefab.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
+        postprefab:DoTaskInTime(25 * FRAMES, postprefab.TriggerFX)
+        postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.rollingmagma.duration, postprefab.KillFX)
 
-    local postprefab = SpawnPrefab("deer_fire_circle_musha")
-    postprefab.Transform:SetPosition(x, 0, z)
-    postprefab.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
-    postprefab:DoTaskInTime(25 * FRAMES, postprefab.TriggerFX)
-    postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.rollingmagma.duration, postprefab.KillFX)
+        inst.SoundEmitter:PlaySound("dontstarve/common/blackpowder_explo")
+        ShakeAllCameras(CAMERASHAKE.FULL, .4, .02, .5, inst, 40)
+    else
+        local postprefab = SpawnPrefab("small_puff")
+        postprefab.Transform:SetPosition(x, 0, z)
+    end
 end
 
 local function FrostOnExplode(inst)
@@ -47,16 +70,33 @@ local function FrostOnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
+    local must_tags = { "_combat", "locomotor" }
+    local ignore_tags = { "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.launchelement.whitefrost.radius
+
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
+        v:AddDebuff("whitefrost", "debuff_slowdown", {
+            duration = TUNING.musha.skills.launchelement.whitefrost.slowdownduration,
+            speedmultiplier = TUNING.musha.skills.launchelement.whitefrost.initialspeedmultiplier
+        })
+        if v.components.freezable then
+            v.components.freezable:SpawnShatterFX()
+        end
+    end)
+
     local fx = SpawnPrefab("splash")
     fx.Transform:SetPosition(x, 0, z)
     fx.Transform:SetScale(1.5, 1.5, 1.5)
     CustomRemoveEntity(fx, 3)
 
     local postprefab = SpawnPrefab("deer_ice_circle_musha")
+    postprefab.owner = inst.owner
     postprefab.Transform:SetPosition(x, 0, z)
     postprefab.SoundEmitter:PlaySound("dontstarve/characters/walter/slingshot/frozen")
     postprefab:DoTaskInTime(3, postprefab.TriggerFX)
     postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.whitefrost.duration, postprefab.KillFX)
+
+    ShakeAllCameras(CAMERASHAKE.FULL, .2, .02, .4, inst, 40)
 end
 
 local function HealingOnExplode(inst)
@@ -66,7 +106,7 @@ end
 
 local function OnAttached(inst, target)
     inst.entity:SetParent(target.entity)
-    inst.Transform:SetPosition(0, 3, 0)
+    inst.Transform:SetPosition(0, 2, 0)
 end
 
 local function OnDetached(inst)
@@ -75,19 +115,19 @@ end
 
 local function OnTimerDone(inst, data)
     if data.name == "explode" then
-        inst.components.debuff:Stop()
         inst:OnExplode()
+        inst.components.debuff:Stop()
         inst:Remove()
     end
 end
 
 local function OnHit(inst, attacker, target)
-    inst:OnExplode(inst)
+    inst:OnExplode()
+    inst.components.debuff:Stop()
     inst:Remove()
 end
 
 local function OnThrown(inst)
-    inst.persists = false
     inst.Physics:SetMass(1)
     inst.Physics:SetFriction(0)
     inst.Physics:SetDamping(0)
@@ -173,6 +213,7 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
 
         inst.entity:AddTransform()
         inst.entity:AddAnimState()
+        inst.entity:AddSoundEmitter()
         inst.entity:AddNetwork()
 
         MakeInventoryPhysics(inst)
@@ -200,13 +241,13 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
                 , hitfx, {})
         end
 
-        inst.persists = false
-
         inst.entity:SetPristine()
 
         if not TheWorld.ismastersim then
             return inst
         end
+
+        inst.persists = false
 
         inst:AddComponent("complexprojectile")
         inst.components.complexprojectile:SetHorizontalSpeed(horizontalspeed)
@@ -220,9 +261,10 @@ local function MakeProjectile(name, bank, build, speed, lightoverride, addcolour
         inst.components.debuff:SetDetachedFn(OnDetached)
 
         inst:AddComponent("timer")
-        inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.poisonspore.maxdelay)
+        inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.maxdelay)
         inst:ListenForEvent("timerdone", OnTimerDone)
 
+        inst.owner = nil -- Assigned when projectile is launched
         inst.OnExplode = onexplodefn
 
         return inst

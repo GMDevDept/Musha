@@ -164,7 +164,7 @@ local function OnUpdateIceCircle(inst, x, z)
                     if inst._track2[v] == nil then
                         if not v:HasTag("freeze_cooldown") then
                             if v.components.combat ~= nil and not nodamage then
-                                v.components.combat:GetAttacked(inst,
+                                v.components.combat:GetAttacked(inst.owner,
                                     TUNING.musha.skills.launchelement.whitefrost.damageperhit)
                             end
                             v.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.coldnessperhit
@@ -259,8 +259,6 @@ local FIRE_TARGET_ONEOF_TAGS = { "_health", "canlight", "freezable" }
 local FIND_DEER_ICE_CIRCLE_TAG = { "deer_ice_circle" }
 local function OnUpdateFireCircle(inst, x, z)
     inst._rad = inst._rad * .9 + FIRE_CIRCLE_RADIUS * .1
-    inst.components.propagator.propagaterange = inst._rad
-    inst.components.propagator.damagerange = inst._rad
 
     if inst._rad > 1 then
         inst.burstdelay = (inst.burstdelay or 2) - 1
@@ -297,11 +295,17 @@ local function OnUpdateFireCircle(inst, x, z)
                     v.components.health ~= nil then
                     if not v.components.burnable:IsBurning() then
                         inst._track2[v] = (inst._track1[v] or 0) + 1
-                        if inst._track2[v] > TUNING.DEER_FIRE_IGNITE_FRAMES then
-                            v.components.burnable:Ignite(true, inst)
+                        if v:HasTag("player") then -- Take longer to ignite players
+                            if inst._track2[v] > 3 * TUNING.musha.skills.launchelement.rollingmagma.igniteframe then
+                                v.components.burnable:Ignite(true, inst)
+                            end
+                        else
+                            if inst._track2[v] > TUNING.musha.skills.launchelement.rollingmagma.igniteframe then
+                                v.components.burnable:Ignite(true, inst)
+                            end
                         end
                     else
-                        inst._track2[v] = TUNING.DEER_FIRE_IGNITE_FRAMES
+                        inst._track2[v] = TUNING.musha.skills.launchelement.rollingmagma.igniteframe
                         v.components.burnable:ExtendBurning()
                     end
                 end
@@ -329,12 +333,6 @@ end
 
 local function deer_fire_circle_master_postinit(inst)
     inst.task = inst:DoTaskInTime(0, OnInitFireCircle)
-
-    inst:AddComponent("propagator")
-    inst.components.propagator.damages = true
-    inst.components.propagator.propagaterange = .25
-    inst.components.propagator.damagerange = .25
-    inst.components.propagator:StartSpreading()
 end
 
 local function OnKillFireCircle(inst)
@@ -342,23 +340,146 @@ local function OnKillFireCircle(inst)
 end
 
 local function deer_fire_circle_onkillfx(inst, anim)
-    inst.components.propagator:StopSpreading()
     inst:RemoveTag("deer_fire_circle")
     inst:ListenForEvent("animover", OnKillFireCircle)
 end
 
 --------------------------------------------------------------------------
 
+local function ChargedFireOnExplode(inst)
+    local x, y, z
+    local parent = inst.entity:GetParent()
+    if parent ~= nil then
+        x, y, z = parent.Transform:GetWorldPosition()
+    else
+        x, y, z = inst.Transform:GetWorldPosition()
+    end
+
+    local owner = inst.owner
+    local postprefab = SpawnPrefab("fireball_projectile_musha")
+    postprefab.owner = owner
+    postprefab.Transform:SetPosition(x, 0, z)
+    postprefab.components.complexprojectile:Hit()
+
+    local function Split()
+        local range = TUNING.musha.skills.launchelement.rollingmagma.charged.range
+        local map = TheWorld.Map
+        local offset = FindValidPositionByFan(
+            math.random() * 2 * PI,
+            math.random() * range,
+            4,
+            function(offset)
+                local x1 = x + offset.x
+                local z1 = z + offset.z
+                return not map:IsPointNearHole(Vector3(x1, 0, z1), .4)
+                    and #TheSim:FindEntities(x1, 0, z1, 3, nil, nil, { "dummyplaceholder", "deer_fire_circle" }) == 0
+            end
+        )
+
+        if offset ~= nil then
+            local placeholder = SpawnPrefab("dummyplaceholder")
+            placeholder.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+
+            local postprefab = SpawnPrefab("fireball_projectile_musha")
+            postprefab.owner = owner
+            postprefab.Transform:SetPosition(x, y, z)
+            postprefab.components.complexprojectile:Launch(Vector3(x + offset.x, 0, z + offset.z), owner)
+        end
+    end
+
+    local min = TUNING.musha.skills.launchelement.rollingmagma.charged.mincount
+    local max = TUNING.musha.skills.launchelement.rollingmagma.charged.maxcount
+
+    TheWorld:CustomDoPeriodicTask(math.random(min, max) * 0.15, .15, Split)
+end
+
+local function ChargedIceOnExplode(inst)
+    local x, y, z
+    local parent = inst.entity:GetParent()
+    if parent ~= nil then
+        x, y, z = parent.Transform:GetWorldPosition()
+    else
+        x, y, z = inst.Transform:GetWorldPosition()
+    end
+
+    local postprefab = SpawnPrefab("crabking_feeze_musha")
+    postprefab.owner = inst.owner
+    postprefab.Transform:SetPosition(x, 0, z)
+    postprefab.SoundEmitter:PlaySound("dontstarve/common/break_iceblock")
+end
+
+local function OnAttached(inst, target)
+    inst.entity:SetParent(target.entity)
+    inst.Transform:SetPosition(0, 4, 0)
+end
+
+local function OnDetached(inst)
+    inst:Remove()
+end
+
+local function OnTimerDone(inst, data)
+    if data.name == "explode" then
+        inst:OnExplode()
+        inst.components.debuff:Stop()
+        inst:Remove()
+    end
+end
+
+local function OnHit(inst, attacker, target)
+    inst:OnExplode()
+    inst.components.debuff:Stop()
+    inst:Remove()
+end
+
+local function OnThrown(inst)
+    inst.Physics:SetMass(1)
+    inst.Physics:SetFriction(0)
+    inst.Physics:SetDamping(0)
+    inst.Physics:SetCollisionGroup(COLLISION.CHARACTERS)
+    inst.Physics:ClearCollisionMask()
+    inst.Physics:CollidesWith(COLLISION.GROUND)
+    inst.Physics:CollidesWith(COLLISION.OBSTACLES)
+    inst.Physics:CollidesWith(COLLISION.ITEMS)
+    inst.Physics:SetCapsule(.2, .2)
+end
+
 local function deer_charge_common_postinit(inst)
+    MakeInventoryPhysics(inst)
+
+    inst:AddTag("NOCLICK")
+    inst:AddTag("projectile")
+
     inst.SoundEmitter:SetParameter("loop", "intensity", 1)
 end
 
-local function deer_charge_master_postinit(inst, init)
+local function deer_charge_master_postinit(inst, init, horizontalspeed, gravity, onexplodefn)
     if not init then
+        inst:AddComponent("complexprojectile")
+        inst.components.complexprojectile:SetHorizontalSpeed(horizontalspeed)
+        inst.components.complexprojectile:SetGravity(gravity)
+        inst.components.complexprojectile:SetLaunchOffset(Vector3(.25, 1, 0))
+        inst.components.complexprojectile:SetOnLaunch(OnThrown)
+        inst.components.complexprojectile:SetOnHit(OnHit)
+
+        inst:AddComponent("debuff")
+        inst.components.debuff:SetAttachedFn(OnAttached)
+        inst.components.debuff:SetDetachedFn(OnDetached)
+
+        inst:AddComponent("timer")
+        inst.components.timer:StartTimer("explode", TUNING.musha.skills.launchelement.maxdelay)
+        inst:ListenForEvent("timerdone", OnTimerDone)
+
+        inst.owner = nil -- Assigned when projectile is launched
+        inst.OnExplode = onexplodefn
+
         inst:DoTaskInTime(0, deer_charge_master_postinit, true)
     elseif not inst.killed then
-        inst.SoundEmitter:PlaySound("dontstarve/wilson/use_gemstaff")
-        inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop_fail")
+        inst:DoTaskInTime(0, function(inst)
+            if not inst.nosound then
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/use_gemstaff")
+                inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop_fail")
+            end
+        end)
     end
 end
 
@@ -490,7 +611,7 @@ local function MakeFX(name, data)
         inst.OnKillFX = data.onkillfx
 
         if data.master_postinit ~= nil then
-            data.master_postinit(inst)
+            data.master_postinit(inst, nil, data.horizontalspeed, data.gravity, data.onexplodefn)
         end
 
         return inst
@@ -522,6 +643,9 @@ return MakeFX("deer_ice_circle_musha", {
         common_postinit = deer_charge_common_postinit,
         master_postinit = deer_charge_master_postinit,
         onkillfx = deer_charge_onkillfx,
+        horizontalspeed = 25,
+        gravity = -35,
+        onexplodefn = ChargedIceOnExplode,
     }),
     MakeFX("deer_fire_circle_musha", {
         light = FIRE_COLOUR,
@@ -542,4 +666,7 @@ return MakeFX("deer_ice_circle_musha", {
         common_postinit = deer_charge_common_postinit,
         master_postinit = deer_charge_master_postinit,
         onkillfx = deer_charge_onkillfx,
+        horizontalspeed = 25,
+        gravity = -35,
+        onexplodefn = ChargedFireOnExplode,
     })
