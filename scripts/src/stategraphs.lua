@@ -43,7 +43,7 @@ AddStategraphPostInit("wilson", function(self)
         if inst:HasTag("musha") then
             inst.sg:AddStateTag("musha_nointerrupt")
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 end)
 
@@ -59,7 +59,7 @@ AddStategraphPostInit("wilson", function(self)
                 inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             end)
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 end)
 
@@ -69,7 +69,7 @@ AddStategraphPostInit("wilson", function(self)
         if inst:HasTag("musha") then
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 end)
 
@@ -105,13 +105,14 @@ AddStategraphPostInit("wilson", function(self)
             inst.components.talker:Say(STRINGS.musha.sleep.poor[math.random(#STRINGS.musha.sleep.poor)])
             SleepDeclaration(inst, "poor")
         end
-        return _onenter(inst)
+        _onenter(inst)
+        inst.components.grue:RemoveImmunity("sleeping")
     end
 
     local _onexit = self.states["knockout"].onexit
     self.states["knockout"].onexit = function(inst)
         CustomCancelTask(inst.task_sleepdeclaration)
-        return _onexit(inst)
+        _onexit(inst)
     end
 end)
 
@@ -124,7 +125,7 @@ AddStategraphPostInit("wilson", function(self)
             inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
             SleepDeclaration(inst, "good")
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 
     local _fn = self.states["bedroll"].events["animqueueover"].fn
@@ -151,7 +152,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onexit = self.states["bedroll"].onexit
     self.states["bedroll"].onexit = function(inst)
         CustomCancelTask(inst.task_sleepdeclaration)
-        return _onexit(inst)
+        _onexit(inst)
     end
 end)
 
@@ -164,13 +165,13 @@ AddStategraphPostInit("wilson", function(self)
             inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
             SleepDeclaration(inst, "perfect")
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 
     local _onexit = self.states["tent"].onexit
     self.states["tent"].onexit = function(inst)
         CustomCancelTask(inst.task_sleepdeclaration)
-        return _onexit(inst)
+        _onexit(inst)
     end
 end)
 
@@ -181,7 +182,7 @@ AddStategraphPostInit("wilson", function(self)
         if inst:HasTag("musha") then
             inst.sg:AddStateTag("musha_nointerrupt")
         end
-        return _onenter(inst)
+        _onenter(inst)
     end
 
     local _onexit = self.states["wakeup"].onexit
@@ -194,7 +195,7 @@ AddStategraphPostInit("wilson", function(self)
                 inst.components.talker:Say(STRINGS.musha.sleep.wakeup[math.random(#STRINGS.musha.sleep.wakeup)])
             end
         end
-        return _onexit(inst)
+        _onexit(inst)
     end
 end)
 
@@ -442,7 +443,6 @@ local musha_berserk_pre = State {
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         end),
         TimeEvent(21 * FRAMES, function(inst)
-            inst.SoundEmitter:PlaySound("dontstarve/creatures/werepig/howl")
             CustomDoAOE(inst, 4, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)
@@ -460,6 +460,7 @@ local musha_berserk_pre = State {
         end),
         TimeEvent(31 * FRAMES, function(inst)
             inst.mode:set(3)
+            inst.SoundEmitter:PlaySound("dontstarve_DLC001/creatures/vargr/howl")
             CustomDoAOE(inst, 6, { "_combat" }, { "player", "companion", "musha_companion" }, nil,
                 function(target)
                     ActivateBerserkAOE(target, inst)

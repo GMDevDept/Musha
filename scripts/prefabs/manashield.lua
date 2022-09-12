@@ -19,6 +19,13 @@ local function OnUpdateLight(inst, dframes)
 
     inst.Light:SetRadius(3 * inst._lightframe:value() / MAX_LIGHT_FRAME)
 
+    if inst.previouslightframe == 0 and inst._lightframe:value() > 0 then
+        inst.Light:Enable(true)
+    elseif inst.previouslightframe > 0 and inst._lightframe:value() == 0 then
+        inst.Light:Enable(false)
+    end
+    inst.previouslightframe = inst._lightframe:value()
+
     if done then
         inst._lighttask:Cancel()
         inst._lighttask = nil
@@ -91,13 +98,13 @@ local function fn()
     inst.Light:SetIntensity(.9)
     inst.Light:SetFalloff(.9)
     inst.Light:SetColour(1, 1, 1)
-    inst.Light:Enable(true)
     inst.Light:EnableClientModulation(true)
 
     inst._lightframe = net_tinybyte(inst.GUID, "forcefieldfx._lightframe", "lightdirty")
     inst._islighton = net_bool(inst.GUID, "forcefieldfx._islighton", "lightdirty")
     inst._lighttask = nil
     inst._islighton:set(true)
+    inst.previouslightframe = 0
 
     inst.OnLightDirty = OnLightDirty
 

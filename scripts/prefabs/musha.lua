@@ -358,6 +358,9 @@ local function ShieldOnAttacked(inst, data)
         if data.damage and data.damage > 0 then
             delta = delta + data.damage
         end
+        if data.stimuli and data.stimuli == "darkness" then
+            delta = max(delta, inst.shielddurability - 1)
+        end
         inst.shielddurability = inst.shielddurability - delta
         if inst.shielddurability <= 0 then
             if inst:HasTag("musha") then
@@ -411,7 +414,7 @@ local function ShieldOn(inst)
         inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
         inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
         inst:SetShieldDurability()
-        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
+        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
         inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
     else
         local validtargets = 0
@@ -447,7 +450,7 @@ local function ShieldOn(inst)
             if not v:HasTag("areamanashieldactivated") then
                 v:AddTag("areamanashieldactivated")
                 v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-                v:ListenForEvent("manashieldonattacked", ShieldOnAttacked)
+                v:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
                 v.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
                 v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
                 v:ListenForEvent("timerdone", cancel_manashield_area)

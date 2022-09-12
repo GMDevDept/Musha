@@ -9,9 +9,6 @@ local prefabs =
     "sporecloud_overlay",
 }
 
-local AURA_EXCLUDE_TAGS = { "playerghost", "ghost", "noauradamage", "INLIMBO", "notarget", "noattack",
-    "flight", "invisible", "companion", "musha_companion", "wall" }
-
 local FADE_FRAMES = 5
 local FADE_INTENSITY = .8
 local FADE_RADIUS = 1
@@ -165,7 +162,10 @@ local function KillOverlayFX(fx)
 end
 
 local function DisableCloud(inst)
-    inst.components.aura:Enable(false)
+    if inst._auratask ~= nil then
+        inst._auratask:Cancel()
+        inst._auratask = nil
+    end
 
     if inst._spoiltask ~= nil then
         inst._spoiltask:Cancel()
@@ -253,10 +253,19 @@ local SPOIL_CANT_TAGS = { "small_livestock" }
 local SPOIL_ONEOF_TAGS = { "fresh", "stale", "spoiled" }
 local function DoAreaSpoil(inst)
     local x, y, z = inst.Transform:GetWorldPosition()
-    local ents = TheSim:FindEntities(x, y, z, inst.components.aura.radius, nil, SPOIL_CANT_TAGS, SPOIL_ONEOF_TAGS)
+    local ents = TheSim:FindEntities(x, y, z, TUNING.musha.skills.launchelement.poisonspore.radius, nil, SPOIL_CANT_TAGS
+        , SPOIL_ONEOF_TAGS)
     for i, v in ipairs(ents) do
         TryPerish(v)
     end
+end
+
+local must_tags = { "_combat" }
+local ignore_tags = { "companion", "musha_companion", "wall" }
+local function AuraOnTick(inst)
+    CustomDoAOE(inst, TUNING.musha.skills.launchelement.poisonspore.radius, must_tags, ignore_tags, nil, function(v)
+        v.components.combat:GetAttacked(inst.owner, TUNING.musha.skills.launchelement.poisonspore.damage)
+    end)
 end
 
 local function fn()
@@ -309,14 +318,9 @@ local function fn()
     inst:AddComponent("combat")
     inst.components.combat:SetDefaultDamage(TUNING.musha.skills.launchelement.poisonspore.damage)
 
-    inst:AddComponent("aura")
-    inst.components.aura.radius = TUNING.musha.skills.launchelement.poisonspore.radius
-    inst.components.aura.tickperiod = TUNING.musha.skills.launchelement.poisonspore.tickperiod
-    inst.components.aura.auraexcludetags = AURA_EXCLUDE_TAGS
-    inst.components.aura:Enable(true)
-
-    inst._spoiltask = inst:DoPeriodicTask(inst.components.aura.tickperiod, DoAreaSpoil,
-        inst.components.aura.tickperiod * .5)
+    inst._auratask = inst:DoPeriodicTask(TUNING.musha.skills.launchelement.poisonspore.tickperiod, AuraOnTick)
+    inst._spoiltask = inst:DoPeriodicTask(TUNING.musha.skills.launchelement.poisonspore.tickperiod, DoAreaSpoil,
+        TUNING.musha.skills.launchelement.poisonspore.tickperiod * .5)
 
     inst.AnimState:PushAnimation("sporecloud_loop", true)
     inst:ListenForEvent("animover", OnAnimOver)
