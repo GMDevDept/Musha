@@ -34,14 +34,6 @@ local elementlist = {
 
 ---------------------------------------------------------------------------------------------------------
 
--- Bonus damage
-local function BonusDamageFn(inst, target, damage, weapon)
-    -- return (target:HasTag("") and TUNING.EXTRADAMAGE) or 0
-    return 0
-end
-
----------------------------------------------------------------------------------------------------------
-
 -- Push event when debuff is added or removed
 -- ? Maybe Klei will add this event officially in the future?
 
@@ -51,6 +43,31 @@ end
 
 local function OnDebuffRemoved(inst, name, debuff)
     inst:PushEvent("debuffremoved", { name = name, debuff = debuff })
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Reset damage multiplier on stamina change
+local function OnStaminaDelta(inst)
+    local multiplier = inst.components.stamina:GetDamageMultiplier()
+    inst.components.combat.externaldamagemultipliers:SetModifier(inst, multiplier, "staminalevel")
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Bonus damage
+local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by target's Combat:GetAttacked, and only when damage > 0
+    local bonusdamage = 0
+
+    if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" }) then
+        bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
+    end
+
+    if inst.mode:value() == 3 and target:HasTag("shadowcreature") then
+        bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.shadow.bonusdamagetoshadow
+    end
+
+    return bonusdamage
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -123,7 +140,6 @@ end
 -- Treasure sniffing
 
 local function SniffTreasure(inst)
-    local pos = Vector3(inst.Transform:GetWorldPosition())
     local treasure = inst.components.treasurehunter:NewStash()
     if treasure ~= nil then
         inst.components.treasurehunter:Reset()
@@ -363,6 +379,7 @@ local function ShieldOnAttacked(inst, data)
         end
         inst.shielddurability = inst.shielddurability - delta
         if inst.shielddurability <= 0 then
+            inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
             if inst:HasTag("musha") then
                 inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
             elseif inst.components.talker then
@@ -1122,7 +1139,6 @@ local function StartSneaking(inst)
     elseif inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.skills.sneak.sanitycost then
         inst:AddTag("sneaking")
         inst:RemoveTag("scarytoprey")
-        inst:RemoveTag("areaattack")
         inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
         inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
         inst:ListenForEvent("attacked", SneakFailed)
@@ -1141,7 +1157,7 @@ local function StartSneaking(inst)
 
             inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst:ListenForEvent("onattackother", BackStab)
-            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 0.7 }, 0)
+            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
             CustomAttachFx(inst, "statue_transition")
         end)
 
@@ -1162,7 +1178,6 @@ local function RemoveSneakEffects(inst)
     inst:RemoveTag("sneaking")
     inst:RemoveTag("notarget")
     inst:AddTag("scarytoprey")
-    inst:AddTag("areaattack")
     inst:RemoveEventCallback("onattackother", BackStab)
     inst:RemoveEventCallback("attacked", SneakFailed)
     CustomCancelTask(inst.task_entersneak)
@@ -1469,7 +1484,7 @@ local function UnfreezeOnFreeze(inst)
 end
 
 -- OnAttack fn for berserk mode
-local function BerserkOnAttackOther(inst, data)
+local function ValkyrieOnAttackOther(inst, data)
     local target = data.target
     local weapon = data.weapon
 
@@ -1477,7 +1492,7 @@ local function BerserkOnAttackOther(inst, data)
         local range = weapon and weapon:HasTag("areaattack") and 1.5 * TUNING.musha.areaattackrange
             or TUNING.musha.areaattackrange
         local excludetags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
-            "wall", "companion", "musha_companion" }
+            "player", "companion", "musha_companion" }
 
         inst.components.combat:DoAreaAttack(target, range, weapon, nil, nil, excludetags) -- Note: DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags)
 
@@ -1550,11 +1565,13 @@ local function OnModeChange(inst)
 
     if previousmode == 2 and currentmode ~= 2 then
         inst:RemoveTag("stronggrip")
-        inst.components.combat.externaldamagemultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
-        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff")
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
         inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
         inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
+
+        inst:RemoveTag("areaattack")
+        inst:RemoveEventCallback("onattackother", ValkyrieOnAttackOther)
 
         inst:LightningDischarge()
         inst.components.timer:StopTimer("lightningrecharge")
@@ -1573,9 +1590,9 @@ local function OnModeChange(inst)
         else
             CustomAttachFx(inst, "statue_transition_2") -- Avoid dupulicate fx
         end
-        inst:RemoveTag("areaattack") -- Must be removed after inst:RemoveSneakEffects()
-        inst:RemoveEventCallback("onattackother", BerserkOnAttackOther)
+
         inst.components.debuffable:RemoveDebuff("elementloaded")
+
         CustomCancelTask(inst.modetrailtask)
 
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -1625,9 +1642,9 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
 
         inst:AddTag("stronggrip")
+        inst:AddTag("areaattack")
+        inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)
 
-        inst.components.combat.externaldamagemultipliers:SetModifier(inst,
-            TUNING.musha.valkyriedamagemultiplier, "valkyriebuff")
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.valkyriedamagetakenmultiplier, "valkyriebuff")
         inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
@@ -1646,9 +1663,6 @@ local function OnModeChange(inst)
 
     if currentmode == 3 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
-
-        inst:AddTag("areaattack")
-        inst:ListenForEvent("onattackother", BerserkOnAttackOther)
 
         inst.shadowmushafollowonly = false
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -1987,6 +2001,7 @@ local function master_postinit(inst)
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
+    inst:ListenForEvent("staminadelta", OnStaminaDelta)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
     inst:ListenForEvent("treasurefull", OnTreasureSniffingReady)
     inst:ListenForEvent("death", OnDeathForPetLeash)

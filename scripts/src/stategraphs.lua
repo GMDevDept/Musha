@@ -47,6 +47,17 @@ AddStategraphPostInit("wilson", function(self)
     end
 end)
 
+-- Thaw
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["thaw"].onenter
+    self.states["thaw"].onenter = function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:AddStateTag("musha_nointerrupt")
+        end
+        _onenter(inst)
+    end
+end)
+
 ---------------------------------------------------------------------------------------------------------
 
 -- Add magpie step cast window after attacking or being attacked
@@ -106,7 +117,9 @@ AddStategraphPostInit("wilson", function(self)
             SleepDeclaration(inst, "poor")
         end
         _onenter(inst)
-        inst.components.grue:RemoveImmunity("sleeping")
+        if inst:HasTag("musha") then
+            inst.components.grue:RemoveImmunity("sleeping")
+        end
     end
 
     local _onexit = self.states["knockout"].onexit
@@ -184,6 +197,13 @@ AddStategraphPostInit("wilson", function(self)
         end
         _onenter(inst)
     end
+
+    local _events = self.states["wakeup"].events
+    _events["musha_attacked"] = EventHandler("attacked", function(inst)
+        if inst:HasTag("musha") then
+            inst.sg:GoToState("hit")
+        end
+    end)
 
     local _onexit = self.states["wakeup"].onexit
     self.states["wakeup"].onexit = function(inst)

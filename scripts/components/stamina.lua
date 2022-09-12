@@ -107,12 +107,12 @@ function Stamina:Recalc(dt)
             or inst.sg:HasStateTag("knockout") and 20
             or 20)
         or (inst.sg:HasStateTag("working") or inst.sg:HasStateTag("attacking") or
-            inst.sg:HasStateTag("abouttoattack")) and -5
-        or inst.sg:HasStateTag("doing") and -2
-        or inst.sg:HasStateTag("fishing") and -1
+            inst.sg:HasStateTag("abouttoattack")) and -10
+        or inst.sg:HasStateTag("doing") and -5
+        or inst.sg:HasStateTag("fishing") and -5
         or inst.sg:HasStateTag("busy") and 0
-        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2
-        or inst.sg:HasStateTag("idle") and 5
+        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 5
+        or inst.sg:HasStateTag("idle") and 10
         or 0
 
     self.baserate = TUNING.musha.staminarate + m
@@ -156,6 +156,12 @@ end
 
 function Stamina:GetDebugString()
     return string.format("%2.2f / %2.2f, rate: %2.2f", self.current, self.max, self.rate)
+end
+
+function Stamina:GetDamageMultiplier()
+    return Remap(self.current, 0, self.max,
+        TUNING.musha.damageonminstamina / TUNING.musha.damagemultiplier,
+        TUNING.musha.damageonmaxstamina / TUNING.musha.damagemultiplier)
 end
 
 return Stamina

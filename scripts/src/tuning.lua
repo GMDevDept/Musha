@@ -32,11 +32,17 @@ TUNING.musha = {
         },
     },
 
-    damagemultiplier = 0.75,
+    damagemultiplier = 0.8,
+    damageonmaxstamina = 0.8,
+    damageonminstamina = 0.5,
     areahitdamagepercent = 0.25,
     areaattackrange = 3,
 
-    maxpets = 50,
+    charactermode = {
+        shadow = {
+            bonusdamagetoshadow = 1,
+        },
+    },
 
     fullmodespeedboost = 1.1,
     fullmodehealthregen = 0.1,
@@ -44,7 +50,7 @@ TUNING.musha = {
     fullmodestaminaregen = 0.5,
     fullmodehungerdrain = 1.3,
 
-    valkyriedamagemultiplier = 1.2,
+    valkyriebonusdamagemultiplier = 0.5,
     valkyriedamagetakenmultiplier = 0.8,
     valkyriemanaongoingmodifier = 0,
 
@@ -62,6 +68,8 @@ TUNING.musha = {
     debuffparalysisduration = 8,
     debuffparalysisperiod = 2,
     debuffparalysisdamage = 5,
+
+    maxpets = 50,
 
     maxexperience = 300,
     maxlevel = 30,
@@ -148,11 +156,12 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = -1,
-            cooldown = 30,
+            lighttime = 4,
             brokendelay = 3,
             durabilitybase = 400,
             durabilitygrowth = 40,
             durabilitydamage = 20,
+            cooldown = 30,
         },
         manashield_area = {
             manacost = 30,
@@ -190,7 +199,7 @@ TUNING.musha = {
                     chargetime = 3,
                     mincount = 15,
                     maxcount = 20,
-                    cooldown = 3,
+                    cooldown = 6,
                 },
             },
             whitefrost = {
@@ -216,7 +225,7 @@ TUNING.musha = {
                     basedamage = 100,
                     percentdamage = 0.2,
                     maxdamage = 1500,
-                    cooldown = 20,
+                    cooldown = 15,
                 },
             },
             poisonspore = {
@@ -225,9 +234,9 @@ TUNING.musha = {
                 radius = 3.5,
                 damage = 20,
                 rot = 0.1,
-                cooldown = 10,
                 duration = 20,
                 tickperiod = 1,
+                cooldown = 5,
             },
         },
         lightningstrike = {

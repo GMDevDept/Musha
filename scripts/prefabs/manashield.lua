@@ -31,9 +31,9 @@ local function OnUpdateLight(inst, dframes)
         inst._lighttask = nil
         if inst._islighton:value() then
             if not inst.components.timer:TimerExists("fireout") then
-                inst.components.timer:StartTimer("fireout", 3) -- Cancel light effect after 3 seconds
+                inst.components.timer:StartTimer("fireout", TUNING.musha.skills.manashield.lighttime) -- Cancel light effect
             else
-                inst.components.timer:SetTimeLeft("fireout", 3)
+                inst.components.timer:SetTimeLeft("fireout", TUNING.musha.skills.manashield.lighttime)
             end
         end
     end
@@ -56,7 +56,7 @@ local function OnAttacked(inst)
         inst:OnLightDirty()
     else
         if inst.components.timer:TimerExists("fireout") then
-            inst.components.timer:SetTimeLeft("fireout", 3)
+            inst.components.timer:SetTimeLeft("fireout", TUNING.musha.skills.manashield.lighttime)
         end
         inst:OnLightDirty()
     end
@@ -91,6 +91,7 @@ local function fn()
     inst.AnimState:SetBuild("manashield")
     inst.AnimState:PlayAnimation("open")
     inst.AnimState:PushAnimation("idle_loop", true)
+    inst.AnimState:SetSortOrder(3)
 
     inst.SoundEmitter:PlaySound("dontstarve/wilson/forcefield_LP", "loop")
 
