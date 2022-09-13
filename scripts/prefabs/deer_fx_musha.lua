@@ -402,6 +402,9 @@ local function ChargedIceOnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
+    local fx = SpawnPrefab("crab_king_waterspout")
+    fx.Transform:SetPosition(x, 0, z)
+
     local postprefab = SpawnPrefab("crabking_feeze_musha")
     postprefab.owner = inst.owner
     postprefab.Transform:SetPosition(x, 0, z)

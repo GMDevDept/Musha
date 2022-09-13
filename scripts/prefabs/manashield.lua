@@ -10,11 +10,11 @@ local function OnUpdateLight(inst, dframes)
     if inst._islighton:value() then
         local frame = inst._lightframe:value() + dframes
         done = frame >= MAX_LIGHT_FRAME
-        inst._lightframe:set_local(done and MAX_LIGHT_FRAME or frame)
+        inst._lightframe:set(done and MAX_LIGHT_FRAME or frame)
     else
         local frame = inst._lightframe:value() - dframes
         done = frame <= 0
-        inst._lightframe:set_local(done and 0 or frame)
+        inst._lightframe:set(done and 0 or frame)
     end
 
     inst.Light:SetRadius(3 * inst._lightframe:value() / MAX_LIGHT_FRAME)
@@ -29,7 +29,8 @@ local function OnUpdateLight(inst, dframes)
     if done then
         inst._lighttask:Cancel()
         inst._lighttask = nil
-        if inst._islighton:value() then
+
+        if TheWorld.ismastersim and inst._islighton:value() then
             if not inst.components.timer:TimerExists("fireout") then
                 inst.components.timer:StartTimer("fireout", TUNING.musha.skills.manashield.lighttime) -- Cancel light effect
             else
@@ -43,38 +44,25 @@ local function OnLightDirty(inst)
     if inst._lighttask == nil then
         inst._lighttask = inst:DoPeriodicTask(FRAMES, OnUpdateLight, nil, 1)
     end
-    OnUpdateLight(inst, 0)
 end
 
 local function OnAttacked(inst)
+    inst._islighton:set(true)
     inst.AnimState:PlayAnimation("hit")
     inst.AnimState:PushAnimation("idle_loop")
     inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
-    if not inst._islighton:value() then -- Light again
-        inst._islighton:set(true)
-        inst._lightframe:set(inst._lightframe:value())
-        inst:OnLightDirty()
-    else
-        if inst.components.timer:TimerExists("fireout") then
-            inst.components.timer:SetTimeLeft("fireout", TUNING.musha.skills.manashield.lighttime)
-        end
-        inst:OnLightDirty()
-    end
+    inst.components.timer:SetTimeLeft("fireout", TUNING.musha.skills.manashield.lighttime)
 end
 
 local function OnTimerDone(inst, data)
     if data.name == "fireout" then
         inst._islighton:set(false)
-        inst._lightframe:set(inst._lightframe:value())
-        inst:OnLightDirty()
     end
 end
 
 local function kill_fx(inst)
     inst.AnimState:PlayAnimation("close")
     inst._islighton:set(false)
-    inst._lightframe:set(inst._lightframe:value())
-    OnLightDirty(inst)
     inst:DoTaskInTime(.6, inst.Remove)
 end
 
@@ -91,7 +79,7 @@ local function fn()
     inst.AnimState:SetBuild("manashield")
     inst.AnimState:PlayAnimation("open")
     inst.AnimState:PushAnimation("idle_loop", true)
-    inst.AnimState:SetSortOrder(3)
+    inst.AnimState:SetSortOrder(2)
 
     inst.SoundEmitter:PlaySound("dontstarve/wilson/forcefield_LP", "loop")
 
@@ -107,26 +95,25 @@ local function fn()
     inst._islighton:set(true)
     inst.previouslightframe = 0
 
-    inst.OnLightDirty = OnLightDirty
-
-    inst:AddComponent("timer")
-
-    inst.entity:SetPristine()
+    inst:ListenForEvent("lightdirty", OnLightDirty)
 
     OnLightDirty(inst)
 
-    inst:ListenForEvent("manashieldonattacked", OnAttacked)
-    inst:ListenForEvent("timerdone", OnTimerDone)
+    inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
-        inst:ListenForEvent("lightdirty", OnLightDirty)
-
         return inst
     end
 
     inst.persists = false
 
+    inst:AddComponent("timer")
+
+    inst:ListenForEvent("manashieldonattacked", OnAttacked)
+    inst:ListenForEvent("timerdone", OnTimerDone)
+
     inst.kill_fx = kill_fx
+
 
     return inst
 end

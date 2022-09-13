@@ -375,15 +375,17 @@ local function ShieldOnAttacked(inst, data)
             delta = delta + data.damage
         end
         if data.stimuli and data.stimuli == "darkness" then
-            delta = max(delta, inst.shielddurability - 1)
+            delta = math.max(delta, inst.shielddurability - 1)
         end
         inst.shielddurability = inst.shielddurability - delta
         if inst.shielddurability <= 0 then
-            inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
             if inst:HasTag("musha") then
                 inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
             elseif inst.components.talker then
                 inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_other)
+            end
+            if inst.SoundEmitter then
+                inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
             end
             inst.task_shieldbrokendelay = inst:DoTaskInTime(TUNING.musha.skills.manashield.brokendelay, function()
                 if inst:HasTag("manashieldactivated") then
@@ -421,17 +423,48 @@ local function SetShieldDurability(inst)
     inst.shielddurability = shielddurability
 end
 
+local function AdjustShieldSize(inst)
+    if not inst.components.rider then return end
+    if inst.components.rider:IsRiding() then
+        inst.fx_manashield.Transform:SetScale(2, 2, 2)
+    else
+        inst.fx_manashield.Transform:SetScale(0.9, 0.9, 0.9)
+    end
+end
+
+local function AddShieldCommonEffects(inst)
+    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
+    inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
+    inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
+    inst:ListenForEvent("mounted", AdjustShieldSize)
+    inst:ListenForEvent("dismounted", AdjustShieldSize)
+    AdjustShieldSize(inst)
+    if inst.SoundEmitter then
+        inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
+        inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
+    end
+end
+
+local function RemoveShieldCommonEffects(inst)
+    inst.fx_manashield:kill_fx()
+    inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
+    inst:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
+    inst:RemoveEventCallback("mounted", AdjustShieldSize)
+    inst:RemoveEventCallback("dismounted", AdjustShieldSize)
+    inst.shielddurability = nil
+    if inst.SoundEmitter then
+        inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
+        inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
+    end
+end
+
 local function ShieldOn(inst)
-    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
-    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
 
     if not inst.skills.manashield_area then
         inst:AddTag("manashieldactivated")
-        inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-        inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
-        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+        AddShieldCommonEffects(inst)
         inst:SetShieldDurability()
-        inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
         inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
     else
         local validtargets = 0
@@ -447,10 +480,7 @@ local function ShieldOn(inst)
                     v:ShieldOff()
                     v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
                 else
-                    v:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
-                    v.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
-                    v.fx_manashield:kill_fx()
-                    inst.shielddurability = nil
+                    RemoveShieldCommonEffects(v)
                 end
                 v:RemoveTag("areamanashieldactivated")
                 v:RemoveEventCallback("timerdone", cancel_manashield_area)
@@ -466,9 +496,7 @@ local function ShieldOn(inst)
 
             if not v:HasTag("areamanashieldactivated") then
                 v:AddTag("areamanashieldactivated")
-                v.fx_manashield = CustomAttachFx(v, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-                v:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
-                v.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
+                AddShieldCommonEffects(v)
                 v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
                 v:ListenForEvent("timerdone", cancel_manashield_area)
             else
@@ -499,17 +527,10 @@ local function ShieldOn(inst)
 end
 
 local function ShieldOff(inst)
-    inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
-    inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
-    inst.shielddurability = nil
-    inst:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
-    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
+    RemoveShieldCommonEffects(inst)
     CustomCancelTask(inst.task_shieldbrokendelay)
-
-    inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
-    inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-    inst.fx_manashield:kill_fx()
-
+    inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
+    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
     inst:RemoveTag("manashieldactivated")
 
     inst.components.timer:StartTimer("cooldown_manashield", TUNING.musha.skills.manashield.cooldown)
