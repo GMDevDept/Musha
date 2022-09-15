@@ -69,6 +69,19 @@ TUNING.musha = {
     debuffparalysisperiod = 2,
     debuffparalysisdamage = 5,
 
+    foodbonus = {
+        taffy = {
+            health = 3,
+            mana = 5,
+            stamina = 25,
+        },
+        jellybean = {
+            mana = 1,
+            stamina = 2,
+            duration = 60,
+        },
+    },
+
     maxpets = 50,
 
     maxexperience = 300,

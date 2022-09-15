@@ -72,6 +72,32 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Additional effects on eating certain foods
+local function OnEatFood(inst, data)
+    if data.food then
+        if data.food.prefab == "taffy" then
+            inst.components.health:DoDelta(3)
+            inst.components.mana:DoDelta(5)
+            inst.components.stamina:DoDelta(25)
+        elseif data.food.prefab == "jellybean" then
+            if not inst.task_canceljellybeaneffects then
+                inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.foodbonus.jellybean.mana, "jellybean")
+                inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.foodbonus.jellybean.stamina, "jellybean")
+            else
+                CustomCancelTask(inst.task_canceljellybeaneffects)
+            end
+
+            inst.task_canceljellybeaneffects = inst:DoTaskInTime(TUNING.musha.foodbonus.jellybean.duration,
+                function()
+                    inst.components.mana.modifiers:RemoveModifier(inst, "jellybean")
+                    inst.components.stamina.modifiers:RemoveModifier(inst, "jellybean")
+                end)
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sleep
 
 local function ToggleSleep(inst)
@@ -2025,6 +2051,7 @@ local function master_postinit(inst)
     inst:ListenForEvent("staminadelta", OnStaminaDelta)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
     inst:ListenForEvent("treasurefull", OnTreasureSniffingReady)
+    inst:ListenForEvent("oneat", OnEatFood)
     inst:ListenForEvent("death", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnDeathForPetLeash)
     inst:ListenForEvent("ms_becameghost", OnBecameGhost)
