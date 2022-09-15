@@ -1,5 +1,8 @@
 local assets = {
+    Asset("ANIM", "anim/musha/musha_normal.zip"),
+    Asset("ANIM", "anim/musha/musha_full.zip"),
     Asset("ANIM", "anim/musha/musha_valkyrie.zip"),
+    Asset("ANIM", "anim/musha/musha_berserk.zip"),
 }
 
 local function fn()
@@ -13,10 +16,16 @@ local function fn()
 
     inst.AnimState:SetBank("wilson")
     inst.AnimState:SetBuild("musha_valkyrie")
-    inst.AnimState:PlayAnimation("idle")
     inst.AnimState:SetSortOrder(-1)
 
     inst.Transform:SetFourFaced()
+
+    inst:DoTaskInTime(0, function()
+        if inst.owner then
+            local build = inst.owner.AnimState:GetBuild()
+            inst.AnimState:SetBuild(build)
+        end
+    end)
 
     if not TheWorld.ismastersim then
         return inst

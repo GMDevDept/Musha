@@ -261,7 +261,7 @@ local function DoAreaSpoil(inst)
 end
 
 local must_tags = { "_combat" }
-local ignore_tags = { "companion", "musha_companion", "wall" }
+local ignore_tags = { "player", "companion", "musha_companion", "wall" }
 local function AuraOnTick(inst)
     CustomDoAOE(inst, TUNING.musha.skills.launchelement.poisonspore.radius, must_tags, ignore_tags, nil, function(v)
         v.components.combat:GetAttacked(inst.owner, TUNING.musha.skills.launchelement.poisonspore.damage)

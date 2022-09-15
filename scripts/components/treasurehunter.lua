@@ -131,101 +131,251 @@ local function StashLoot(inst, stash)
     end
 end
 
-local function GenerateLoot(stash)
+local function StashChest(inst, stash)
+    if inst.container and inst.loots then
+        local container = SpawnPrefab(inst.container)
+        for _, v in pairs(inst.loots) do
+            if math.random() < v.chance then
+                for i = 1, math.random(v.lootcount, v.lootcountmax) do
+                    local loot = SpawnPrefab(v.prefab)
+                    container.components.container:GiveItem(loot)
+                end
+
+                if container.components.container:IsFull() then
+                    break
+                end
+            end
+        end
+        stash:stashloot(container)
+    end
+
+    if inst.extraloots then
+        for _, v in pairs(inst.extraloots) do
+            if math.random() < v.chance then
+                for i = 1, math.random(v.lootcount, v.lootcountmax) do
+                    local loot = SpawnPrefab(v.prefab)
+                    stash:stashloot(loot)
+                end
+            end
+        end
+    end
+end
+
+local function GenerateLoot(stash, count)
+    local lootlist = {}
 
     local function additem(name)
         local item = SpawnPrefab(name)
         StashLoot(item, stash)
     end
 
-    local lootlist = {}
+    local collection1 = {
+        boneshard = 4,
+        houndstooth = 4,
+        stinger = 4,
+        tentaclespots = 2,
+        beefalowool = 4,
+        feather_robin = 1,
+        feather_robin_winter = 1,
+        feather_crow = 1,
+        feather_canary = 1,
+        pigskin = 4,
+        manrabbit_tail = 4,
+        spidergland = 4,
+    }
 
-    for i = 1, math.random(2, 4) do
-        table.insert(lootlist, "palmcone_scale")
+    local collection2 = {
+        nightmarefuel = 4,
+        livinglog = 4,
+        petals_evil = 4,
+        petals = 4,
+        purplegem = 1,
+    }
+
+    local collection3 = {
+        gears = 4,
+        cutreeds = 4,
+        log = 4,
+        rocks = 4,
+        nitre = 4,
+        charcoal = 4,
+        moonglass = 2,
+    }
+
+    local collection4 = {
+        boards = 4,
+        cutstone = 4,
+        rope = 4,
+        papyrus = 4,
+        transistor = 2,
+        marblebean = 2,
+    }
+
+    local foodlist = require("preparedfoods")
+    local additionalfoods = require("preparedfoods_warly")
+
+    for k, v in pairs(additionalfoods) do
+        foodlist[k] = v
     end
 
-    for i = 1, math.random(2, 4) do
-        table.insert(lootlist, "cave_banana")
-    end
+    local food = GetRandomItem(foodlist)
+    table.insert(lootlist, food.name)
 
-    if math.random() < 0.3 then
+    local collections = { collection1, collection2, collection3, collection4 }
+
+    for i = 1, math.random(1, 3) do
+        local collection = GetRandomItem(collections)
+        local item = weighted_random_choice(collection)
         for i = 1, math.random(2, 4) do
-            table.insert(lootlist, "treegrowthsolution")
+            table.insert(lootlist, item)
         end
     end
 
-    if math.random() < 0.3 then
-        for i = 1, math.random(2, 4) do
-            table.insert(lootlist, "goldnugget")
+    for i = 1, math.random(2, 5) do
+        table.insert(lootlist, "goldnugget")
+    end
+
+    if math.random() < 0.7 then
+        for i = 1, math.random(1, 3) do
+            table.insert(lootlist, "taffy")
         end
+    else
+        table.insert(lootlist, "jellybean")
+    end
+
+    if math.random() < 0.10 then
+        table.insert(lootlist, "mandrake")
+    end
+
+    if math.random() < 0.15 then
+        table.insert(lootlist, "purplegem")
+    end
+
+    if math.random() < 0.05 then
+        table.insert(lootlist, "greengem")
+    end
+
+    if math.random() < 0.05 then
+        table.insert(lootlist, "yellowgem")
+    end
+
+    if math.random() < 0.05 then
+        table.insert(lootlist, "orangegem")
     end
 
     if math.random() < 0.5 then
-        for i = 1, math.random(3, 6) do
-            if math.random() < 0.3 then
-                table.insert(lootlist, "meat_dried")
+        for i = 1, math.random(1, 3) do
+            if math.random() < 0.5 then
+                table.insert(lootlist, "redgem")
             end
         end
     end
 
     if math.random() < 0.5 then
         for i = 1, math.random(1, 3) do
-            table.insert(lootlist, "bananajuice")
+            if math.random() < 0.5 then
+                table.insert(lootlist, "bluegem")
+            end
         end
     end
 
     for i, loot in ipairs(lootlist) do
         additem(loot)
     end
+
+    local chest
+    local treasurechests, weightedtable = require("src/treasurechests")[1], require("src/treasurechests")[2]
+
+    if count == 0 then
+        chest = treasurechests.gift_birth
+    elseif count == 2 then
+        chest = treasurechests.gift_shadow
+    elseif count == 4 then
+        chest = treasurechests.gift_book
+    elseif math.random() < TUNING.musha.skills.treasuresniffing.chestchance then
+        chest = treasurechests[weighted_random_choice(weightedtable)]
+    end
+
+    if chest ~= nil then
+        StashChest(chest, stash)
+    end
 end
 
 function TreasureHunter:FindStashLocation()
-    local locationOK = false
     local pt = Vector3(0, 0, 0)
-    local offset = Vector3(0, 0, 0)
 
-    while locationOK == false do
-        local ids = {}
-        for node, i in pairs(TheWorld.topology.nodes) do
-            local ct = TheWorld.topology.nodes[node].cent
-            if TheWorld.Map:IsVisualGroundAtPoint(ct[1], 0, ct[2]) then
-                table.insert(ids, node)
+    if self.count == 0 then
+        local x, y, z = self.inst.Transform:GetWorldPosition()
+        local range = 10
+        local map = TheWorld.Map
+        local offset
+
+        while not offset do
+            offset = FindValidPositionByFan(
+                math.random() * 2 * PI,
+                math.random() * range,
+                4,
+                function(offset)
+                    local x1 = x + offset.x
+                    local z1 = z + offset.z
+                    return map:IsVisualGroundAtPoint(x1, 0, z1)
+                        and #TheSim:FindEntities(x1, 0, z1, 5, nil, nil, { "player" }) == 0
+                end
+            )
+        end
+        pt = Vector3(x + offset.x, 0, z + offset.z)
+    else
+        local locationOK = false
+        local offset = Vector3(0, 0, 0)
+
+        while locationOK == false do
+            local ids = {}
+            for node, i in pairs(TheWorld.topology.nodes) do
+                local ct = TheWorld.topology.nodes[node].cent
+                if TheWorld.Map:IsVisualGroundAtPoint(ct[1], 0, ct[2]) then
+                    table.insert(ids, node)
+                end
             end
-        end
 
-        local randnode = TheWorld.topology.nodes[ids[math.random(1, #ids)]]
-        pt = Vector3(randnode.cent[1], 0, randnode.cent[2])
-        local theta = math.random() * 2 * PI
-        local radius = 4
-        offset = Vector3(radius * math.cos(theta), 0, -radius * math.sin(theta))
+            local randnode = TheWorld.topology.nodes[ids[math.random(1, #ids)]]
+            pt = Vector3(randnode.cent[1], 0, randnode.cent[2])
 
-        while TheWorld.Map:IsVisualGroundAtPoint(pt.x, 0, pt.z) == true do
-            pt = pt + offset
-        end
+            while not TheWorld.Map:IsVisualGroundAtPoint(pt.x, 0, pt.z) == true do
+                local theta = math.random() * 2 * PI
+                local radius = 4
+                offset = Vector3(radius * math.cos(theta), 0, -radius * math.sin(theta))
+                pt = pt + offset
+            end
 
-        local players = FindPlayersInRange(pt.x, pt.y, pt.z, 40, true)
-        if #players == 0 then
-            locationOK = true
+            local players = FindPlayersInRange(pt.x, pt.y, pt.z, 10, true)
+            if #players == 0 then
+                locationOK = true
+            end
         end
     end
 
-    return pt - (offset * 2)
+    return pt
 end
 
 function TreasureHunter:NewStash(pt) -- pt: Vector3
     if not pt then
         pt = self:FindStashLocation()
-        if not pt then
+        if not pt then -- Theoretically impossible
             self.inst.components.talker:Say(STRINGS.musha.skills.treasuresniffing.cannot_find_pos)
             return
         end
     end
+
     local stash = SpawnPrefab("elftreasure")
     stash.Transform:SetPosition(pt.x, 0, pt.z)
     stash.owner = self.inst.GUID
     stash.components.mapspotrevealer:RevealMap(self.inst)
 
-    GenerateLoot(stash)
+    if self.count == 0 then
+        SpawnPrefab("shovel").Transform:SetPosition(pt.x, 0, pt.z)
+    end
+
+    GenerateLoot(stash, self.count)
     return stash
 end
 

@@ -190,7 +190,7 @@ function ShadowMushaBrain:OnStart()
                     -- Attack and work only when inst not under follow-only mode
                     WhileNode(function() return not self.inst:HasTag("followonly") end, "Not Follow-Only",
                         PriorityNode({
-                            -- Flee from enermy if health level is low and not under berserk mode
+                            -- Flee from enemy if health level is low and not under berserk mode
                             WhileNode(function() return self.inst.components.health:GetPercent() < 0.25 and
                                     not self.inst:HasTag("shadowberserk")
                             end, "Flee",

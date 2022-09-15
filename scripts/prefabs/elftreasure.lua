@@ -20,10 +20,20 @@ local function stash_dug(inst)
     for i, loot in ipairs(inst.loot) do
         loot:ReturnToScene()
         loot.Transform:SetPosition(inst_pos:Get())
-        loot:DoTaskInTime(MAX_LOOTFLING_DELAY * math.random(), fling_loot)
+        if not loot.components.container then
+            loot:DoTaskInTime(MAX_LOOTFLING_DELAY * math.random(), fling_loot)
+        end
 
         if loot.components.perishable then
             loot.components.perishable:StartPerishing()
+        end
+
+        if loot.components.container then
+            loot.components.container:ForEachItem(function(item)
+                if item.components.perishable then
+                    item.components.perishable:StartPerishing()
+                end
+            end)
         end
     end
 
@@ -40,8 +50,17 @@ local function stashloot(inst, item)
     if item.components.perishable then
         item.components.perishable:StopPerishing()
     end
-    if inst.onstashed then
-        inst:onstashed()
+
+    if item.components.container then
+        item.components.container:ForEachItem(function(item)
+            if item.components.perishable then
+                item.components.perishable:StopPerishing()
+            end
+        end)
+    end
+
+    if item.onstashed then
+        item:onstashed()
     end
 end
 

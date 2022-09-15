@@ -13,8 +13,7 @@ local assets = {
 
 -- Custom starting inventory
 TUNING.GAMEMODE_STARTING_ITEMS.DEFAULT.MUSHA = {
-    "tentaclespike",
-    "minotaurhorn",
+    "taffy",
 }
 
 local start_inv = {}
@@ -63,10 +62,11 @@ local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by targe
         bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
     end
 
-    if inst.mode:value() == 3 and target:HasTag("shadowcreature") then
+    if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature" }) then
+        print("Bonus damage!", damage)
         bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.shadow.bonusdamagetoshadow
     end
-
+    print("bonusdamage", bonusdamage)
     return bonusdamage
 end
 
@@ -1990,7 +1990,7 @@ local function master_postinit(inst)
     inst.components.petleash:SetOnDespawnFn(OnDespawnPet)
 
     -- Food bonus
-    inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_LARGE)
+    inst.components.foodaffinity:AddPrefabAffinity("taffy", TUNING.AFFINITY_15_CALORIES_HUGE)
 
     -- Common attributes
     inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default

@@ -108,6 +108,7 @@ TUNING.musha = {
             max = 960, -- 2 days
             regen = 1,
             first = 60,
+            chestchance = 0.25,
         },
         elfmelody = {
             max = 100,
@@ -199,7 +200,7 @@ TUNING.musha = {
                     chargetime = 3,
                     mincount = 15,
                     maxcount = 20,
-                    cooldown = 6,
+                    cooldown = 10,
                 },
             },
             whitefrost = {
@@ -236,7 +237,7 @@ TUNING.musha = {
                 rot = 0.1,
                 duration = 20,
                 tickperiod = 1,
-                cooldown = 5,
+                cooldown = 10,
             },
         },
         lightningstrike = {
@@ -283,7 +284,7 @@ TUNING.musha = {
             sinkhole = {
                 destructionradius = 3.5,
                 centerdamage = 25,
-                collapsetime = 0.1,
+                collapsetime = 0.2,
                 repairtime = { 2, 3, 7 }, -- Sum = duration
             },
         },

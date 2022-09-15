@@ -1135,6 +1135,8 @@ local musha_treasuresniffing = State {
             inst.components.inventory:Unequip(EQUIPSLOTS.HANDS, true)
             inst.components.inventory:GiveItem(item)
         end
+        inst.AnimState:Show("ARM_carry")
+        inst.AnimState:Hide("ARM_normal")
         inst.AnimState:OverrideSymbol("swap_object", "swap_telescope", "swap_object")
         inst.AnimState:OverrideSymbol("scroll", "messagebottle", "scroll")
         inst.AnimState:PlayAnimation("telescope")
@@ -1166,6 +1168,12 @@ local musha_treasuresniffing = State {
 
     events =
     {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:IsCurrentAnimation("scroll") then
+                inst.AnimState:Hide("ARM_carry")
+                inst.AnimState:Show("ARM_normal")
+            end
+        end),
         EventHandler("animqueueover", function(inst)
             if inst.AnimState:AnimDone() then
                 inst.sg:GoToState("idle")
@@ -1180,6 +1188,8 @@ local musha_treasuresniffing_client = State {
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
+        inst.AnimState:Show("ARM_carry")
+        inst.AnimState:Hide("ARM_normal")
         inst.AnimState:OverrideSymbol("swap_object", "swap_telescope", "swap_object")
         inst.AnimState:OverrideSymbol("scroll", "messagebottle", "scroll")
         inst.AnimState:PlayAnimation("telescope")
@@ -1190,6 +1200,12 @@ local musha_treasuresniffing_client = State {
 
     events =
     {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:IsCurrentAnimation("scroll") then
+                inst.AnimState:Hide("ARM_carry")
+                inst.AnimState:Show("ARM_normal")
+            end
+        end),
         EventHandler("animqueueover", function(inst)
             if inst.AnimState:AnimDone() then
                 inst.sg:GoToState("idle")
