@@ -58,7 +58,8 @@ end
 local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by target's Combat:GetAttacked, and only when damage > 0
     local bonusdamage = 0
 
-    if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" }) then
+    if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" })
+        and not target:HasOneOfTags({ "shadow", "shadowcreature" }) then
         bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
     end
 
@@ -1607,6 +1608,10 @@ local function OnModeChange(inst)
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
+        inst.components.eater:SetDiet({ FOODGROUP.OMNI })
+        inst.components.eater.preferseatingtags = nil
+        inst.components.eater.stale_hunger = nil
+        inst.components.eater:SetRefusesSpoiledFood(false)
         CustomCancelTask(inst.task_fullmodehealthregen)
     end
 
@@ -1676,6 +1681,17 @@ local function OnModeChange(inst)
                 inst.components.health:DoDelta(TUNING.musha.fullmodehealthregen, true, "regen")
             end
         end, nil, inst.components.health)
+
+        if math.random() < 1 / 3 then
+            inst.components.eater:SetDiet({ FOODGROUP.OMNI }, { FOODTYPE.MEAT, FOODTYPE.GOODIES })
+        elseif math.random() < 2 / 3 then
+            inst.components.eater:SetDiet({ FOODGROUP.VEGETARIAN })
+        else
+            inst.components.eater:SetPrefersEatingTag("preparedfood")
+            inst.components.eater:SetPrefersEatingTag("pre-preparedfood")
+        end
+        inst.components.eater.stale_hunger = 0
+        inst.components.eater:SetRefusesSpoiledFood(true)
 
         inst.components.skinner:SetSkinName("musha_full")
         inst.customidleanim = "idle_warly"

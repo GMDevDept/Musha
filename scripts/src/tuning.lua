@@ -44,10 +44,10 @@ TUNING.musha = {
         },
     },
 
-    fullmodespeedboost = 1.1,
+    fullmodespeedboost = 1.15,
     fullmodehealthregen = 0.1,
     fullmodesanityregen = 0.1,
-    fullmodestaminaregen = 0.5,
+    fullmodestaminaregen = 1,
     fullmodehungerdrain = 1.3,
 
     valkyriebonusdamagemultiplier = 0.5,
@@ -78,7 +78,7 @@ TUNING.musha = {
         jellybean = {
             mana = 1,
             stamina = 2,
-            duration = 60,
+            duration = 30,
         },
     },
 
@@ -186,7 +186,7 @@ TUNING.musha = {
         },
         valkyriemode = {
             cooldown = 20,
-            manacost = 10,
+            manacost = 30,
         },
         sneak = {
             sanitycost = 50,
@@ -238,7 +238,7 @@ TUNING.musha = {
                     speedmultiplier = 0.25,
                     basedamage = 100,
                     percentdamage = 0.2,
-                    maxdamage = 1500,
+                    maxdamage = 2000,
                     cooldown = 15,
                 },
             },
@@ -274,7 +274,7 @@ TUNING.musha = {
         phoenixadvent = {
             damagemultiplier = 2,
             radius = 4.5,
-            staminaregen = 20,
+            staminaregen = 25,
         },
         annihilation = {
             manacost = 0,
