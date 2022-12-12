@@ -42,6 +42,7 @@ modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classi
 modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
+modimport("scripts/src/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
 
 -- The skins shown in the cycle view window on the character select screen.
 -- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes

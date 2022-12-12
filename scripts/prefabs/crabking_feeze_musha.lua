@@ -67,7 +67,7 @@ local function onfreeze(inst, target)
             CustomOnFreeze(target)
         end
     elseif not target.components.freezable and target.components.locomotor then
-        v:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
+        target:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
             speedmult = TUNING.musha.skills.launchelement.whitefrost.charged.speedmultiplier,
             duration = TUNING.musha.skills.launchelement.whitefrost.charged.frosttime,
         })
