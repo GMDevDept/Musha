@@ -1,4 +1,3 @@
----@diagnostic disable: deprecated
 local ICE_COLOUR = { 60 / 255, 120 / 255, 255 / 255 }
 local FIRE_COLOUR = { 220 / 255, 100 / 255, 0 / 255 }
 

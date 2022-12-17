@@ -133,6 +133,7 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst:AddTag("musha_companion")
         inst:AddTag("shadowmusha")
         inst:AddTag("shadowminion")
+        inst:AddTag("scarytoprey")
         inst:AddTag("NOBLOCK")
 
         inst.entity:AddTransform()

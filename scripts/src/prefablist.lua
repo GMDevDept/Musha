@@ -2,6 +2,7 @@ PrefabFiles = {
     -- Character
     "musha",
     "musha_skins",
+    "musha_voidphantom",
 
     -- Creatures
     "shadowmusha",

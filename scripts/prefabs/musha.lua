@@ -1206,6 +1206,7 @@ local function StartSneaking(inst)
             inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst:ListenForEvent("onattackother", BackStab)
             inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
+            inst.Physics:SetCollisionMask(COLLISION.WORLD)
             CustomAttachFx(inst, "statue_transition")
         end)
 
@@ -1230,6 +1231,7 @@ local function RemoveSneakEffects(inst)
     inst:RemoveEventCallback("attacked", SneakFailed)
     CustomCancelTask(inst.task_entersneak)
     inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
+    ChangeToCharacterPhysics(inst, 75, .5)
     CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
 end
 

@@ -1,4 +1,3 @@
----@diagnostic disable: deprecated
 local assets = -- For reference
 {
     Asset("ANIM", "anim/fireball_2_fx.zip"),

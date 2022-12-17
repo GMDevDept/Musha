@@ -1,4 +1,3 @@
----@diagnostic disable: deprecated
 require("stategraphs/commonstates")
 
 local assets =

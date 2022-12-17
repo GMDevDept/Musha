@@ -1,4 +1,3 @@
----@diagnostic disable: deprecated
 local freezeprefabs =
 {
     "mushroomsprout_glow",

@@ -7,12 +7,13 @@ local assets = {
 
 local function fn()
     local inst = CreateEntity()
-    inst.entity:AddNetwork()
-    inst.entity:AddTransform()
-    inst.entity:AddAnimState()
 
     inst:AddTag("FX")
     inst:AddTag("NOCLICK")
+
+    inst.entity:AddNetwork()
+    inst.entity:AddTransform()
+    inst.entity:AddAnimState()
 
     inst.AnimState:SetBank("wilson")
     inst.AnimState:SetBuild("musha_valkyrie")
