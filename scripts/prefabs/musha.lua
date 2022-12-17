@@ -108,7 +108,9 @@ local function ToggleSleep(inst)
         return
     end
 
-    if inst.components.rider:IsRiding() then
+    if inst:HasDebuff("elementloaded") then
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+    elseif inst.components.rider:IsRiding() then
         inst.components.rider:Dismount()
     elseif not inst.sg:HasStateTag("sleeping") and not (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
         inst.components.talker:Say(STRINGS.musha.sleep.fail.busy)
@@ -1266,33 +1268,7 @@ end
 
 local function ValkyrieKeyLongPressed(inst, data)
     if data.name == "valkyriekeyonlongpress" then
-        if inst.mode:value() == 2 then
-            -- Delayed event, need to check again
-            local attacking = inst.sg:HasStateTag("musha_setsugetsuka")
-                or inst.sg:HasStateTag("musha_phoenixadvent")
-                or inst.sg:HasStateTag("musha_annihilation")
-                or inst.sg:HasStateTag("musha_desolatedive")
-                or inst.sg:HasStateTag("musha_magpiestep")
-
-            if attacking or inst.components.health:IsDead() or inst:HasTag("playerghost") or
-                inst.sg:HasStateTag("ghostbuild") then return end
-
-            if not inst.skills.desolatedive then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.timer:TimerExists("cooldown_desolatedive") then
-                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                    .. STRINGS.musha.skills.desolatedive.name
-                    .. STRINGS.musha.skills.incooldown.part2
-                    .. STRINGS.musha.skills.incooldown.part3
-                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_desolatedive"))
-                    .. STRINGS.musha.skills.incooldown.part4)
-            elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
-                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
-                CustomPlayFailedAnim(inst)
-            else
-                inst.startdesolatedive_pre:push()
-            end
-        elseif inst.mode:value() == 3 then
+        if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if inst:HasDebuff("elementloaded") then
                 local element = CustomFindKeyByValue(elementlist, inst.elementmode)
 
@@ -1327,7 +1303,48 @@ local function ValkyrieKeyLongPressed(inst, data)
                     inst:ListenForEvent("debuffremoved", ElementRemoved)
                     inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
                 end
+            else
+                -- Delayed event, need to check again
+                if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+                    or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then return end
+
+                if not inst.skills.valkyrie then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.timer:TimerExists("cooldown_valkyriemode") then
+                    inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                        .. STRINGS.musha.skills.valkyriemode.name
+                        .. STRINGS.musha.skills.incooldown.part2
+                        .. STRINGS.musha.skills.incooldown.part3
+                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_valkyriemode"))
+                        .. STRINGS.musha.skills.incooldown.part4)
+                elseif inst.components.mana.current < TUNING.musha.skills.valkyriemode.manacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.startdesolatedive_pre:push()
+                end
             end
+        elseif inst.mode:value() == 2 then
+            -- Delayed event, need to check again
+            if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+                or inst.sg:HasStateTag("musha_nointerrupt") then return end
+
+            if not inst.skills.desolatedive then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_desolatedive") then -- Different skill cooldown timer
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.desolatedive.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_desolatedive"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.startdesolatedive_pre:push()
+            end
+        elseif inst.mode:value() == 3 then
         end
 
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
@@ -1335,40 +1352,24 @@ local function ValkyrieKeyLongPressed(inst, data)
 end
 
 local function ValkyrieKeyDown(inst, x, y, z)
+    local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
+        or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
+        or inst.sg:HasStateTag("musha_magpiestep")
+
     -- Can recharge when using skills
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
         or inst.valkyriekeypressed
-        or (inst.sg:HasStateTag("musha_nointerrupt")
-            and not (inst.sg:HasStateTag("musha_setsugetsuka")
-                or inst.sg:HasStateTag("musha_phoenixadvent")
-                or inst.sg:HasStateTag("musha_annihilation")
-                or inst.sg:HasStateTag("musha_desolatedive")
-                or inst.sg:HasStateTag("musha_magpiestep"))) then
+        or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
         return
     end
 
     inst.valkyriekeypressed = true -- Prevent continuous triggering on long press
 
-    local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
-        or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
-        or inst.sg:HasStateTag("musha_magpiestep")
-
     inst.bufferedcursorpos = Vector3(x, y, z)
 
     if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("nomorph") then
-        if inst.components.timer:TimerExists("cooldown_valkyriemode") then
-            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                .. STRINGS.musha.skills.valkyriemode.name
-                .. STRINGS.musha.skills.incooldown.part2
-                .. STRINGS.musha.skills.incooldown.part3
-                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_valkyriemode"))
-                .. STRINGS.musha.skills.incooldown.part4)
-        elseif inst.components.mana.current < TUNING.musha.skills.valkyriemode.manacost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-            CustomPlayFailedAnim(inst)
-        else
-            inst.startdesolatedive_pre:push()
-        end
+        inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
+        inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("premagpiestep") then
             inst.startmagpiestep:push()
@@ -1390,13 +1391,6 @@ local function ValkyrieKeyDown(inst, x, y, z)
             end
         end
     elseif inst.mode:value() == 3 then
-        inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
-        inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
-
-        if not inst:HasDebuff("elementloaded") then
-            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            inst.nolaunchelement = true -- No launching element until long pressed or release key and press again
-        end
     end
 end
 
@@ -1410,6 +1404,10 @@ local function ValkyrieKeyUp(inst, x, y, z)
     if inst.mode:value() == 0 or inst.mode:value() == 1 then
         if inst.sg:HasStateTag("musha_desolatedive_pre") then
             inst.startdesolatedive:push()
+        elseif inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+        elseif inst:HasDebuff("elementloaded") then
+            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
         end
     elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.noannihilation then
@@ -1433,15 +1431,9 @@ local function ValkyrieKeyUp(inst, x, y, z)
             inst.startdesolatedive:push()
         end
     elseif inst.mode:value() == 3 then
-        if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.nolaunchelement then
-            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-        elseif not inst.components.timer:TimerExists("valkyriekeyonlongpress") and inst:HasDebuff("elementloaded") then
-            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-        end
     end
 
     inst.noannihilation = nil
-    inst.nolaunchelement = nil
     inst.valkyriekeypressed = nil
     inst.components.timer:StopTimer("valkyriekeyonlongpress")
     inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
@@ -1459,7 +1451,32 @@ local function ToggleBerserk(inst, x, y, z)
     inst.bufferedcursorpos = Vector3(x, y, z)
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
-        inst.activateberserk:push()
+        if not inst:HasDebuff("elementloaded") then
+            inst.activateberserk:push()
+        else
+            inst:RemoveDebuff("elementloaded")
+
+            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+
+            if TUNING.musha.skills.launchelement[element].manacost then
+                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
+            end
+            if TUNING.musha.skills.launchelement[element].sanitycost then
+                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
+            end
+
+            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
+
+            if success then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "noskill" then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif reason == "noalter" then
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            elseif reason == "complete" then
+                return
+            end
+        end
     elseif previousmode == 2 and not inst.components.rider:IsRiding() then
         if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
             and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
@@ -1492,30 +1509,7 @@ local function ToggleBerserk(inst, x, y, z)
             end
         end
     elseif previousmode == 3 then
-        if inst:HasDebuff("elementloaded") then
-            inst:RemoveDebuff("elementloaded")
-
-            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
-
-            if TUNING.musha.skills.launchelement[element].manacost then
-                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
-            end
-            if TUNING.musha.skills.launchelement[element].sanitycost then
-                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
-            end
-
-            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
-
-            if success then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "noskill" then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif reason == "noalter" then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "complete" then
-                return
-            end
-        elseif not inst:HasTag("sneaking") then
+        if not inst:HasTag("sneaking") then
             StartSneaking(inst)
         else
             StopSneaking(inst)
@@ -1645,8 +1639,6 @@ local function OnModeChange(inst)
             CustomAttachFx(inst, "statue_transition_2") -- Avoid dupulicate fx
         end
 
-        inst.components.debuffable:RemoveDebuff("elementloaded")
-
         CustomCancelTask(inst.modetrailtask)
 
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -1721,6 +1713,8 @@ local function OnModeChange(inst)
         LightningRecharge(inst)
         inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
 
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
@@ -1741,6 +1735,8 @@ local function OnModeChange(inst)
                 end
             end
         end
+
+        inst.components.debuffable:RemoveDebuff("elementloaded")
 
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
@@ -1855,7 +1851,7 @@ local function OnLevelUp(inst, data)
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
     inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
-    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil
+    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- should be same as desolatedive
     inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil

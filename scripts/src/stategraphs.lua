@@ -1919,7 +1919,7 @@ end
 
 local musha_desolatedive_pre = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "doing", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -1983,7 +1983,7 @@ local musha_desolatedive_pre = State {
 
 local musha_desolatedive_pre_client = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "doing", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
