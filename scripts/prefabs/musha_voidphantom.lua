@@ -15,17 +15,20 @@ local fn = function()
     inst.entity:AddSoundEmitter()
     inst.entity:AddNetwork()
 
-    MakeGhostPhysics(inst, 1, 0.5)
+    MakeTinyFlyingCharacterPhysics(inst, 1, .1)
 
     inst.Transform:SetFourFaced()
 
     inst.AnimState:SetBank("wilson")
     inst.AnimState:SetBuild("musha_alter")
-    inst.AnimState:SetMultColour(.7, .7, .7, .5)
+    inst.AnimState:SetMultColour(.1, .1, .1, .85)
+    inst.AnimState:OverrideSymbol("swap_object", "swap_nightmaresword_shadow", "swap_nightmaresword_shadow")
 
     inst:DoTaskInTime(0, function()
         if not inst.owner then
             inst:Remove()
+        else
+            CustomAttachFx(inst, "statue_transition")
         end
     end)
 
@@ -46,4 +49,4 @@ local fn = function()
     return inst
 end
 
-Prefab("musha_voidphantom", fn, assets)
+return Prefab("musha_voidphantom", fn, assets)

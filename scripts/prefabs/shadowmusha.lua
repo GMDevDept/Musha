@@ -141,7 +141,8 @@ local function MakeMinion(prefab, tool, hat, master_postinit)
         inst.entity:AddSoundEmitter()
         inst.entity:AddNetwork()
 
-        MakeGhostPhysics(inst, 1, 0.5)
+        inst:SetPhysicsRadiusOverride(.5)
+        MakeGhostPhysics(inst, 1, inst.physicsradiusoverride)
 
         inst.Transform:SetFourFaced(inst)
 

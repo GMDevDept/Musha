@@ -10,7 +10,7 @@ local function spawnicespike(inst)
     inst:CustomDoPeriodicTask(1, 1 / TUNING.musha.skills.launchelement.whitefrost.charged.range,
         function()
             for i = 1, counter do
-                local offset = FindValidPositionByFan(
+                local offset = FindValidPositionByFan(-- Note: FindValidPositionByFan(angle, radius, attempts, testfn)
                     math.random() * 2 * PI,
                     counter,
                     TUNING.musha.skills.launchelement.whitefrost.charged.range,

@@ -131,7 +131,7 @@ GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags,
         end
     end
 
-    local targets = TheSim:FindEntities(x, y, z, radius, must_tags, ignore_tags, one_of_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags, one_of_tags), including inst itself
+    local targets = TheSim:FindEntities(x, y, z, radius, must_tags, ignore_tags, one_of_tags) -- Note: FindEntities(x, y, z, range, must_tags, ignore_tags, one_of_tags), including center entity itself
 
     if targets then
         for _, target in pairs(targets) do

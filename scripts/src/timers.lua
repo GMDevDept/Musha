@@ -10,6 +10,7 @@ local timerlist = {
     "cooldown_setsugetsuka",
     "cooldown_annihilation",
     "cooldown_desolatedive",
+    "cooldown_voidphantom",
     "stopelfmelody_full",
     "stopelfmelody_partial",
     "premelody",

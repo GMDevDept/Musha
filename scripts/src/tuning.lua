@@ -92,12 +92,12 @@ TUNING.musha = {
     _exp_to_level = { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 175, 200,
         250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 }, -- len = 30
 
-    leveltounlockskill = {
+    leveltounlockskill = { -- Maintain src/timers.lua after adding new skill with cooldown timer
         freezingspell      = 0,
         manashield         = 0,
         manashield_area    = 1,
         manashield_passive = 0,
-        valkyrie           = 0,
+        valkyrie           = 0, -- Should be same as desolatedive
         berserk            = 0,
         thunderspell       = 0,
         shadowspell        = 0,
@@ -114,6 +114,7 @@ TUNING.musha = {
         desolatedive       = 0,
         magpiestep         = 0,
         annihilation       = 0,
+        voidphantom        = 0,
     },
 
     skills = {
@@ -305,6 +306,13 @@ TUNING.musha = {
             staminacost = 5,
             maxdist = 10,
             usewindow = 0.5,
+        },
+        voidphantom = {
+            manacost = 15,
+            sanitycost = 10,
+            damagemultiplier = 1,
+            range = 10,
+            cooldown = 1,
         },
     },
 

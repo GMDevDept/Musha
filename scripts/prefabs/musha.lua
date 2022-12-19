@@ -861,6 +861,44 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Void phantom
+
+local function VoidPhantomOnTimerDone(inst, data)
+    if data.name == "cooldown_voidphantom" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.voidphantom.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", VoidPhantomOnTimerDone)
+    end
+end
+
+local function PhantomAttack(inst, data)
+    if not (data.target and data.target:IsValid()) then return end
+
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local offset = FindValidPositionByFan(
+        math.random() * 2 * PI,
+        math.random() * 5,
+        8,
+        function(offset)
+            local x1 = x + offset.x
+            local z1 = z + offset.z
+            return TheWorld.Map:IsVisualGroundAtPoint(x1, 0, z1)
+                and TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
+                and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
+        end
+    )
+    inst.voidphantom = SpawnPrefab("musha_voidphantom")
+    inst.voidphantom.owner = inst
+    inst.voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+    inst.voidphantom.sg:GoToState("lunge_pre", data.target)
+
+    inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
+    inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Launch element
 
 -- Magma
@@ -1345,6 +1383,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 inst.startdesolatedive_pre:push()
             end
         elseif inst.mode:value() == 3 then
+            -- Reserved
         end
 
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
@@ -1391,6 +1430,8 @@ local function ValkyrieKeyDown(inst, x, y, z)
             end
         end
     elseif inst.mode:value() == 3 then
+        inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
+        inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     end
 end
 
@@ -1431,6 +1472,41 @@ local function ValkyrieKeyUp(inst, x, y, z)
             inst.startdesolatedive:push()
         end
     elseif inst.mode:value() == 3 then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+            if not inst.skills.voidphantom then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_voidphantom") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.voidphantom.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_voidphantom"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            else
+                local must_tags = { "_combat" }
+                local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
+                    "player",
+                    "companion", "musha_companion" }
+                local target = TheSim:FindEntities(x, y, z, 2, must_tags, ignore_tags)[1] or
+                    inst.components.combat.target
+
+                if not (target and target:IsValid()) then
+                    inst.components.talker:Say(STRINGS.musha.no_target)
+                elseif not inst:IsNear(target, TUNING.musha.skills.voidphantom.range) then
+                    inst.components.talker:Say(STRINGS.musha.out_of_range)
+                elseif inst.components.mana.current < TUNING.musha.skills.voidphantom.manacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                    CustomPlayFailedAnim(inst)
+                elseif inst.components.sanity.current < TUNING.musha.skills.voidphantom.sanitycost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.components.mana:DoDelta(-TUNING.musha.skills.voidphantom.manacost)
+                    inst.components.sanity:DoDelta(-TUNING.musha.skills.voidphantom.sanitycost)
+                    PhantomAttack(inst, { target = target })
+                end
+            end
+        end
     end
 
     inst.noannihilation = nil
@@ -1851,7 +1927,7 @@ local function OnLevelUp(inst, data)
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
     inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
-    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- should be same as desolatedive
+    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- Should be same as desolatedive
     inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
@@ -1868,6 +1944,7 @@ local function OnLevelUp(inst, data)
     inst.skills.desolatedive       = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
     inst.skills.magpiestep         = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
     inst.skills.annihilation       = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
+    inst.skills.voidphantom        = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
 end
 
 ---------------------------------------------------------------------------------------------------------

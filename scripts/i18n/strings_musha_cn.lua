@@ -7,6 +7,8 @@ STRINGS.musha = {
     lack_of_sanity = "Musha的理智值不够了!",
     lack_of_stamina = "Musha的耐力值不够了!",
     mount_not_allowed = "Musha得先从坐骑上下来!",
+    no_target = "Musha找不到有效目标!",
+    out_of_range = "Musha距离目标太远了!",
 
     switchkeybindings_on = "随从命令快捷键: 开启",
     switchkeybindings_off = "随从命令快捷键: 关闭",
@@ -161,6 +163,15 @@ STRINGS.musha = {
         },
         desolatedive = {
             name = "荒芜俯冲",
+        },
+        voidphantom = {
+            name = "影幻身",
+        },
+        phantomslash = {
+            name = "影乱舞",
+        },
+        phantomblossom = {
+            name = "影莲华",
         },
     },
 
