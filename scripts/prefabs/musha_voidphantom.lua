@@ -2,9 +2,15 @@ local assets = {
     Asset("ANIM", "anim/musha/musha_alter.zip"),
 }
 
+local function OwnerValid(inst)
+    return inst.owner ~= nil and inst.owner:IsValid() and inst.owner.components.health ~= nil
+        and not inst.owner.components.health:IsDead()
+end
+
 local fn = function()
     local inst = CreateEntity()
 
+    inst:AddTag("musha_voidphantom")
     inst:AddTag("musha_companion")
     inst:AddTag("shadowminion")
     inst:AddTag("scarytoprey")
@@ -25,11 +31,15 @@ local fn = function()
     inst.AnimState:OverrideSymbol("swap_object", "swap_nightmaresword_shadow", "swap_nightmaresword_shadow")
 
     inst:DoTaskInTime(0, function()
-        if not inst.owner then
+        if not inst:OwnerValid() then
             inst:Remove()
         else
             CustomAttachFx(inst, "statue_transition")
         end
+    end)
+
+    inst:DoTaskInTime(TUNING.musha.skills.voidphantom.duration, function()
+        inst.sg:GoToState("disappear")
     end)
 
     inst.entity:SetPristine()
@@ -40,11 +50,9 @@ local fn = function()
 
     inst.persists = false
 
-    inst:AddComponent("health")
-    inst.components.health:SetMaxHealth(1)
-    inst.components.health.nofadeout = true
-
     inst:SetStateGraph("SGvoidphantom")
+
+    inst.OwnerValid = OwnerValid
 
     return inst
 end

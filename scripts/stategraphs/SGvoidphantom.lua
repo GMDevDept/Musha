@@ -1,19 +1,18 @@
-require("stategraphs/commonstates")
-
-local function AttachSlashFX(inst)
+local function DoPhantomSlash(inst)
     local fx = CustomAttachFx(inst,
         math.random() < .5 and "shadowstrike_slash_fx" or "shadowstrike_slash2_fx",
         nil, Vector3(2, 2, 2), Vector3(0, 1.5, 0))
     fx.Transform:SetRotation(math.random() * 360)
     inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
     inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
-end
 
-local function TrySplashFX(inst, size)
-    local x, y, z = inst.Transform:GetWorldPosition()
-    if TheWorld.Map:IsOceanAtPoint(x, 0, z) then
-        SpawnPrefab("ocean_splash_" .. (size or "med") .. tostring(math.random(2))).Transform:SetPosition(x, 0, z)
-        return true
+    local target = inst.sg.statemem.target
+    if inst:OwnerValid() and target ~= nil and target:IsValid() and inst:IsNear(target, 2) then
+        local owner = inst.owner
+        local weapon = owner.components.combat:GetWeapon()
+        local damage = owner.components.combat:CalcDamage(target, weapon,
+            TUNING.musha.skills.phantomslash.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
+        target.components.combat:GetAttacked(owner, damage)
     end
 end
 
@@ -21,13 +20,19 @@ local function NotBlocked(pt)
     return not TheWorld.Map:IsGroundTargetBlocked(pt)
 end
 
-local events =
-{
-    CommonHandlers.OnDeath(),
-}
-
 local states =
 {
+    State {
+        name = "idle",
+        tags = { "idle", "canrotate" },
+
+        onenter = function(inst)
+            inst.Physics:Stop()
+            inst.AnimState:PlayAnimation("ready_stance_pre")
+            inst.AnimState:PushAnimation("ready_stance_loop", true)
+        end,
+    },
+
     State {
         name = "lunge_pre",
         tags = { "attack", "busy", "noattack", "temp_invincible" },
@@ -78,10 +83,9 @@ local states =
         tags = { "attack", "busy", "noattack", "temp_invincible" },
 
         onenter = function(inst, data)
-            inst.AnimState:PlayAnimation("lunge_loop") --NOTE: this anim NOT a loop yo
+            inst.AnimState:PlayAnimation("lunge_loop")
             inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
             inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
-            TrySplashFX(inst)
 
             if data ~= nil then
                 if data.target ~= nil and data.target:IsValid() then
@@ -115,13 +119,16 @@ local states =
                 fx.Transform:SetRotation(inst.Transform:GetRotation())
                 fx.Transform:SetScale(2, 2, 2)
 
-                local owner = inst.owner
-                if owner and not owner.components.health:IsDead() then
+                if inst:OwnerValid() then
+                    local owner = inst.owner
                     local weapon = owner.components.combat:GetWeapon()
                     local damage = owner.components.combat:CalcDamage(target, weapon,
                         TUNING.musha.skills.voidphantom.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
                     target.components.combat:GetAttacked(owner, damage)
                     owner:PushEvent("onattackother", { target = target })
+                    if weapon and weapon.components.stackable then
+                        weapon.components.stackable:Get():Remove()
+                    end
                 end
 
                 if inst.sg.statemem.animdone then
@@ -185,10 +192,10 @@ local states =
                         if target:IsValid() then
                             local targetpos = target:GetPosition()
                             local dx, dz = targetpos.x - pos.x, targetpos.z - pos.z
-                            local radius = math.sqrt(dx * dx + dz * dz)
                             local theta = math.atan2(dz, -dx)
-                            local offs = FindWalkableOffset(targetpos, theta, 3 + 2 * math.random(), 8, false, true
-                                , NotBlocked, true, true)
+                            local offs = FindWalkableOffset(targetpos, theta,
+                                inst.phantomslashready and 1 or 3 + 2 * math.random(), 8, false, true
+                                , NotBlocked, true, true) -- Note: FindWalkableOffset(pos, theta, dist, ...)
                             if offs ~= nil then
                                 pos.x = targetpos.x + offs.x
                                 pos.z = targetpos.z + offs.z
@@ -208,6 +215,11 @@ local states =
 
                     if target ~= nil then
                         inst:ForceFacePoint(target.Transform:GetWorldPosition())
+                    end
+
+                    if inst.phantomslashready then
+                        inst.sg:GoToState("phantomslash", target)
+                        return
                     end
 
                     inst.sg.statemem.appearing = true
@@ -232,7 +244,7 @@ local states =
         timeline =
         {
             TimeEvent(9 * FRAMES, function(inst)
-                TrySplashFX(inst, "small")
+                CustomAttachFx(inst, "statue_transition_2")
             end),
             TimeEvent(11 * FRAMES, function(inst)
                 inst.sg:RemoveStateTag("temp_invincible")
@@ -247,69 +259,32 @@ local states =
         {
             EventHandler("animover", function(inst)
                 if inst.AnimState:AnimDone() then
-                    inst.Physics:Stop()
+                    inst.sg:GoToState("idle")
                 end
             end),
-        },
-
-        onexit = function(inst)
-            inst.Physics:Stop()
-        end,
+        }
     },
 
     State {
         name = "disappear",
         tags = { "busy", "noattack", "temp_invincible", "phasing" },
 
-        onenter = function(inst, attacker)
-            inst.components.locomotor:Stop()
-            inst:ClearBufferedAction()
-            ToggleOffCharacterCollisions(inst)
+        onenter = function(inst)
             inst.AnimState:PlayAnimation("disappear")
-            if attacker ~= nil and attacker:IsValid() then
-                inst.sg.statemem.attackerpos = attacker:GetPosition()
-            end
-            TrySplashFX(inst, "small")
-            inst:DropAggro()
+            CustomAttachFx(inst, "statue_transition_2")
         end,
 
         events =
         {
             EventHandler("animover", function(inst)
                 if inst.AnimState:AnimDone() then
-                    local theta =
-                    inst.sg.statemem.attackerpos ~= nil and
-                        inst:GetAngleToPoint(inst.sg.statemem.attackerpos) or
-                        inst.Transform:GetRotation()
-
-                    theta = (theta + 165 + math.random() * 30) * DEGREES
-
-                    local pos = inst:GetPosition()
-                    pos.y = 0
-
-                    local offs =
-                    FindWalkableOffset(pos, theta, 4 + math.random(), 8, false, true, NotBlocked, true, true) or
-                        FindWalkableOffset(pos, theta, 2 + math.random(), 6, false, true, NotBlocked, true, true)
-
-                    if offs ~= nil then
-                        pos.x = pos.x + offs.x
-                        pos.z = pos.z + offs.z
-                    end
-                    inst.Physics:Teleport(pos:Get())
-                    if inst.sg.statemem.attackerpos ~= nil then
-                        inst:ForceFacePoint(inst.sg.statemem.attackerpos)
-                    end
-
-                    inst.sg.statemem.appearing = true
-                    inst.sg:GoToState("appear")
+                    inst:Remove()
                 end
             end),
         },
 
         onexit = function(inst)
-            if not inst.sg.statemem.appearing then
-                ToggleOnCharacterCollisions(inst)
-            end
+            inst:Remove()
         end,
     },
 
@@ -317,36 +292,52 @@ local states =
         name = "phantomslash",
         tags = { "attack", "busy", "noattack", "temp_invincible" },
 
-        onenter = function(inst, data)
+        onenter = function(inst, target)
+            if not (target ~= nil and target:IsValid()) then return end
+
             inst.AnimState:PlayAnimation("asa_zan1")
             inst.AnimState:PushAnimation("asa_zan2")
             inst.AnimState:PushAnimation("asa_zan3")
             inst.AnimState:PushAnimation("lunge_pst", false)
 
-            if data ~= nil then
-                if data.target ~= nil and data.target:IsValid() then
-                    inst.sg.statemem.target = data.target
-                    inst:ForceFacePoint(data.target.Transform:GetWorldPosition())
-                elseif data.targetpos ~= nil then
-                    inst:ForceFacePoint(data.targetpos)
-                end
-            end
-            inst.Physics:SetMotorVelOverride(1, 0, 0)
+            inst.sg.statemem.target = target
+            inst:ForceFacePoint(target.Transform:GetWorldPosition())
+            inst.Physics:SetMotorVelOverride(15, 0, 0)
         end,
 
         timeline =
         {
             TimeEvent(1 * FRAMES, function(inst)
-                AttachSlashFX(inst)
+                DoPhantomSlash(inst)
+            end),
+            TimeEvent(5 * FRAMES, function(inst)
+                local target = inst.sg.statemem.target
+                if target ~= nil and target:IsValid() then
+                    inst:ForceFacePoint(target.Transform:GetWorldPosition())
+                end
             end),
             TimeEvent(9 * FRAMES, function(inst)
-                AttachSlashFX(inst)
+                DoPhantomSlash(inst)
+            end),
+            TimeEvent(14 * FRAMES, function(inst)
+                local target = inst.sg.statemem.target
+                if target ~= nil and target:IsValid() then
+                    inst:ForceFacePoint(target.Transform:GetWorldPosition())
+                end
             end),
             TimeEvent(20 * FRAMES, function(inst)
-                AttachSlashFX(inst)
+                DoPhantomSlash(inst)
+            end),
+            TimeEvent(25 * FRAMES, function(inst)
+                local target = inst.sg.statemem.target
+                if target ~= nil and target:IsValid() then
+                    inst:ForceFacePoint(target.Transform:GetWorldPosition())
+                end
             end),
             TimeEvent(31 * FRAMES, function(inst)
-                AttachSlashFX(inst)
+                DoPhantomSlash(inst)
+            end),
+            TimeEvent(33 * FRAMES, function(inst)
                 inst.Physics:Stop()
             end),
         },
@@ -355,11 +346,11 @@ local states =
         {
             EventHandler("animqueueover", function(inst)
                 if inst.AnimState:AnimDone() then
-                    inst.Physics:Stop()
+                    inst.sg:GoToState("disappear")
                 end
             end),
         },
     },
 }
 
-return StateGraph("voidphantom", states, events, nil, nil) -- Note: StateGraph(name, states, events, defaultstate, actionhandlers)
+return StateGraph("voidphantom", states, {}, "idle", nil) -- Note: StateGraph(name, states, events, defaultstate, actionhandlers)

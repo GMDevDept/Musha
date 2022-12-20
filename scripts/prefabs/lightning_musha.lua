@@ -48,7 +48,6 @@ local function StartFX(inst)
         local k = math.max(0, math.min(1, distSq / LIGHTNING_MAX_DIST_SQ))
         local intensity = -(k - 1) * (k - 1) * (k - 1) --k * 0.8 * (k - 2) + 0.8
 
-        --print("StartFX", k, intensity)
         if intensity > 0 then
             v:ScreenFlash(intensity <= 0.05 and 0.05 or intensity)
             v:ShakeCamera(CAMERASHAKE.FULL, .7, .02, intensity / 3)

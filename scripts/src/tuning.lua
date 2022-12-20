@@ -115,6 +115,7 @@ TUNING.musha = {
         magpiestep         = 0,
         annihilation       = 0,
         voidphantom        = 0,
+        phantomslash       = 0,
     },
 
     skills = {
@@ -269,7 +270,7 @@ TUNING.musha = {
             damagetakenmultiplier = 0.5,
             radius = 3,
             mindist = 4,
-            usewindow = 1,
+            usewindow = 1.5,
             cooldown = 5,
         },
         phoenixadvent = {
@@ -312,7 +313,13 @@ TUNING.musha = {
             sanitycost = 10,
             damagemultiplier = 1,
             range = 10,
-            cooldown = 1,
+            duration = 60,
+            cooldown = 10,
+        },
+        phantomslash = {
+            staminacost = 20,
+            damagemultiplier = 0.5,
+            usewindow = 1,
         },
     },
 

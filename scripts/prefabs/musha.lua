@@ -64,10 +64,9 @@ local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by targe
     end
 
     if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature" }) then
-        print("Bonus damage!", damage)
         bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.shadow.bonusdamagetoshadow
     end
-    print("bonusdamage", bonusdamage)
+
     return bonusdamage
 end
 
@@ -872,7 +871,13 @@ local function VoidPhantomOnTimerDone(inst, data)
     end
 end
 
-local function PhantomAttack(inst, data)
+local function ClearPhantomSlashTarget(inst, data)
+    if data.name == "phantomslashready" then
+        inst.bufferedphantomslashtarget = nil
+    end
+end
+
+local function StartPhantomAttack(inst, data)
     if not (data.target and data.target:IsValid()) then return end
 
     local x, y, z = inst.Transform:GetWorldPosition()
@@ -888,13 +893,45 @@ local function PhantomAttack(inst, data)
                 and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
         end
     )
-    inst.voidphantom = SpawnPrefab("musha_voidphantom")
-    inst.voidphantom.owner = inst
-    inst.voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
-    inst.voidphantom.sg:GoToState("lunge_pre", data.target)
+    local voidphantom = SpawnPrefab("musha_voidphantom")
+    voidphantom.owner = inst
+    voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+    voidphantom.sg:GoToState("lunge_pre", data.target)
+
+    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
+    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range,
+        { "musha_voidphantom" }, nil, nil)
+
+    if phantoms then
+        for _, phantom in pairs(phantoms) do
+            if phantom.owner == inst and not phantom.sg:HasStateTag("busy") then
+                phantom.sg:GoToState("lunge_pre", data.target)
+            end
+        end
+    end
+
+    inst.bufferedphantomslashtarget = data.target
+    inst.components.timer:StartTimer("phantomslashready", TUNING.musha.skills.phantomslash.usewindow)
+    inst:ListenForEvent("timerdone", ClearPhantomSlashTarget)
 
     inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
     inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
+end
+
+local function StartPhantomSlash(inst, data)
+    if not (data.target and data.target:IsValid()) then return end
+
+    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
+    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range * 2,
+        { "musha_voidphantom" }, nil, nil)
+
+    if phantoms then
+        for _, phantom in pairs(phantoms) do
+            if phantom.owner == inst and phantom.sg:HasStateTag("attack") then
+                phantom.phantomslashready = true
+            end
+        end
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -1193,12 +1230,14 @@ local function BackStab(inst, data)
     local extradamage = TUNING.musha.skills.sneak.backstabbasedamage + 50 * math.floor(inst.components.leveler.lvl / 5)
     if not (target.components and target.components.combat) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
-    elseif target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen") then
+    elseif target.sg and
+        (target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen")) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
         target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
         CustomAttachFx(inst, "nightsword_curve_fx")
     else
+        inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
         target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
@@ -1473,37 +1512,45 @@ local function ValkyrieKeyUp(inst, x, y, z)
         end
     elseif inst.mode:value() == 3 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
-            if not inst.skills.voidphantom then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.timer:TimerExists("cooldown_voidphantom") then
-                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                    .. STRINGS.musha.skills.voidphantom.name
-                    .. STRINGS.musha.skills.incooldown.part2
-                    .. STRINGS.musha.skills.incooldown.part3
-                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_voidphantom"))
-                    .. STRINGS.musha.skills.incooldown.part4)
-            else
-                local must_tags = { "_combat" }
-                local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
-                    "player",
-                    "companion", "musha_companion" }
-                local target = TheSim:FindEntities(x, y, z, 2, must_tags, ignore_tags)[1] or
-                    inst.components.combat.target
-
-                if not (target and target:IsValid()) then
-                    inst.components.talker:Say(STRINGS.musha.no_target)
-                elseif not inst:IsNear(target, TUNING.musha.skills.voidphantom.range) then
-                    inst.components.talker:Say(STRINGS.musha.out_of_range)
-                elseif inst.components.mana.current < TUNING.musha.skills.voidphantom.manacost then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-                    CustomPlayFailedAnim(inst)
-                elseif inst.components.sanity.current < TUNING.musha.skills.voidphantom.sanitycost then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-                    CustomPlayFailedAnim(inst)
+            if inst.components.timer:TimerExists("phantomslashready") then
+                if not inst.skills.phantomslash then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 else
-                    inst.components.mana:DoDelta(-TUNING.musha.skills.voidphantom.manacost)
-                    inst.components.sanity:DoDelta(-TUNING.musha.skills.voidphantom.sanitycost)
-                    PhantomAttack(inst, { target = target })
+                    inst.components.stamina:DoDelta(-TUNING.musha.skills.phantomslash.staminacost)
+                    StartPhantomSlash(inst, { target = inst.bufferedphantomslashtarget })
+                end
+            else
+                if not inst.skills.voidphantom then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.timer:TimerExists("cooldown_voidphantom") then
+                    inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                        .. STRINGS.musha.skills.voidphantom.name
+                        .. STRINGS.musha.skills.incooldown.part2
+                        .. STRINGS.musha.skills.incooldown.part3
+                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_voidphantom"))
+                        .. STRINGS.musha.skills.incooldown.part4)
+                else
+                    local must_tags = { "_combat" }
+                    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead",
+                        "playerghost", "player", "companion", "musha_companion" }
+                    local target = TheSim:FindEntities(x, y, z, 2, must_tags, ignore_tags)[1] or
+                        inst.components.combat.target
+
+                    if not (target and target:IsValid()) then
+                        inst.components.talker:Say(STRINGS.musha.no_target)
+                    elseif not inst:IsNear(target, TUNING.musha.skills.voidphantom.range) then
+                        inst.components.talker:Say(STRINGS.musha.out_of_range)
+                    elseif inst.components.mana.current < TUNING.musha.skills.voidphantom.manacost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                        CustomPlayFailedAnim(inst)
+                    elseif inst.components.sanity.current < TUNING.musha.skills.voidphantom.sanitycost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                        CustomPlayFailedAnim(inst)
+                    else
+                        inst.components.mana:DoDelta(-TUNING.musha.skills.voidphantom.manacost)
+                        inst.components.sanity:DoDelta(-TUNING.musha.skills.voidphantom.sanitycost)
+                        StartPhantomAttack(inst, { target = target })
+                    end
                 end
             end
         end
@@ -1927,7 +1974,7 @@ local function OnLevelUp(inst, data)
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
     inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
-    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- Should be same as desolatedive
+    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- Should be same as desolatedive?
     inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
@@ -1945,6 +1992,7 @@ local function OnLevelUp(inst, data)
     inst.skills.magpiestep         = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
     inst.skills.annihilation       = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
     inst.skills.voidphantom        = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
+    inst.skills.phantomslash       = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
 end
 
 ---------------------------------------------------------------------------------------------------------
