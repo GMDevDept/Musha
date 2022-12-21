@@ -439,6 +439,15 @@ local ActivateBerserkAOE = function(target, inst)
         inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
 end
 
+local function ShadowSpellOnTimerDone(inst, data)
+    if data.name == "cooldown_shadowspell" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.shadowspell.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShadowSpellOnTimerDone)
+    end
+end
+
 local musha_berserk_pre = State {
     name = "musha_berserk_pre",
     tags = { "musha_berserk_pre", "doing", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
@@ -518,6 +527,8 @@ local musha_berserk_pre = State {
     onexit = function(inst)
         inst.components.health:SetInvincible(false)
         inst.components.playercontroller:Enable(true)
+        inst.components.timer:StartTimer("cooldown_shadowspell", TUNING.musha.skills.shadowspell.cooldown)
+        inst:ListenForEvent("timerdone", ShadowSpellOnTimerDone)
     end,
 }
 

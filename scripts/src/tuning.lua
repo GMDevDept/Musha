@@ -10,7 +10,12 @@ TUNING.musha = {
     staminarate = 0,
 
     maxfatigue = 100,
-    fatiguerate = 1 / 96, -- 5/day
+    fatiguebaserate = 1 / 96, -- 5/day
+    fatiguerate1 = 0.02,
+    fatiguerate2 = 0.05,
+    fatiguerate3 = 0.1,
+    fatiguerate4 = 0.2,
+    fatiguerate5 = 0.5,
 
     fatiguelevel = {
         level0 = {
@@ -40,7 +45,10 @@ TUNING.musha = {
 
     charactermode = {
         shadow = {
-            bonusdamagetoshadow = 1,
+            maxsanity = 50,
+            sanityregen = 5,
+            negsanityauraabsorb = 0.5,
+            bonusdamagetoshadow = 0.5,
         },
     },
 
@@ -97,8 +105,8 @@ TUNING.musha = {
         manashield         = 0,
         manashield_area    = 1,
         manashield_passive = 0,
-        valkyrie           = 0, -- Should be same as desolatedive
-        berserk            = 0,
+        valkyriemode       = 0, -- Should be same as desolatedive
+        shadowmode         = 0,
         thunderspell       = 0,
         shadowspell        = 0,
         sneak              = 0,
@@ -167,11 +175,12 @@ TUNING.musha = {
             durationgrowth = 0.4,
         },
         shadowspell = {
-            sanitycost = -50,
+            sanitycost = 50,
+            cooldown = 5,
         },
         manashield = {
             manacost = 10,
-            manaongoingcost = -1,
+            manaongoingcost = 1,
             lighttime = 4,
             brokendelay = 3,
             durabilitybase = 400,
@@ -190,13 +199,18 @@ TUNING.musha = {
             cooldown = 20,
             manacost = 30,
         },
+        shadowmode = {
+            cooldown = 20,
+            sanitycost = 50,
+        },
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
         },
         sneakspeedboost = {
-            max = 1.5,
-            staminacost = -10,
+            min = 2,
+            max = 2.5,
+            staminacost = 10,
             backstabbonustime = 2,
         },
         launchelement = {
@@ -267,7 +281,7 @@ TUNING.musha = {
             manacost = 0,
             staminacost = 10,
             damagemultiplier = 0.4,
-            damagetakenmultiplier = 0.5,
+            damagetakenmultiplier = 0.2,
             radius = 3,
             mindist = 4,
             usewindow = 1.5,
@@ -285,7 +299,7 @@ TUNING.musha = {
             radius = 3.5,
             maxdist = 10,
             paralysisduration = 8,
-            cooldown = 12,
+            cooldown = 8,
         },
         desolatedive = {
             staminacost = 0,
@@ -311,10 +325,10 @@ TUNING.musha = {
         voidphantom = {
             manacost = 15,
             sanitycost = 10,
-            damagemultiplier = 1,
+            damagemultiplier = 0.5,
             range = 10,
-            duration = 60,
-            cooldown = 10,
+            duration = 40,
+            cooldown = 5,
         },
         phantomslash = {
             staminacost = 20,

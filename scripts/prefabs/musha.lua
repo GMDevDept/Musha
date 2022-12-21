@@ -59,11 +59,11 @@ local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by targe
     local bonusdamage = 0
 
     if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" })
-        and not target:HasOneOfTags({ "shadow", "shadowcreature" }) then
+        and not target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece" }) then
         bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
     end
 
-    if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature" }) then
+    if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece" }) then
         bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.shadow.bonusdamagetoshadow
     end
 
@@ -492,7 +492,7 @@ local function ShieldOn(inst)
         inst:AddTag("manashieldactivated")
         AddShieldCommonEffects(inst)
         inst:SetShieldDurability()
-        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+        inst.components.mana.modifiers:SetModifier(inst, -TUNING.musha.skills.manashield.manaongoingcost, "manashield")
         inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
     else
         local validtargets = 0
@@ -1201,7 +1201,8 @@ end
 
 local function ResetSneakSpeedMultiplier(inst)
     inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-        (TUNING.musha.skills.sneakspeedboost.max + inst.components.stamina:GetPercent()))
+        Remap(inst.components.stamina:GetPercent(), 0, 1,
+            TUNING.musha.skills.sneakspeedboost.min, TUNING.musha.skills.sneakspeedboost.max))
 end
 
 local function CancelSneakSpeedBoost(inst)
@@ -1218,7 +1219,7 @@ local function SneakSpeedBoost(inst)
         ResetSneakSpeedMultiplier(inst)
         inst:ListenForEvent("staminadelta", ResetSneakSpeedMultiplier)
         inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
-        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.skills.sneakspeedboost.staminacost,
+        inst.components.stamina.modifiers:SetModifier(inst, -TUNING.musha.skills.sneakspeedboost.staminacost,
             "sneakspeedboost")
     end
 end
@@ -1243,7 +1244,7 @@ local function BackStab(inst, data)
         CustomAttachFx(target, "statue_transition")
         CustomAttachFx(inst, "nightsword_curve_fx")
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
-            (TUNING.musha.skills.sneakspeedboost.max + 1)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
+            (TUNING.musha.skills.sneakspeedboost.max)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
         inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime, function()
             if not inst:HasTag("sneakspeedboost") then
                 inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
@@ -1252,7 +1253,7 @@ local function BackStab(inst, data)
     end
 end
 
-local function SneakFailed(inst, data)
+local function SneakFailed(inst)
     inst:RemoveSneakEffects()
     inst.components.talker:Say(STRINGS.musha.skills.sneak.failed)
 end
@@ -1332,8 +1333,6 @@ local function DecideNormalOrFull(inst)
     end
 end
 
--- Hotkey: valkyrie
-
 local function ValkyrieModeOnTimerDone(inst, data)
     if data.name == "cooldown_valkyriemode" then
         inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
@@ -1343,6 +1342,16 @@ local function ValkyrieModeOnTimerDone(inst, data)
     end
 end
 
+local function ShadowModeOnTimerDone(inst, data)
+    if data.name == "cooldown_shadowmode" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.shadowmode.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShadowModeOnTimerDone)
+    end
+end
+
+-- Hotkey: R
 local function ValkyrieKeyLongPressed(inst, data)
     if data.name == "valkyriekeyonlongpress" then
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
@@ -1385,7 +1394,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
                     or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then return end
 
-                if not inst.skills.valkyrie then
+                if not inst.skills.valkyriemode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.timer:TimerExists("cooldown_valkyriemode") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -1398,6 +1407,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                     inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                     CustomPlayFailedAnim(inst)
                 else
+                    inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
                     inst.startdesolatedive_pre:push()
                 end
             end
@@ -1562,7 +1572,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
     inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
 end
 
--- Toggle berserk mode
+-- Hotkey: G
 local function ToggleBerserk(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
         inst.sg:HasStateTag("musha_nointerrupt") then
@@ -1575,7 +1585,21 @@ local function ToggleBerserk(inst, x, y, z)
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
         if not inst:HasDebuff("elementloaded") then
-            inst.activateberserk:push()
+            if not inst.skills.shadowmode then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.shadowmode.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.activateberserk:push()
+            end
         else
             inst:RemoveDebuff("elementloaded")
 
@@ -1764,6 +1788,11 @@ local function OnModeChange(inst)
 
         CustomCancelTask(inst.modetrailtask)
 
+        inst.components.sanity:RemoveSanityPenalty("shadowmodebuff") -- Currently sanity penalty will not be saved, if there are future changes, this line should be added to onsave/onload
+        inst.components.sanity.externalmodifiers:RemoveModifier(inst, "shadowmodebuff")
+        inst.components.sanity.neg_aura_absorb = inst.components.sanity.neg_aura_absorb -
+            TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
+
         for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("shadowvalkyrie") then
                 v:DoTaskInTime(math.random() * 0.5 + 0.5,
@@ -1773,6 +1802,8 @@ local function OnModeChange(inst)
             end
         end
 
+        inst.components.timer:StartTimer("cooldown_shadowmode", TUNING.musha.skills.shadowmode.cooldown)
+        inst:ListenForEvent("timerdone", ShadowModeOnTimerDone)
         inst:ListenForEvent("hungerdelta", DecideNormalOrFull)
         inst.emotesoundoverride = "dontstarve/characters/willow/emote"
     end
@@ -1820,6 +1851,7 @@ local function OnModeChange(inst)
 
     if currentmode == 2 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+        inst.components.debuffable:RemoveDebuff("elementloaded")
 
         inst:AddTag("stronggrip")
         inst:AddTag("areaattack")
@@ -1836,8 +1868,6 @@ local function OnModeChange(inst)
         LightningRecharge(inst)
         inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
 
-        inst.components.debuffable:RemoveDebuff("elementloaded")
-
         inst.components.skinner:SetSkinName("musha_valkyrie")
         inst.customidleanim = "idle_wathgrithr"
         inst.soundsname = "winnie"
@@ -1845,6 +1875,14 @@ local function OnModeChange(inst)
 
     if currentmode == 3 then
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+
+        inst.components.sanity:AddSanityPenalty('shadowmodebuff',
+            1 - TUNING.musha.charactermode.shadow.maxsanity / inst.components.sanity.max) -- Note: AddSanityPenalty(key, modifier:pct)
+        inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.charactermode.shadow.sanityregen,
+            "shadowmodebuff")
+        inst.components.sanity.neg_aura_absorb = inst.components.sanity.neg_aura_absorb +
+            TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
 
         inst.shadowmushafollowonly = false
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -1858,8 +1896,6 @@ local function OnModeChange(inst)
                 end
             end
         end
-
-        inst.components.debuffable:RemoveDebuff("elementloaded")
 
         CustomAttachFx(inst, "statue_transition")
         inst.components.skinner:SetSkinName("musha_berserk")
@@ -1974,8 +2010,8 @@ local function OnLevelUp(inst, data)
     inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
     inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
     inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
-    inst.skills.valkyrie           = data.lvl >= TUNING.musha.leveltounlockskill.valkyrie and true or nil -- Should be same as desolatedive?
-    inst.skills.berserk            = data.lvl >= TUNING.musha.leveltounlockskill.berserk and true or nil
+    inst.skills.valkyriemode       = data.lvl >= TUNING.musha.leveltounlockskill.valkyriemode and true or nil -- Should be same as desolatedive?
+    inst.skills.shadowmode         = data.lvl >= TUNING.musha.leveltounlockskill.shadowmode and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil

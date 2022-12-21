@@ -97,6 +97,9 @@ STRINGS.musha = {
                 name = "雷霆法咒",
                 cast = "雷之精灵, 惩罚Musha的敌人!",
             },
+            shadowspell = {
+                name = "暗影波动",
+            },
         },
         manashield = {
             name = "精灵护盾",
@@ -110,7 +113,7 @@ STRINGS.musha = {
         valkyriemode = {
             name = "女武神模式",
         },
-        berserk = {
+        shadowmode = {
             name = "暗影模式",
         },
         sneak = {

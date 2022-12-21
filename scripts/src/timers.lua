@@ -1,7 +1,9 @@
 local timerlist = {
     "cooldown_valkyriemode",
+    "cooldown_shadowmode",
     "cooldown_thunderspell",
     "cooldown_freezingspell",
+    "cooldown_shadowspell",
     "cooldown_manashield",
     "cooldown_rollingmagma",
     "cooldown_whitefrost",

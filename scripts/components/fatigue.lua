@@ -21,7 +21,7 @@ local Fatigue = Class(function(self, inst)
     self.current = 0
 
     self.ispaused = false
-    self.baserate = TUNING.musha.fatiguerate
+    self.baserate = TUNING.musha.fatiguebaserate
     self.modifiers = SourceModifierList(inst, 0, SourceModifierList.additive)
     self.multipliers = SourceModifierList(inst)
     self.rate = 0 -- Dynamic, delta per second
@@ -108,22 +108,22 @@ function Fatigue:Recalc(dt)
             or inst.sg:HasStateTag("bedroll") and -1
             or inst.sg:HasStateTag("knockout") and -0.5
             or -1)
-        or stamina == 0 and 0.25
-        or stamina < 0.2 and 0.1
-        or stamina < 0.4 and 0.05
-        or stamina < 0.6 and 0.02
-        or stamina < 0.8 and 0.01
+        or stamina == 0 and TUNING.musha.fatiguerate5
+        or stamina < 0.2 and TUNING.musha.fatiguerate4
+        or stamina < 0.4 and TUNING.musha.fatiguerate3
+        or stamina < 0.6 and TUNING.musha.fatiguerate2
+        or stamina < 0.8 and TUNING.musha.fatiguerate1
         or 0
 
-    self.baserate = TUNING.musha.fatiguerate + m
+    self.baserate = TUNING.musha.fatiguebaserate + m
 
     self.rate = (self:ModifierOnly() and self.modifiers:Get() or
         self.baserate + self.modifiers:Get()) * self.multipliers:Get()
 
-    self.ratelevel = (self.rate >= 0.25 and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate >= 0.05 and RATE_SCALE.INCREASE_MED) or
-        (self.rate > 0.02 and RATE_SCALE.INCREASE_LOW) or
-        (self.rate <= -2 and RATE_SCALE.DECREASE_HIGH) or
+    self.ratelevel = (self.rate >= TUNING.musha.fatiguerate5 and RATE_SCALE.INCREASE_HIGH) or
+        (self.rate >= TUNING.musha.fatiguerate3 and RATE_SCALE.INCREASE_MED) or
+        (self.rate > TUNING.musha.fatiguerate1 and RATE_SCALE.INCREASE_LOW) or
+        (self.rate <= -1.5 and RATE_SCALE.DECREASE_HIGH) or
         (self.rate <= -1 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL

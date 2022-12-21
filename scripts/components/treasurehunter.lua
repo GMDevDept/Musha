@@ -287,6 +287,7 @@ local function GenerateLoot(stash, count)
     local treasurechests, weightedtable = require("src/treasurechests")[1], require("src/treasurechests")[2]
 
     if count == 0 then
+        stash.loot = {} -- No additional loots with the first chest
         chest = treasurechests.gift_birth
     elseif count == 2 then
         chest = treasurechests.gift_shadow
