@@ -178,6 +178,12 @@ TUNING.musha = {
             sanitycost = 50,
             cooldown = 5,
         },
+        shadowprison = {
+            manacost = 10,
+            maxmanacost = 30,
+            range = 8,
+            cooldown = 12,
+        },
         manashield = {
             manacost = 10,
             manaongoingcost = 1,
@@ -280,7 +286,7 @@ TUNING.musha = {
         setsugetsuka = {
             manacost = 0,
             staminacost = 10,
-            damagemultiplier = 0.4,
+            damagemultiplier = 0.5,
             damagetakenmultiplier = 0.2,
             radius = 3,
             mindist = 4,
@@ -288,14 +294,14 @@ TUNING.musha = {
             cooldown = 5,
         },
         phoenixadvent = {
-            damagemultiplier = 2,
+            damagemultiplier = 2.5,
             radius = 4.5,
-            staminaregen = 25,
+            staminaregen = 35,
         },
         annihilation = {
             manacost = 0,
             staminacost = 15,
-            damagemultiplier = 1.25,
+            damagemultiplier = 1,
             radius = 3.5,
             maxdist = 10,
             paralysisduration = 8,
@@ -318,9 +324,11 @@ TUNING.musha = {
             },
         },
         magpiestep = {
-            staminacost = 5,
+            staminaregen = 5,
             maxdist = 10,
             usewindow = 0.5,
+            radius = 2,
+            damagemultiplier = 1,
         },
         voidphantom = {
             manacost = 15,
@@ -328,7 +336,7 @@ TUNING.musha = {
             damagemultiplier = 0.5,
             range = 10,
             duration = 40,
-            cooldown = 5,
+            cooldown = 3,
         },
         phantomslash = {
             staminacost = 20,

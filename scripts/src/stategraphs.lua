@@ -1344,7 +1344,7 @@ local musha_setsugetsuka_pre_client = State {
 
 local musha_setsugetsuka = State {
     name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "noattack", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1370,6 +1370,8 @@ local musha_setsugetsuka = State {
 
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.setsugetsuka.damagetakenmultiplier, "setsugetsuka")
+
+        inst.components.timer:SetTimeLeft("premagpiestep", 0)
         inst.components.timer:StopTimer("cooldown_setsugetsuka")
         inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
         inst.components.timer:StopTimer("clearsetsugetsukacounter")
@@ -1420,7 +1422,6 @@ local musha_setsugetsuka = State {
         TimeEvent(19 * FRAMES, function(inst)
             DoThrust(inst, inst.sg.statemem.lightningapplied)
             inst.sg:RemoveStateTag("busy")
-            inst.sg:RemoveStateTag("noattack")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("nointerrupt")
             inst.sg:RemoveStateTag("musha_nointerrupt")
@@ -2271,7 +2272,7 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive",
 
 local musha_magpiestep = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "doing", "busy", "noattack", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -2299,6 +2300,33 @@ local musha_magpiestep = State {
         inst.task_phantom = inst:DoPeriodicTask(FRAMES, function()
             ApplyPhantom(inst, "asa_dodge")
         end)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.attackdone then
+            return
+        end
+
+        local radius = TUNING.musha.skills.magpiestep.radius
+        local must_tags = { "_combat" }
+        local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
+            "companion", "musha_companion" }
+        local target = FindEntity(inst, radius, nil, must_tags, ignore_tags)
+
+        if target ~= nil and target:IsValid() then
+            local fx = SpawnPrefab(math.random() < .5 and "shadowstrike_slash_fx" or "shadowstrike_slash2_fx")
+            local x, y, z = target.Transform:GetWorldPosition()
+            fx.Transform:SetPosition(x, y + 1.5, z)
+            fx.Transform:SetRotation(inst.Transform:GetRotation())
+            fx.Transform:SetScale(2, 2, 2)
+
+            local weapon = inst.components.combat:GetWeapon()
+            local damage = inst.components.combat:CalcDamage(target, weapon,
+                TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
+            target.components.combat:GetAttacked(inst, damage, weapon)
+
+            inst.sg.statemem.attackdone = true
+        end
     end,
 
     timeline = {

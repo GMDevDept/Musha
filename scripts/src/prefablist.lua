@@ -23,6 +23,7 @@ PrefabFiles = {
     "fireball_projectile_musha",
     "crabking_feeze_musha",
     "antlion_sinkhole_musha",
+    "shadow_pillar_musha",
     "dummyplaceholder",
 
     -- General

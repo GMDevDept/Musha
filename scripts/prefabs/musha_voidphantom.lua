@@ -27,6 +27,7 @@ local fn = function()
 
     inst.AnimState:SetBank("wilson")
     inst.AnimState:SetBuild("musha_alter")
+    inst.AnimState:AddOverrideBuild("lavaarena_shadow_lunge")
     inst.AnimState:SetMultColour(.1, .1, .1, .85)
     inst.AnimState:OverrideSymbol("swap_object", "swap_nightmaresword_shadow", "swap_nightmaresword_shadow")
 

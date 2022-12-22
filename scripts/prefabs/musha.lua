@@ -59,11 +59,11 @@ local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by targe
     local bonusdamage = 0
 
     if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" })
-        and not target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece" }) then
+        and not target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece", "stalker" }) then
         bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
     end
 
-    if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece" }) then
+    if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece", "stalker" }) then
         bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.shadow.bonusdamagetoshadow
     end
 
@@ -1460,6 +1460,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
         inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("premagpiestep") then
+            inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregen)
             inst.startmagpiestep:push()
         else
             if not inst:HasTag("lightningstrikeready") then
@@ -1674,7 +1675,7 @@ local function UnfreezeOnFreeze(inst)
     end)
 end
 
--- OnAttack fn for berserk mode
+-- Area attack
 local function ValkyrieOnAttackOther(inst, data)
     local target = data.target
     local weapon = data.weapon
@@ -1694,7 +1695,7 @@ local function ValkyrieOnAttackOther(inst, data)
     end
 end
 
--- Berserk trailing fx (ancient cane)
+-- Shadow trailing fx (ancient cane)
 local function AddBerserkTrailFx(inst)
     local owner = inst
     if not owner.entity:IsVisible() then

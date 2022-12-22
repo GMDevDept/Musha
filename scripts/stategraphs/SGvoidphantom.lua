@@ -239,13 +239,11 @@ local states =
 
         onenter = function(inst)
             inst.AnimState:PlayAnimation("appear")
+            CustomAttachFx(inst, "sanity_raise")
         end,
 
         timeline =
         {
-            TimeEvent(9 * FRAMES, function(inst)
-                CustomAttachFx(inst, "statue_transition_2")
-            end),
             TimeEvent(11 * FRAMES, function(inst)
                 inst.sg:RemoveStateTag("temp_invincible")
                 inst.sg:RemoveStateTag("phasing")
@@ -299,6 +297,7 @@ local states =
             inst.AnimState:PushAnimation("asa_zan2")
             inst.AnimState:PushAnimation("asa_zan3")
             inst.AnimState:PushAnimation("lunge_pst", false)
+            CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
 
             inst.sg.statemem.target = target
             inst:ForceFacePoint(target.Transform:GetWorldPosition())
