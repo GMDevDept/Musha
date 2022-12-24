@@ -435,7 +435,8 @@ end)
 -- On entering berserk mode
 local ActivateBerserkAOE = function(target, inst)
     target.components.combat:GetAttacked(inst,
-        TUNING.musha.activateberserkbasedamage + 5 * math.floor(inst.components.leveler.lvl / 5),
+        TUNING.musha.skills.shadowspell.basedamage +
+        TUNING.musha.skills.shadowspell.damagegrowth * math.floor(inst.components.leveler.lvl / 5),
         inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
 end
 

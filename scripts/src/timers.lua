@@ -4,6 +4,7 @@ local timerlist = {
     "cooldown_thunderspell",
     "cooldown_freezingspell",
     "cooldown_shadowspell",
+    "cooldown_shadowprison",
     "cooldown_manashield",
     "cooldown_rollingmagma",
     "cooldown_whitefrost",

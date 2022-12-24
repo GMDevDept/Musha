@@ -125,7 +125,7 @@ local function DoPillarsTarget(target, caster, item, newpillars, map, x0, z0)
         theta = theta + delta
     end
 
-    if not (target.sg ~= nil and target.sg:HasStateTag("noattack")) then
+    if not (target.sg ~= nil and target.sg:HasStateTag("noattack") or caster:HasTag("notarget")) then
         target:PushEvent("attacked", { attacker = caster, damage = 0, weapon = item })
     end
 end

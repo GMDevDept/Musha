@@ -162,21 +162,52 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
         end
         return true
     elseif inst.mode:value() == 3 then
-        if not inst.skills.shadowspell then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.timer:TimerExists("cooldown_shadowspell") then
-            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                .. STRINGS.musha.skills.manaspells.shadowspell.name
-                .. STRINGS.musha.skills.incooldown.part2
-                .. STRINGS.musha.skills.incooldown.part3
-                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowspell"))
-                .. STRINGS.musha.skills.incooldown.part4)
-        elseif inst.components.sanity.current < TUNING.musha.skills.shadowspell.sanitycost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-            CustomPlayFailedAnim(inst)
+        if inst:HasTag("sneaking") and inst.skills.shadowprison then
+            if inst.components.timer:TimerExists("cooldown_shadowprison") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.manaspells.shadowprison.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowprison"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.mana.current < TUNING.musha.skills.shadowprison.manacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowprison.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.components.mana:DoDelta(-TUNING.musha.skills.shadowprison.manacost)
+                inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowprison.sanitycost)
+                inst.bufferedspell = "ShadowPrison"
+                inst.bufferedbookfx = {
+                    swap_build = "swap_books",
+                    swap_prefix = "book_tentacles",
+                    def = {
+                        fx = "waxwell_shadow_book_fx",
+                        fx_under_prefab = "fx_tentacles_under_book",
+                        layer_sound = { frame = 30, sound = "maxwell_rework/shadow_magic/cast" },
+                    }
+                }
+                inst.castmanaspell:push()
+            end
         else
-            inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowspell.sanitycost)
-            inst.activateberserk:push()
+            if not inst.skills.shadowspell then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_shadowspell") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.manaspells.shadowspell.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowspell"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowspell.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowspell.sanitycost)
+                inst.activateberserk:push()
+            end
         end
         return true
     else
@@ -196,7 +227,11 @@ ACTIONS.MANASPELL.strfn = function(act)
     elseif act.doer.mode:value() == 2 then
         return "THUNDERSPELL"
     elseif act.doer.mode:value() == 3 then
-        return "SHADOWSPELL"
+        if act.doer:HasTag("sneaking") and act.doer.skills.shadowprison then
+            return "SHADOWPRISON"
+        else
+            return "SHADOWSPELL"
+        end
     else
         return "GENERIC"
     end

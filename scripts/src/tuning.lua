@@ -62,8 +62,6 @@ TUNING.musha = {
     valkyriedamagetakenmultiplier = 0.8,
     valkyriemanaongoingmodifier = 0,
 
-    activateberserkbasedamage = 5,
-
     freezecooldowntime = 5,
 
     singleclicktimewindow = 0.5,
@@ -109,6 +107,7 @@ TUNING.musha = {
         shadowmode         = 0,
         thunderspell       = 0,
         shadowspell        = 0,
+        shadowprison       = 0,
         sneak              = 0,
         sneakspeedboost    = 0,
         rollingmagma       = 0,
@@ -175,12 +174,14 @@ TUNING.musha = {
             durationgrowth = 0.4,
         },
         shadowspell = {
+            basedamage = 10,
+            damagegrowth = 5, -- per 5 levels
             sanitycost = 50,
             cooldown = 5,
         },
         shadowprison = {
-            manacost = 10,
-            maxmanacost = 30,
+            manacost = 15,
+            sanitycost = 25,
             range = 8,
             cooldown = 12,
         },
@@ -331,7 +332,7 @@ TUNING.musha = {
             damagemultiplier = 1,
         },
         voidphantom = {
-            manacost = 15,
+            manacost = 10,
             sanitycost = 10,
             damagemultiplier = 0.5,
             range = 10,

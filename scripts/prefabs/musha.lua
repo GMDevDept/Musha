@@ -684,6 +684,26 @@ local function ThunderSpell(inst)
     inst:ListenForEvent("timerdone", ThunderSpellOnTimerDone)
 end
 
+-- Shadow prison
+local function ShadowPrisonOnTimerDone(inst, data)
+    if data.name == "cooldown_shadowprison" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.shadowprison.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShadowPrisonOnTimerDone)
+    end
+end
+
+local function ShadowPrison(inst)
+    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
+    spellprefab.caster = inst
+    spellprefab.item = inst.components.combat:GetWeapon()
+    spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())
+
+    inst.components.timer:StartTimer("cooldown_shadowprison", TUNING.musha.skills.shadowprison.cooldown)
+    inst:ListenForEvent("timerdone", ShadowPrisonOnTimerDone)
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- Pet leash related
@@ -2015,6 +2035,7 @@ local function OnLevelUp(inst, data)
     inst.skills.shadowmode         = data.lvl >= TUNING.musha.leveltounlockskill.shadowmode and true or nil
     inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
     inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
+    inst.skills.shadowprison       = data.lvl >= TUNING.musha.leveltounlockskill.shadowprison and true or nil
     inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
     inst.skills.sneakspeedboost    = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
     inst.skills.rollingmagma       = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
@@ -2216,6 +2237,7 @@ local function master_postinit(inst)
     inst.ShieldOff = ShieldOff
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
+    inst.ShadowPrison = ShadowPrison
     inst.LightningDischarge = LightningDischarge
     inst.StartMelodyBuff = StartMelodyBuff
     inst.StopMelodyBuff = StopMelodyBuff

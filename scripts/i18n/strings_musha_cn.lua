@@ -88,6 +88,7 @@ STRINGS.musha = {
                 FREEZINGSPELL = "唤冰法咒",
                 THUNDERSPELL = "雷霆法咒",
                 SHADOWSPELL = "暗影波动",
+                SHADOWPRISON = "暗影囚牢",
             },
             freezingspell = {
                 name = "唤冰法咒",
@@ -99,6 +100,9 @@ STRINGS.musha = {
             },
             shadowspell = {
                 name = "暗影波动",
+            },
+            shadowprison = {
+                name = "暗影囚牢",
             },
         },
         manashield = {
