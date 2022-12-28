@@ -162,7 +162,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
         end
         return true
     elseif inst.mode:value() == 3 then
-        if inst:HasTag("sneaking") and inst.skills.shadowprison then
+        if inst:HasTag("shadowprisonready") then
             if inst.components.timer:TimerExists("cooldown_shadowprison") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.manaspells.shadowprison.name
@@ -227,7 +227,7 @@ ACTIONS.MANASPELL.strfn = function(act)
     elseif act.doer.mode:value() == 2 then
         return "THUNDERSPELL"
     elseif act.doer.mode:value() == 3 then
-        if act.doer:HasTag("sneaking") and act.doer.skills.shadowprison then
+        if act.doer:HasTag("shadowprisonready") then
             return "SHADOWPRISON"
         else
             return "SHADOWSPELL"

@@ -279,11 +279,7 @@ local states =
                     inst:Remove()
                 end
             end),
-        },
-
-        onexit = function(inst)
-            inst:Remove()
-        end,
+        }
     },
 
     State {
@@ -291,7 +287,10 @@ local states =
         tags = { "attack", "busy", "noattack", "temp_invincible" },
 
         onenter = function(inst, target)
-            if not (target ~= nil and target:IsValid()) then return end
+            if not (target ~= nil and target:IsValid()) then
+                inst.sg:GoToState("idle")
+                return
+            end
 
             inst.AnimState:PlayAnimation("asa_zan1")
             inst.AnimState:PushAnimation("asa_zan2")

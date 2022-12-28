@@ -14,6 +14,7 @@ local timerlist = {
     "cooldown_annihilation",
     "cooldown_desolatedive",
     "cooldown_voidphantom",
+    "cooldown_phantomblossom",
     "stopelfmelody_full",
     "stopelfmelody_partial",
     "premelody",

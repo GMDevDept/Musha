@@ -908,8 +908,7 @@ local function StartPhantomAttack(inst, data)
         function(offset)
             local x1 = x + offset.x
             local z1 = z + offset.z
-            return TheWorld.Map:IsVisualGroundAtPoint(x1, 0, z1)
-                and TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
+            return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
                 and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
         end
     )
@@ -1286,6 +1285,7 @@ local function StartSneaking(inst)
         CustomPlayFailedAnim(inst)
     elseif inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.skills.sneak.sanitycost then
         inst:AddTag("sneaking")
+        if inst.skills.shadowprison then inst:AddTag("shadowprisonready") end -- For MANASPELL action's strfn
         inst:RemoveTag("scarytoprey")
         inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
         inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
@@ -1326,6 +1326,7 @@ local function RemoveSneakEffects(inst)
     CancelSneakSpeedBoost(inst)
     inst:RemoveTag("sneaking")
     inst:RemoveTag("notarget")
+    inst:RemoveTag("shadowprisonready")
     inst:AddTag("scarytoprey")
     inst:RemoveEventCallback("onattackother", BackStab)
     inst:RemoveEventCallback("attacked", SneakFailed)
@@ -1374,6 +1375,10 @@ end
 -- Hotkey: R
 local function ValkyrieKeyLongPressed(inst, data)
     if data.name == "valkyriekeyonlongpress" then
+        -- Delayed event, need to check again
+        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+            or inst.sg:HasStateTag("musha_nointerrupt") then return end
+
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if inst:HasDebuff("elementloaded") then
                 local element = CustomFindKeyByValue(elementlist, inst.elementmode)
@@ -1410,9 +1415,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                     inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
                 end
             else
-                -- Delayed event, need to check again
-                if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-                    or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then return end
+                if inst.sg:HasStateTag("nomorph") then return end
 
                 if not inst.skills.valkyriemode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -1432,10 +1435,6 @@ local function ValkyrieKeyLongPressed(inst, data)
                 end
             end
         elseif inst.mode:value() == 2 then
-            -- Delayed event, need to check again
-            if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-                or inst.sg:HasStateTag("musha_nointerrupt") then return end
-
             if not inst.skills.desolatedive then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_desolatedive") then -- Different skill cooldown timer
@@ -1452,7 +1451,25 @@ local function ValkyrieKeyLongPressed(inst, data)
                 inst.startdesolatedive_pre:push()
             end
         elseif inst.mode:value() == 3 then
-            -- Reserved
+            if not inst.skills.phantomblossom then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_phantomblossom") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.phantomblossom.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_phantomblossom"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.mana.current < TUNING.musha.skills.phantomblossom.manacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            elseif inst.components.sanity.current < TUNING.musha.skills.phantomblossom.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                -- mana and sanity cost handled in the stategraph
+                inst.startphantomblossom_pre:push()
+            end
         end
 
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
@@ -1466,8 +1483,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
 
     -- Can recharge when using skills
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-        or inst.valkyriekeypressed
-        or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
+        or inst.valkyriekeypressed or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
         return
     end
 
@@ -1584,6 +1600,8 @@ local function ValkyrieKeyUp(inst, x, y, z)
                     end
                 end
             end
+        elseif inst.sg:HasStateTag("musha_phantomblossom_pre") then
+            inst.startphantomblossom:push()
         end
     end
 
@@ -2051,6 +2069,7 @@ local function OnLevelUp(inst, data)
     inst.skills.annihilation       = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
     inst.skills.voidphantom        = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
     inst.skills.phantomslash       = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
+    inst.skills.phantomblossom     = data.lvl >= TUNING.musha.leveltounlockskill.phantomblossom and true or nil
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2153,6 +2172,8 @@ local function common_postinit(inst)
     inst.startdesolatedive_pre = net_event(inst.GUID, "startdesolatedive_pre") -- Handler set in SG
     inst.startdesolatedive = net_event(inst.GUID, "startdesolatedive") -- Handler set in SG
     inst.startmagpiestep = net_event(inst.GUID, "startmagpiestep") -- Handler set in SG
+    inst.startphantomblossom_pre = net_event(inst.GUID, "startphantomblossom_pre") -- Handler set in SG
+    inst.startphantomblossom = net_event(inst.GUID, "startphantomblossom") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)

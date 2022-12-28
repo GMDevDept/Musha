@@ -1932,7 +1932,7 @@ end
 
 local musha_desolatedive_pre = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "doing", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -1996,7 +1996,7 @@ local musha_desolatedive_pre = State {
 
 local musha_desolatedive_pre_client = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "doing", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -2006,19 +2006,32 @@ local musha_desolatedive_pre_client = State {
         inst.sg:SetTimeout(TUNING.musha.skills.desolatedive.maxchargingtime)
     end,
 
+    events =
+    {
+        EventHandler("startdesolatedive", function(inst)
+            if TheCamera.shake ~= nil then
+                TheCamera.shake:StopShaking()
+            end
+        end)
+    },
+
     onupdate = function(inst)
-        if inst:HasTag("doing") then
+        if inst:HasTag("musha_desolatedive_pre") then
             if inst.entity:FlattenMovementPrediction() then
                 inst.sg:GoToState("idle", "noanim")
             end
-        elseif inst.bufferedaction == nil then
-            inst.sg:GoToState("idle")
         end
     end,
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
-    end
+    end,
+
+    onexit = function(inst)
+        if TheCamera.shake ~= nil then
+            TheCamera.shake:StopShaking()
+        end
+    end,
 }
 
 local musha_desolatedive = State {
@@ -2259,14 +2272,6 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive_pre",
     end)
 )
 
-AddStategraphEvent("wilson_client", EventHandler("startdesolatedive",
-    function()
-        if TheCamera.shake ~= nil then
-            TheCamera.shake:StopShaking()
-        end
-    end)
-)
-
 ---------------------------------------------------------------------------------------------------------
 
 -- Magpie step
@@ -2423,5 +2428,230 @@ AddStategraphEvent("wilson", EventHandler("startmagpiestep",
 AddStategraphEvent("wilson_client", EventHandler("startmagpiestep",
     function(inst)
         inst.sg:GoToState("musha_magpiestep")
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Phantom blossom
+
+local function PhantomBlossomOnTimerDone(inst, data)
+    if data.name == "cooldown_phantomblossom" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.phantomblossom.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", PhantomBlossomOnTimerDone)
+    end
+end
+
+local function DoBlossom(inst, data)
+    if not (data.target and data.target:IsValid()) then return end
+
+    local target = data.target
+    local counter = 0
+
+    while counter < TUNING.musha.skills.phantomblossom.maxcount
+        and inst.components.mana.current >= TUNING.musha.skills.phantomblossom.manacost
+        and inst.components.sanity.current >= TUNING.musha.skills.phantomblossom.sanitycost do
+
+        counter = counter + 1
+
+        TheWorld:DoTaskInTime(counter * 0.4 * math.random(), function()
+            if not target:IsValid() or target.components.health:IsDead() then return end
+
+            inst.components.mana:DoDelta(-TUNING.musha.skills.phantomblossom.manacost)
+            inst.components.sanity:DoDelta(-TUNING.musha.skills.phantomblossom.sanitycost)
+
+            local x, y, z = target.Transform:GetWorldPosition()
+            local offset = FindValidPositionByFan(
+                math.random() * 2 * PI,
+                math.random() * 10,
+                8,
+                function(offset)
+                    local x1 = x + offset.x
+                    local z1 = z + offset.z
+                    return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
+                        and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
+                end
+            )
+            local voidphantom = SpawnPrefab("musha_voidphantom")
+            voidphantom.owner = inst
+            voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+            voidphantom.sg:GoToState("lunge_pre", target)
+            voidphantom.phantomslashready = true
+        end)
+    end
+end
+
+local musha_phantomblossom_pre = State {
+    name = "musha_phantomblossom_pre",
+    tags = { "musha_phantomblossom_pre", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("channel_pre")
+        inst.sg.statemem.animcounter = 0
+    end,
+
+    events =
+    {
+        EventHandler("startphantomblossom", function(inst)
+            if inst.sg.statemem.ready then
+                local targetpos = inst.bufferedcursorpos
+                local must_tags = { "_combat" }
+                local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead",
+                    "playerghost", "player", "companion", "musha_companion" }
+                local target = TheSim:FindEntities(targetpos.x, targetpos.y, targetpos.z, 2, must_tags, ignore_tags)[1]
+                    or inst.components.combat.target
+
+                if not (target and target:IsValid()) then
+                    inst.components.talker:Say(STRINGS.musha.no_target)
+                    inst.sg:GoToState("idle")
+                elseif not inst:IsNear(target, TUNING.musha.skills.phantomblossom.range) then
+                    inst.components.talker:Say(STRINGS.musha.out_of_range)
+                    inst.sg:GoToState("idle")
+                else
+                    inst.sg:GoToState("musha_phantomblossom", { target = target })
+                end
+            else
+                inst.sg:GoToState("idle")
+            end
+            inst.bufferedcursorpos = nil
+        end),
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                if inst.AnimState:IsCurrentAnimation("channel_pre") then
+                    inst.AnimState:PlayAnimation("channel_loop", false)
+                    inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+                    inst.sg.statemem.flash = 0.8
+                elseif inst.AnimState:IsCurrentAnimation("channel_loop") then
+                    if inst.sg.statemem.animcounter < 3 then
+                        inst.AnimState:PlayAnimation("channel_loop", false)
+                    elseif inst.sg.statemem.animcounter == 3 then
+                        inst.sg.statemem.ready = true
+                        inst.AnimState:PlayAnimation("channel_loop", false)
+                        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+                        inst:ShakeCamera(CAMERASHAKE.FULL, TUNING.musha.skills.phantomblossom.maxchargingtime, .01, .1)
+                        inst.sg:SetTimeout(TUNING.musha.skills.phantomblossom.maxchargingtime)
+                    else
+                        inst.AnimState:PlayAnimation("channel_loop", false)
+                        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+                    end
+                end
+                CustomAttachFx(inst, "waxwell_shadow_book_fx")
+                inst.sg.statemem.animcounter = inst.sg.statemem.animcounter + 1
+            end
+        end),
+    },
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .025)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("phantomblossom", c, c, c, 0.5)
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+        inst.components.timer:StartTimer("cooldown_phantomblossom", TUNING.musha.skills.phantomblossom.cooldown)
+        inst:ListenForEvent("timerdone", PhantomBlossomOnTimerDone)
+    end,
+
+    onexit = function(inst)
+        inst.components.colouradder:PopColour("phantomblossom")
+        if TheCamera.shake ~= nil then
+            TheCamera.shake:StopShaking()
+        end
+    end,
+}
+
+local musha_phantomblossom_pre_client = State {
+    name = "musha_phantomblossom_pre",
+    tags = { "musha_phantomblossom_pre", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("channel_pre")
+        inst.AnimState:PushAnimation("channel_loop")
+
+        inst.sg:SetTimeout(TUNING.musha.skills.phantomblossom.maxchargingtime)
+    end,
+
+    events =
+    {
+        EventHandler("startphantomblossom", function(inst)
+            inst.sg:GoToState("idle")
+        end)
+    },
+
+    onupdate = function(inst)
+        if inst:HasTag("musha_phantomblossom_pre") then
+            if inst.entity:FlattenMovementPrediction() then
+                inst.sg:GoToState("idle", "noanim")
+            end
+        end
+    end,
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+    end,
+
+    onexit = function(inst)
+        if TheCamera.shake ~= nil then
+            TheCamera.shake:StopShaking()
+        end
+    end,
+}
+
+local musha_phantomblossom = State {
+    name = "musha_phantomblossom",
+    tags = { "musha_phantomblossom", "doing", "busy", "nopredict", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        if inst.AnimState:IsCurrentAnimation("channel_loop") then
+            inst.AnimState:PlayAnimation("mindcontrol_loop")
+            inst.AnimState:PushAnimation("mindcontrol_loop")
+            inst.AnimState:PushAnimation("mindcontrol_loop")
+            inst.AnimState:PushAnimation("mindcontrol_loop")
+            inst.AnimState:PushAnimation("mindcontrol_pst", false)
+
+            DoBlossom(inst, data)
+            return
+        end
+        --Failed
+        inst.sg:GoToState("idle", true)
+    end,
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.components.timer:StartTimer("cooldown_phantomblossom", TUNING.musha.skills.phantomblossom.cooldown)
+        inst:ListenForEvent("timerdone", PhantomBlossomOnTimerDone)
+    end,
+}
+
+AddStategraphState("wilson", musha_phantomblossom_pre)
+AddStategraphState("wilson_client", musha_phantomblossom_pre_client)
+
+AddStategraphState("wilson", musha_phantomblossom)
+
+AddStategraphEvent("wilson", EventHandler("startphantomblossom_pre",
+    function(inst)
+        inst.sg:GoToState("musha_phantomblossom_pre")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startphantomblossom_pre",
+    function(inst)
+        inst.sg:GoToState("musha_phantomblossom_pre")
     end)
 )

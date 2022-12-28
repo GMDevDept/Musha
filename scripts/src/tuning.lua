@@ -10,7 +10,7 @@ TUNING.musha = {
     staminarate = 0,
 
     maxfatigue = 100,
-    fatiguebaserate = 1 / 96, -- 5/day
+    fatiguebaserate = 1 / 48, -- 10/day
     fatiguerate1 = 0.02,
     fatiguerate2 = 0.05,
     fatiguerate3 = 0.1,
@@ -123,6 +123,7 @@ TUNING.musha = {
         annihilation       = 0,
         voidphantom        = 0,
         phantomslash       = 0,
+        phantomblossom     = 0,
     },
 
     skills = {
@@ -181,7 +182,7 @@ TUNING.musha = {
         },
         shadowprison = {
             manacost = 15,
-            sanitycost = 25,
+            sanitycost = 15,
             range = 8,
             cooldown = 12,
         },
@@ -343,6 +344,14 @@ TUNING.musha = {
             staminacost = 20,
             damagemultiplier = 0.5,
             usewindow = 1,
+        },
+        phantomblossom = {
+            manacost = 10,
+            sanitycost = 5,
+            maxcount = 10,
+            range = 15,
+            maxchargingtime = 10,
+            cooldown = 3,
         },
     },
 

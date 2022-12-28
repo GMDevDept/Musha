@@ -31,18 +31,6 @@ local fn = function()
     inst.AnimState:SetMultColour(.1, .1, .1, .85)
     inst.AnimState:OverrideSymbol("swap_object", "swap_nightmaresword_shadow", "swap_nightmaresword_shadow")
 
-    inst:DoTaskInTime(0, function()
-        if not inst:OwnerValid() then
-            inst:Remove()
-        else
-            CustomAttachFx(inst, "statue_transition")
-        end
-    end)
-
-    inst:DoTaskInTime(TUNING.musha.skills.voidphantom.duration, function()
-        inst.sg:GoToState("disappear")
-    end)
-
     inst.entity:SetPristine()
 
     if not TheWorld.ismastersim then
@@ -54,6 +42,18 @@ local fn = function()
     inst:SetStateGraph("SGvoidphantom")
 
     inst.OwnerValid = OwnerValid
+
+    inst:DoTaskInTime(0, function()
+        if not inst:OwnerValid() then
+            inst:Remove()
+        else
+            CustomAttachFx(inst, "statue_transition")
+        end
+    end)
+
+    inst:DoTaskInTime(TUNING.musha.skills.voidphantom.duration, function()
+        inst.sg:GoToState("disappear")
+    end)
 
     return inst
 end
