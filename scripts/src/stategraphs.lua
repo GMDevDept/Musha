@@ -2001,7 +2001,7 @@ local musha_desolatedive_pre_client = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("superjump_pre")
-        inst.AnimState:PushAnimation("superjump_lag", true)
+        inst.AnimState:PushAnimation("superjump_lag", false)
 
         inst.sg:SetTimeout(TUNING.musha.skills.desolatedive.maxchargingtime)
     end,
@@ -2331,6 +2331,8 @@ local musha_magpiestep = State {
                 TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
             target.components.combat:GetAttacked(inst, damage, weapon)
 
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
+            inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
             inst.sg.statemem.attackdone = true
         end
     end,

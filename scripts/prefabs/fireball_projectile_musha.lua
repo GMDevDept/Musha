@@ -105,7 +105,7 @@ end
 
 local function OnAttached(inst, target)
     inst.entity:SetParent(target.entity)
-    inst.Transform:SetPosition(0, 2, 0)
+    inst.Transform:SetPosition(0, target.components.rider and target.components.rider:IsRiding() and 4 or 2, 0)
 end
 
 local function OnDetached(inst)
