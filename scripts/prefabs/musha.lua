@@ -1419,6 +1419,9 @@ local function ValkyrieKeyLongPressed(inst, data)
 
                 if not inst.skills.valkyriemode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.rider:IsRiding() then
+                    inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                    CustomPlayFailedAnim(inst)
                 elseif inst.components.timer:TimerExists("cooldown_valkyriemode") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                         .. STRINGS.musha.skills.valkyriemode.name
@@ -1437,6 +1440,9 @@ local function ValkyrieKeyLongPressed(inst, data)
         elseif inst.mode:value() == 2 then
             if not inst.skills.desolatedive then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.rider:IsRiding() then
+                inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                CustomPlayFailedAnim(inst)
             elseif inst.components.timer:TimerExists("cooldown_desolatedive") then -- Different skill cooldown timer
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.desolatedive.name
@@ -1453,6 +1459,9 @@ local function ValkyrieKeyLongPressed(inst, data)
         elseif inst.mode:value() == 3 then
             if not inst.skills.phantomblossom then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.rider:IsRiding() then
+                inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                CustomPlayFailedAnim(inst)
             elseif inst.components.timer:TimerExists("cooldown_phantomblossom") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.phantomblossom.name
@@ -1495,7 +1504,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
         inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
         inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     elseif inst.mode:value() == 2 then
-        if inst.components.timer:TimerExists("premagpiestep") then
+        if inst.components.timer:TimerExists("premagpiestep") and not inst.components.rider:IsRiding() then
             inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregen)
             inst.startmagpiestep:push()
         else
@@ -1533,11 +1542,12 @@ local function ValkyrieKeyUp(inst, x, y, z)
             inst.startdesolatedive:push()
         elseif inst.components.timer:TimerExists("valkyriekeyonlongpress") then
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-        elseif inst:HasDebuff("elementloaded") then
+        elseif inst:HasDebuff("elementloaded") then -- Charged element
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
         end
     elseif inst.mode:value() == 2 then
-        if inst.components.timer:TimerExists("valkyriekeyonlongpress") and not inst.noannihilation then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress")
+            and not inst.noannihilation and not inst.components.rider:IsRiding() then
             if not inst.skills.annihilation then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_annihilation") then
@@ -1623,23 +1633,7 @@ local function ToggleBerserk(inst, x, y, z)
     inst.bufferedcursorpos = Vector3(x, y, z)
 
     if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
-        if not inst:HasDebuff("elementloaded") then
-            if not inst.skills.shadowmode then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
-                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                    .. STRINGS.musha.skills.shadowmode.name
-                    .. STRINGS.musha.skills.incooldown.part2
-                    .. STRINGS.musha.skills.incooldown.part3
-                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
-                    .. STRINGS.musha.skills.incooldown.part4)
-            elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
-                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-                CustomPlayFailedAnim(inst)
-            else
-                inst.activateberserk:push()
-            end
-        else
+        if inst:HasDebuff("elementloaded") then
             inst:RemoveDebuff("elementloaded")
 
             local element = CustomFindKeyByValue(elementlist, inst.elementmode)
@@ -1661,6 +1655,22 @@ local function ToggleBerserk(inst, x, y, z)
                 LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
             elseif reason == "complete" then
                 return
+            end
+        else
+            if not inst.skills.shadowmode then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.shadowmode.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.activateberserk:push()
             end
         end
     elseif previousmode == 2 and not inst.components.rider:IsRiding() then

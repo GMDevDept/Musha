@@ -311,7 +311,7 @@ TUNING.musha = {
         },
         desolatedive = {
             staminacost = 0,
-            staminacostrate = 1,
+            staminacostrate = 2,
             radius = 10,
             mindist = 10,
             damagemultiplier = 0.5,
