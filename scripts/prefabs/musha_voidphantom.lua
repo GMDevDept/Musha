@@ -39,6 +39,8 @@ local fn = function()
 
     inst.persists = false
 
+    inst:AddComponent("spelltarget")
+
     inst:SetStateGraph("SGvoidphantom")
 
     inst.OwnerValid = OwnerValid

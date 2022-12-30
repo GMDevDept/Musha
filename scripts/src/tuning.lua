@@ -351,7 +351,12 @@ TUNING.musha = {
             maxcount = 10,
             range = 15,
             maxchargingtime = 10,
-            cooldown = 3,
+            cooldown = 30,
+        },
+        phantomspells = {
+            teleport = {
+                sanitycost = 5,
+            },
         },
     },
 

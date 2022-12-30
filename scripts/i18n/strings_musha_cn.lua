@@ -180,6 +180,12 @@ STRINGS.musha = {
         phantomblossom = {
             name = "影莲华",
         },
+        phantomspells = {
+            actionstrings = {
+                GENERIC = "交换位置",
+            },
+            fail_notowner = "这个影子的主人并不是Musha。",
+        },
     },
 
     equipments = {

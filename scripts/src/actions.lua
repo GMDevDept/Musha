@@ -101,7 +101,10 @@ end
 
 -- Add new actions
 
+---------------------------------------------------------------------------------------------------------
+
 -- Cast spell on self
+
 AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, function(act)
     local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
@@ -237,12 +240,70 @@ ACTIONS.MANASPELL.strfn = function(act)
     end
 end
 
-local function CastSpellOnSelf(inst, doer, actions, right)
+---------------------------------------------------------------------------------------------------------
+
+-- Switch position with phantom (teleport)
+
+AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENERIC, function(act)
+    local inst = act.doer
+    -- No need to worry whether player is dead, action.ghost_valid is disabled by default
+    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_spell") then
+        return false
+    elseif inst.mode:value() == 3 then
+        if act.target.owner ~= inst then
+            inst.components.talker:Say(STRINGS.musha.skills.phantomspells.fail_notowner)
+            return false
+        elseif inst.components.sanity.current < TUNING.musha.skills.phantomspells.teleport.sanitycost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+            CustomPlayFailedAnim(inst)
+            return false
+        else
+            inst.components.sanity:DoDelta(-TUNING.musha.skills.phantomspells.teleport.sanitycost)
+
+            local doerpos = inst:GetPosition()
+            local targetpos = act.target:GetPosition()
+
+            if not inst.components.rider:IsRiding() then
+                inst.sg:GoToState("musha_portal_jumpout", { dest = targetpos })
+            else
+                inst.Physics:Teleport(targetpos:Get())
+                inst.SoundEmitter:PlaySound("dontstarve/characters/wortox/soul/hop_out")
+                inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt")
+                CustomAttachFx(inst, "sanity_lower", nil, Vector3(2, 2, 2))
+                CustomAttachFx(inst, "statue_transition_2", nil, Vector3(3, 3, 3))
+            end
+
+            act.target.Physics:Teleport(doerpos:Get())
+            act.target:ForceFacePoint(targetpos:Get())
+            act.target.sg:GoToState("appear")
+
+            return true
+        end
+    else
+        return false
+    end
+end)
+
+ACTIONS.PHANTOMSPELL.instant = true
+ACTIONS.PHANTOMSPELL.mount_valid = true
+ACTIONS.PHANTOMSPELL.priority = 2
+
+STRINGS.ACTIONS.PHANTOMSPELL = STRINGS.musha.skills.phantomspells.actionstrings
+
+ACTIONS.PHANTOMSPELL.strfn = function(act)
+    return "GENERIC"
+end
+
+---------------------------------------------------------------------------------------------------------
+
+local function CastSpell(inst, doer, actions, right) -- Both inst and doer are client side objects
     if right then
         if inst:HasTag("musha") and inst == doer then
             table.insert(actions, GLOBAL.ACTIONS.MANASPELL)
+        elseif inst:HasTag("musha_voidphantom") and doer.mode:value() == 3 then
+            table.insert(actions, GLOBAL.ACTIONS.PHANTOMSPELL)
         end
     end
 end
 
-AddComponentAction("SCENE", "spelltarget", CastSpellOnSelf) -- Note: AddComponentAction = function(actiontype, component, fn)
+AddComponentAction("SCENE", "spelltarget", CastSpell) -- Note: AddComponentAction = function(actiontype, component, fn)

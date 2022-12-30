@@ -223,12 +223,6 @@ end)
 
 -- Smite
 
-local function DoMountSound(inst, mount, sound, ispredicted)
-    if mount ~= nil and mount.sounds ~= nil then
-        inst.SoundEmitter:PlaySound(mount.sounds[sound], nil, nil, ispredicted)
-    end
-end
-
 local musha_smite = State {
     name = "musha_smite",
     tags = { "musha_smite", "attack", "notalking", "abouttoattack", "autopredict" },
@@ -240,32 +234,24 @@ local musha_smite = State {
             inst.sg:GoToState("idle", true)
             return
         end
+
         if inst.sg.laststate == inst.sg.currentstate then
             inst.sg.statemem.chained = true
         end
+
         local buffaction = inst:GetBufferedAction()
         local target = buffaction ~= nil and buffaction.target or nil
-        local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        local cooldown = inst.components.combat.min_attack_period + .5 * FRAMES
+
         inst.components.combat:SetTarget(target)
         inst.components.combat:StartAttack()
         inst.components.locomotor:Stop()
-        local cooldown = inst.components.combat.min_attack_period + .5 * FRAMES
-        if inst.components.rider:IsRiding() then
-            inst.AnimState:PlayAnimation("atk_pre")
-            inst.AnimState:PushAnimation("atk", false)
-            DoMountSound(inst, inst.components.rider:GetMount(), "angry", true)
-            cooldown = math.max(cooldown, 16 * FRAMES)
-        else
-            inst.AnimState:PlayAnimation("pickaxe_pre")
-            inst.AnimState:PushAnimation("pickaxe_loop", false)
-            if equip and equip:HasTag("frosthammer") then
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
-            else
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
-            end
-            cooldown = math.max(cooldown, 24 * FRAMES)
-        end
 
+        inst.AnimState:PlayAnimation("pickaxe_pre")
+        inst.AnimState:PushAnimation("pickaxe_loop", false)
+        inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
+
+        cooldown = math.max(cooldown, 24 * FRAMES)
         inst.sg:SetTimeout(cooldown)
 
         if target ~= nil then
@@ -321,6 +307,7 @@ local musha_smite_client = State {
     onenter = function(inst)
         local buffaction = inst:GetBufferedAction()
         local cooldown = 0
+
         if inst.replica.combat ~= nil then
             if inst.replica.combat:InCooldown() then
                 inst.sg:RemoveStateTag("abouttoattack")
@@ -331,30 +318,18 @@ local musha_smite_client = State {
             inst.replica.combat:StartAttack()
             cooldown = inst.replica.combat:MinAttackPeriod() + .5 * FRAMES
         end
+
         if inst.sg.laststate == inst.sg.currentstate then
             inst.sg.statemem.chained = true
         end
+
         inst.components.locomotor:Stop()
-        local equip = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-        local rider = inst.replica.rider
-        if rider ~= nil and rider:IsRiding() then
-            inst.AnimState:PlayAnimation("atk_pre")
-            inst.AnimState:PushAnimation("atk", false)
-            DoMountSound(inst, rider:GetMount(), "angry", true)
-            if cooldown > 0 then
-                cooldown = math.max(cooldown, 16 * FRAMES)
-            end
-        else
-            inst.AnimState:PlayAnimation("pickaxe_pre")
-            inst.AnimState:PushAnimation("pickaxe_loop", false)
-            if equip and equip:HasTag("phoenix_axe") then
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_firestaff", nil, nil, true)
-            else
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
-            end
-            if cooldown > 0 then
-                cooldown = math.max(cooldown, 24 * FRAMES)
-            end
+        inst.AnimState:PlayAnimation("pickaxe_pre")
+        inst.AnimState:PushAnimation("pickaxe_loop", false)
+        inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_icestaff", nil, nil, true)
+
+        if cooldown > 0 then
+            cooldown = math.max(cooldown, 24 * FRAMES)
         end
 
         if buffaction ~= nil then
@@ -410,7 +385,8 @@ AddStategraphPostInit("wilson", function(self)
     local _deststate = self.actionhandlers[ACTIONS.ATTACK].deststate
     self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
         local weapon = inst.components.combat ~= nil and inst.components.combat:GetWeapon()
-        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack" then
+        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack"
+            and not inst.components.rider:IsRiding() then
             return "musha_smite"
         else
             return _deststate(inst, action)
@@ -422,7 +398,8 @@ AddStategraphPostInit("wilson_client", function(self)
     local _deststate = self.actionhandlers[ACTIONS.ATTACK].deststate
     self.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action)
         local weapon = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack" then
+        if weapon and weapon:HasTag("attackmodule_smite") and _deststate(inst, action) == "attack"
+            and not inst.replica.rider:IsRiding() then
             return "musha_smite"
         else
             return _deststate(inst, action)
@@ -2657,3 +2634,58 @@ AddStategraphEvent("wilson_client", EventHandler("startphantomblossom_pre",
         inst.sg:GoToState("musha_phantomblossom_pre")
     end)
 )
+
+---------------------------------------------------------------------------------------------------------
+
+-- Teleport under shadow mode
+
+local musha_portal_jumpout = State {
+    name = "musha_portal_jumpout",
+    tags = { "busy", "nopredict", "nomorph", "noattack", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        ToggleOffPhysics(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("wortox_portal_jumpout")
+        inst:ResetMinimapOffset()
+        local dest = data and data.dest or nil
+        if dest ~= nil then
+            inst.Physics:Teleport(dest:Get())
+        else
+            dest = inst:GetPosition()
+        end
+        CustomAttachFx(inst, "sanity_lower")
+        CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.8, 1.8, 1.8))
+        inst.DynamicShadow:Enable(false)
+        inst.sg:SetTimeout(14 * FRAMES)
+        inst.components.health:SetInvincible(true)
+    end,
+
+    timeline =
+    {
+        TimeEvent(FRAMES, function(inst) inst.SoundEmitter:PlaySound("dontstarve/characters/wortox/soul/hop_out") end),
+        TimeEvent(7 * FRAMES, function(inst)
+            inst.components.health:SetInvincible(false)
+            inst.sg:RemoveStateTag("noattack")
+            inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt")
+        end),
+        TimeEvent(8 * FRAMES, function(inst)
+            inst.DynamicShadow:Enable(true)
+            ToggleOnPhysics(inst)
+        end),
+    },
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle", true)
+    end,
+
+    onexit = function(inst)
+        inst.components.health:SetInvincible(false)
+        inst.DynamicShadow:Enable(true)
+        if inst.sg.statemem.isphysicstoggle then
+            ToggleOnPhysics(inst)
+        end
+    end,
+}
+
+AddStategraphState("wilson", musha_portal_jumpout)
