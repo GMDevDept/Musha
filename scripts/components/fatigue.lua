@@ -121,8 +121,8 @@ function Fatigue:Recalc(dt)
         self.baserate + self.modifiers:Get()) * self.multipliers:Get()
 
     self.ratelevel = (self.rate >= TUNING.musha.fatiguerate5 and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate >= TUNING.musha.fatiguerate3 and RATE_SCALE.INCREASE_MED) or
-        (self.rate > TUNING.musha.fatiguerate1 and RATE_SCALE.INCREASE_LOW) or
+        (self.rate >= TUNING.musha.fatiguebaserate + TUNING.musha.fatiguerate3 and RATE_SCALE.INCREASE_MED) or
+        (self.rate >= TUNING.musha.fatiguebaserate + TUNING.musha.fatiguerate1 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -1.5 and RATE_SCALE.DECREASE_HIGH) or
         (self.rate <= -1 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or

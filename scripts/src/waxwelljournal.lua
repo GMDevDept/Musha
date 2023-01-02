@@ -36,6 +36,10 @@ end
 local function PrefabPostInitFn(inst)
     inst:AddTag("prototyper")
 
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
     inst:AddComponent("prototyper")
     inst.components.prototyper.restrictedtag = "musha"
     inst.components.prototyper.onactivate = onactivate

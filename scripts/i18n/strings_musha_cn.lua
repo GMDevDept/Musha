@@ -64,6 +64,12 @@ STRINGS.musha = {
         },
     },
 
+    eatbymusha = {
+        actionstrings = {
+            GENERIC = "吃",
+        }
+    },
+
     skills = {
         press_to_confirm = "(确认: 再次按技能键)",
         incooldown = {

@@ -43,6 +43,8 @@ modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings f
 modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
 modimport("scripts/src/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
+modimport("scripts/src/nightmarefuel.lua") -- Add edible component to remove sanity penalty under shadow mode
+modimport("scripts/src/shadowheart.lua") -- Add edible component to remove sanity penalty under shadow mode
 
 -- The skins shown in the cycle view window on the character select screen.
 -- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes

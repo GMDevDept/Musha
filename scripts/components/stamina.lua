@@ -91,7 +91,7 @@ function Stamina:SetRateLevel(ratelevel)
 end
 
 function Stamina:ModifierOnly()
-    return self.inst:HasTag("sneakspeedboost")
+    return self.inst:HasTag("sneakspeedbooston")
 end
 
 function Stamina:Recalc(dt)

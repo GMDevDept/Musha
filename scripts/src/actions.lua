@@ -9,6 +9,8 @@ ACTIONS.GIVE.priority = 2
 
 -- Redefinations of game built-in actions
 
+---------------------------------------------------------------------------------------------------------
+
 -- Open a useable item (for musha's equipments they can be always right-clicked while kept being equipped)
 local _UseItemFn = ACTIONS.USEITEM.fn
 ACTIONS.USEITEM.fn = function(act)
@@ -240,14 +242,12 @@ ACTIONS.MANASPELL.strfn = function(act)
     end
 end
 
----------------------------------------------------------------------------------------------------------
-
 -- Switch position with phantom (teleport)
 
 AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENERIC, function(act)
     local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
-    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_spell") then
+    if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") then
         return false
     elseif inst.mode:value() == 3 then
         if act.target.owner ~= inst then
@@ -294,11 +294,11 @@ ACTIONS.PHANTOMSPELL.strfn = function(act)
     return "GENERIC"
 end
 
----------------------------------------------------------------------------------------------------------
+-- Add action to the action list
 
 local function CastSpell(inst, doer, actions, right) -- Both inst and doer are client side objects
-    if right then
-        if inst:HasTag("musha") and inst == doer then
+    if doer:HasTag("musha") and right then
+        if inst == doer then
             table.insert(actions, GLOBAL.ACTIONS.MANASPELL)
         elseif inst:HasTag("musha_voidphantom") and doer.mode:value() == 3 then
             table.insert(actions, GLOBAL.ACTIONS.PHANTOMSPELL)
@@ -307,3 +307,77 @@ local function CastSpell(inst, doer, actions, right) -- Both inst and doer are c
 end
 
 AddComponentAction("SCENE", "spelltarget", CastSpell) -- Note: AddComponentAction = function(actiontype, component, fn)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Enable eating shadows under shadow mode
+
+AddAction("EATBYMUSHA", STRINGS.musha.eatbymusha.actionstrings.GENERIC, function(act)
+    local inst = act.doer
+    local obj = act.target or act.invobject
+    -- No need to worry whether player is dead, action.ghost_valid is disabled by default
+    -- No need to check busy state since action.instant = false and buffered action will be performed in 'eat' sg
+    if inst.sg:HasStateTag("musha_nointerrupt") then
+        return false
+    elseif obj ~= nil then
+        if obj:IsValid() then
+            if obj.components.stackable ~= nil then
+                obj.components.stackable:Get():Remove()
+            else
+                obj:Remove()
+            end
+        end
+
+        inst:PushEvent("oneat", { food = obj })
+        CustomAttachFx(inst, "sanity_lower")
+
+        return true
+    else
+        return false
+    end
+end)
+
+ACTIONS.EATBYMUSHA.instant = false
+ACTIONS.EATBYMUSHA.mount_valid = true
+ACTIONS.EATBYMUSHA.priority = 2
+
+STRINGS.ACTIONS.EATBYMUSHA = STRINGS.musha.eatbymusha.actionstrings
+
+ACTIONS.EATBYMUSHA.strfn = function(act)
+    return "GENERIC"
+end
+
+local EatByMushaHandler = ActionHandler(ACTIONS.EATBYMUSHA,
+    function(inst, action)
+        print("EatByMushaHandler", 1111)
+        if inst.sg:HasStateTag("busy") then
+            return
+        end
+        print("EatByMushaHandler", 2222)
+        local obj = action.target or action.invobject
+        if obj == nil then
+
+            print("EatByMushaHandler", 4444)
+            return
+        elseif obj:HasTag("quickeat") then
+            return "quickeat"
+        else
+            print("EatByMushaHandler", 3333)
+            return "eat"
+        end
+    end)
+
+AddStategraphActionHandler("wilson", EatByMushaHandler)
+AddStategraphActionHandler("wilson_client", EatByMushaHandler)
+
+-- Add action to the action list
+
+local function EatByMusha(inst, doer, actions, right)
+    if doer:HasTag("musha") then
+        if doer.mode:value() == 3 and (inst.prefab == "nightmarefuel" or inst.prefab == "shadowheart") then
+            table.insert(actions, ACTIONS.EATBYMUSHA)
+        end
+    end
+end
+
+AddComponentAction("INVENTORY", "mushaedible", EatByMusha)
