@@ -34,7 +34,7 @@ local elementlist = {
 ---------------------------------------------------------------------------------------------------------
 
 -- Push event when debuff is added or removed
--- ? Maybe Klei will add this event officially in the future?
+-- ? Maybe Klei will add this event officially in the future
 
 local function OnDebuffAdded(inst, name, debuff, data)
     inst:PushEvent("debuffadded", { name = name, debuff = debuff, data = data })
@@ -60,7 +60,7 @@ local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by targe
 
     if inst.mode:value() == 2 and target:HasOneOfTags({ "monster", "hostile" })
         and not target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece", "stalker" }) then
-        bonusdamage = bonusdamage + damage * TUNING.musha.valkyriebonusdamagemultiplier
+        bonusdamage = bonusdamage + damage * TUNING.musha.charactermode.valkyrie.bonusdamagetomonster
     end
 
     if inst.mode:value() == 3 and target:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece", "stalker" }) then
@@ -76,9 +76,9 @@ end
 local function OnEatFood(inst, data)
     if data.food then
         if data.food.prefab == "taffy" then
-            inst.components.health:DoDelta(3)
-            inst.components.mana:DoDelta(5)
-            inst.components.stamina:DoDelta(25)
+            inst.components.health:DoDelta(TUNING.musha.foodbonus.taffy.health)
+            inst.components.mana:DoDelta(TUNING.musha.foodbonus.taffy.mana)
+            inst.components.stamina:DoDelta(TUNING.musha.foodbonus.taffy.stamina)
         elseif data.food.prefab == "jellybean" then
             if not inst.task_canceljellybeaneffects then
                 inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.foodbonus.jellybean.mana, "jellybean")
@@ -92,6 +92,18 @@ local function OnEatFood(inst, data)
                     inst.components.mana.modifiers:RemoveModifier(inst, "jellybean")
                     inst.components.stamina.modifiers:RemoveModifier(inst, "jellybean")
                 end)
+        elseif data.food.prefab == "nightmarefuel" and inst.mode:value() == 3 then
+            inst.components.sanity:AddSanityPenalty("shadowmodebuff",
+                math.max(0, inst.components.sanity.sanity_penalties["shadowmodebuff"] -
+                    TUNING.musha.charactermode.shadow.sanitypenaltydeltaonrefuel / inst.components.sanity.max))
+            inst.components.sanity:DoDelta(TUNING.musha.charactermode.shadow.sanitypenaltydeltaonrefuel)
+        elseif data.food.prefab == "shadowheart" and inst.mode:value() == 3 then
+            inst.components.sanity:AddSanityPenalty("shadowmodebuff", 0)
+            inst.components.sanity:SetPercent(1)
+            CustomCancelTask(inst.task_updatesanitypenalty)
+            CustomAttachFx(inst,
+                { "waxwell_shadow_book_fx", "statue_transition", "statue_transition_2",
+                    "shadow_shield" .. math.random(1, 6) })
         end
     end
 end
@@ -1229,12 +1241,12 @@ local function CancelSneakSpeedBoost(inst)
     inst:RemoveEventCallback("startstaminadepleted", CancelSneakSpeedBoost)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
-    inst:RemoveTag("sneakspeedboost")
+    inst:RemoveTag("sneakspeedbooston")
 end
 
 local function SneakSpeedBoost(inst)
     if inst.components.stamina.current > 0 then
-        inst:AddTag("sneakspeedboost")
+        inst:AddTag("sneakspeedbooston")
         ResetSneakSpeedMultiplier(inst)
         inst:ListenForEvent("staminadelta", ResetSneakSpeedMultiplier)
         inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
@@ -1244,85 +1256,87 @@ local function SneakSpeedBoost(inst)
 end
 
 local function BackStab(inst, data)
-    inst:RemoveSneakEffects()
+    inst:StopSneaking()
     inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
     local target = data.target
     local extradamage = TUNING.musha.skills.sneak.backstabbasedamage + 50 * math.floor(inst.components.leveler.lvl / 5)
     if not (target.components and target.components.combat) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
-    elseif target.sg and
-        (target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen")) then
+    elseif target.sg
+        and (target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen")) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
-        target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
-        CustomAttachFx(inst, "nightsword_curve_fx")
+        CustomAttachFx(inst, "nightsword_curve_fx", nil, Vector3(2, 2, 2))
+
+        target.components.combat:GetAttacked(inst, extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
     else
         inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_perfect)
-        target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
         CustomAttachFx(target, "statue_transition")
-        CustomAttachFx(inst, "nightsword_curve_fx")
+        CustomAttachFx(inst, "nightsword_curve_fx", nil, Vector3(2, 2, 2))
+
+        target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
+
+        CustomCancelTask(inst.task_removesneakspeedboost)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
             (TUNING.musha.skills.sneakspeedboost.max)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-        inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime, function()
-            if not inst:HasTag("sneakspeedboost") then
-                inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
-            end
-        end)
+        inst.task_removesneakspeedboost = inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime,
+            function()
+                if not inst:HasTag("sneakspeedbooston") then
+                    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+                end
+            end)
     end
 end
 
-local function SneakFailed(inst)
-    inst:RemoveSneakEffects()
-    inst.components.talker:Say(STRINGS.musha.skills.sneak.failed)
-end
-
-local function StartSneaking(inst)
-    if not inst.skills.sneak then
-        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-    elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
-        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-        CustomPlayFailedAnim(inst)
-    elseif inst.skills.sneak and inst.components.sanity.current >= TUNING.musha.skills.sneak.sanitycost then
-        inst:AddTag("sneaking")
-        if inst.skills.shadowprison then inst:AddTag("shadowprisonready") end -- For MANASPELL action's strfn
-        inst:RemoveTag("scarytoprey")
-        inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
-        inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
-        inst:ListenForEvent("attacked", SneakFailed)
-        inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
-        CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
-
-        inst.task_entersneak = inst:DoTaskInTime(4, function()
-            if not inst:HasTag("sneaking") then return end
+local function EnterSneak(inst, data)
+    if data.name == "entersneak" then
+        if inst:HasTag("sneaking") then
             inst:AddTag("notarget")
-
             CustomDoAOE(inst, 25, { "_combat" }, nil, nil, function(v)
                 if v.components.combat and v.components.combat.target == inst then
                     v.components.combat.target = nil
                 end
             end)
 
-            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst:ListenForEvent("onattackother", BackStab)
+
+            if inst:HasTag("sneakspeedbooston") then
+                CancelSneakSpeedBoost(inst)
+            end
+
+            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
             inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
             inst.Physics:SetCollisionMask(COLLISION.WORLD)
             CustomAttachFx(inst, "statue_transition")
-        end)
-
-        if inst.skills.sneakspeedboost and not inst:HasTag("sneakspeedboost") then
-            SneakSpeedBoost(inst)
         end
+        inst:RemoveEventCallback("timerdone", EnterSneak)
+    end
+end
+
+local function SneakFailed(inst)
+    inst:StopSneaking()
+    inst.components.talker:Say(STRINGS.musha.skills.sneak.failed)
+end
+
+local function StartSneaking(inst)
+    inst:AddTag("sneaking")
+    if inst.skills.shadowprison then inst:AddTag("shadowprisonready") end -- For MANASPELL action's strfn
+    inst:RemoveTag("scarytoprey")
+    inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
+    inst:ListenForEvent("attacked", SneakFailed)
+    inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
+    CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
+
+    inst.components.timer:StartTimer("entersneak", TUNING.musha.skills.sneak.preparetime)
+    inst:ListenForEvent("timerdone", EnterSneak)
+
+    if inst.skills.sneakspeedboost then
+        SneakSpeedBoost(inst)
     end
 end
 
 local function StopSneaking(inst)
-    inst:RemoveSneakEffects()
-    inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
-    inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
-end
-
-local function RemoveSneakEffects(inst)
     CancelSneakSpeedBoost(inst)
     inst:RemoveTag("sneaking")
     inst:RemoveTag("notarget")
@@ -1330,7 +1344,8 @@ local function RemoveSneakEffects(inst)
     inst:AddTag("scarytoprey")
     inst:RemoveEventCallback("onattackother", BackStab)
     inst:RemoveEventCallback("attacked", SneakFailed)
-    CustomCancelTask(inst.task_entersneak)
+    inst:RemoveEventCallback("timerdone", EnterSneak)
+    inst.components.timer:StopTimer("entersneak")
     inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
     ChangeToCharacterPhysics(inst, 75, .5)
     CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.2, 1.2, 1.2))
@@ -1432,8 +1447,11 @@ local function ValkyrieKeyLongPressed(inst, data)
                 elseif inst.components.mana.current < TUNING.musha.skills.valkyriemode.manacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                     CustomPlayFailedAnim(inst)
+                elseif inst.components.stamina.current < TUNING.musha.skills.desolatedive.staminacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                    CustomPlayFailedAnim(inst)
                 else
-                    inst.components.mana:DoDelta(-TUNING.musha.skills.valkyriemode.manacost)
+                    -- Mana and stamina cost handled in stategraph
                     inst.startdesolatedive_pre:push()
                 end
             end
@@ -1454,6 +1472,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
                 CustomPlayFailedAnim(inst)
             else
+                -- Stamina cost handled in stategraph
                 inst.startdesolatedive_pre:push()
             end
         elseif inst.mode:value() == 3 then
@@ -1560,7 +1579,11 @@ local function ValkyrieKeyUp(inst, x, y, z)
             elseif inst.components.mana.current < TUNING.musha.skills.annihilation.manacost then
                 inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                 CustomPlayFailedAnim(inst)
+            elseif inst.components.stamina.current < TUNING.musha.skills.annihilation.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
             else
+                inst.components.mana:DoDelta(-TUNING.musha.skills.annihilation.manacost)
                 inst.components.stamina:DoDelta(-TUNING.musha.skills.annihilation.staminacost)
                 inst.startannihilation:push()
             end
@@ -1572,6 +1595,9 @@ local function ValkyrieKeyUp(inst, x, y, z)
             if inst.components.timer:TimerExists("phantomslashready") then
                 if not inst.skills.phantomslash then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.stamina.current < TUNING.musha.skills.phantomslash.staminacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                    CustomPlayFailedAnim(inst)
                 else
                     inst.components.stamina:DoDelta(-TUNING.musha.skills.phantomslash.staminacost)
                     StartPhantomSlash(inst, { target = inst.bufferedphantomslashtarget })
@@ -1683,6 +1709,13 @@ local function ToggleBerserk(inst, x, y, z)
         elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
+        elseif inst.components.stamina.current < TUNING.musha.skills.setsugetsuka.staminacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent then
+                inst.startphoenixadvent:push()
+            else
+                CustomPlayFailedAnim(inst)
+            end
         else
             if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.setsugetsuka_counter < 3
                 and inst.skills.setsugetsukaredux then
@@ -1705,10 +1738,20 @@ local function ToggleBerserk(inst, x, y, z)
             end
         end
     elseif previousmode == 3 then
-        if not inst:HasTag("sneaking") then
-            StartSneaking(inst)
-        else
+        if inst:HasTag("sneaking") then
             StopSneaking(inst)
+            inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
+            inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
+        else
+            if not inst.skills.sneak then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
+                StartSneaking(inst)
+            end
         end
     end
 end
@@ -1741,6 +1784,40 @@ local function ValkyrieOnAttackOther(inst, data)
         fx.Transform:SetScale(scale, scale, scale)
         fx.Transform:SetPosition(target:GetPosition():Get())
     end
+end
+
+-- Regen health and sanity when kill monster
+local function ValkyrieOnKilled(inst, data)
+    local victim = data.victim
+
+    if victim and (victim:HasTag("monster") or victim:HasTag("hostile")) then
+        local baseamt = victim.components.health and victim.components.health.maxhealth or 100
+        inst.components.health:DoDelta(TUNING.musha.charactermode.valkyrie.healthregenonkill * baseamt, nil, nil, true) -- Note: DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+        inst.components.sanity:DoDelta(TUNING.musha.charactermode.valkyrie.sanityregenonkill * baseamt)
+    end
+end
+
+-- Remove sanity penalty when kill shadow creature
+local function RemoveSanityPenaltyOnKilled(inst, data)
+    local victim = data.victim
+
+    if victim and victim:HasOneOfTags({ "shadow", "shadowcreature", "shadowchesspiece", "stalker" }) then
+        inst.components.sanity:AddSanityPenalty("shadowmodebuff",
+            math.max(0, inst.components.sanity.sanity_penalties["shadowmodebuff"] -
+                TUNING.musha.charactermode.shadow.sanitypenaltydeltaonkill / inst.components.sanity.max))
+    end
+end
+
+-- Regen mana when attacked by electric
+local function ValkyrieOnAttacked(inst, data)
+    if data.stimuli == "electric" then
+        inst.components.mana:DoDelta(TUNING.musha.charactermode.valkyrie.manaregenbyelectric)
+    end
+end
+
+-- Custom drowning damage
+local function GetDrowningDamgeTunings(inst)
+    return TUNING.musha.charactermode.valkyrie.drowningdamage
 end
 
 -- Shadow trailing fx (ancient cane)
@@ -1808,14 +1885,19 @@ local function OnModeChange(inst)
     end
 
     if previousmode == 2 and currentmode ~= 2 then
-        inst:RemoveTag("stronggrip")
         inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
-        inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "valkyriebuff")
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
-        inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
 
         inst:RemoveTag("areaattack")
         inst:RemoveEventCallback("onattackother", ValkyrieOnAttackOther)
+
+        inst:RemoveEventCallback("killed", ValkyrieOnKilled)
+
+        inst.components.inventory.isexternallyinsulated:RemoveModifier(inst, "valkyriebuff")
+        inst:RemoveEventCallback("attacked", ValkyrieOnAttacked)
+
+        inst:RemoveTag("stronggrip")
+        inst.components.drownable:SetCustomTuningsFn(nil)
 
         inst:LightningDischarge()
         inst.components.timer:StopTimer("lightningrecharge")
@@ -1829,18 +1911,23 @@ local function OnModeChange(inst)
 
     if previousmode == 3 and currentmode ~= 3 then
         if inst:HasTag("sneaking") then
-            inst:RemoveSneakEffects()
+            inst:StopSneaking()
             inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
         else
             CustomAttachFx(inst, "statue_transition_2") -- Avoid dupulicate fx
         end
 
-        CustomCancelTask(inst.modetrailtask)
+        inst:RemoveEventCallback("freeze", UnfreezeOnFreeze)
 
-        inst.components.sanity:RemoveSanityPenalty("shadowmodebuff") -- Currently sanity penalty will not be saved, if there are future changes, this line should be added to onsave/onload
+        inst.components.health.externalfiredamagemultipliers:RemoveModifier(inst, "shadowmodebuff")
+
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "shadowmodebuff")
-        inst.components.sanity.neg_aura_absorb = inst.components.sanity.neg_aura_absorb -
-            TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
+        inst.components.sanity.neg_aura_absorb = 0 -- Check sanity component, could be deprecated in the future
+        inst.components.sanity:RemoveSanityPenalty("shadowmodebuff") -- Currently sanity penalty will not be saved, if there are future changes, this line should be added to onsave/onload
+        CustomCancelTask(inst.task_updatesanitypenalty)
+        inst:RemoveEventCallback("killed", RemoveSanityPenaltyOnKilled)
+
+        CustomCancelTask(inst.modetrailtask)
 
         for _, v in pairs(inst.components.petleash:GetPets()) do
             if v:HasTag("shadowmusha") and not v:HasTag("shadowvalkyrie") then
@@ -1902,17 +1989,21 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
         inst.components.debuffable:RemoveDebuff("elementloaded")
 
-        inst:AddTag("stronggrip")
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.charactermode.valkyrie.damagetakenmultiplier, "valkyriebuff")
+        inst.components.mana.modifiers:SetModifier(inst, -- Note: SourceModifierList:SetModifier(source, m, key)
+            TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
+
         inst:AddTag("areaattack")
         inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)
 
-        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
-            TUNING.musha.valkyriedamagetakenmultiplier, "valkyriebuff")
-        inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "valkyriebuff") -- Note: SourceModifierList:SetModifier(source, m, key)
-        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.valkyriemanaongoingmodifier, "valkyriebuff")
+        inst:ListenForEvent("killed", ValkyrieOnKilled)
 
-        inst.components.freezable:Unfreeze()
-        inst:ListenForEvent("freeze", UnfreezeOnFreeze)
+        inst.components.inventory.isexternallyinsulated:SetModifier(inst, true, "valkyriebuff")
+        inst:ListenForEvent("attacked", ValkyrieOnAttacked)
+
+        inst:AddTag("stronggrip")
+        inst.components.drownable:SetCustomTuningsFn(GetDrowningDamgeTunings)
 
         LightningRecharge(inst)
         inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
@@ -1926,12 +2017,24 @@ local function OnModeChange(inst)
         inst:RemoveEventCallback("hungerdelta", DecideNormalOrFull)
         inst.components.debuffable:RemoveDebuff("elementloaded")
 
-        inst.components.sanity:AddSanityPenalty('shadowmodebuff',
-            1 - TUNING.musha.charactermode.shadow.maxsanity / inst.components.sanity.max) -- Note: AddSanityPenalty(key, modifier:pct)
+        inst.components.freezable:Unfreeze() -- Therotically not necessary
+        inst:ListenForEvent("freeze", UnfreezeOnFreeze)
+
+        inst.components.health.externalfiredamagemultipliers:SetModifier(inst, 0, "shadowmodebuff")
+
         inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.charactermode.shadow.sanityregen,
             "shadowmodebuff")
-        inst.components.sanity.neg_aura_absorb = inst.components.sanity.neg_aura_absorb +
-            TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
+        inst.components.sanity.neg_aura_absorb = TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
+        inst.components.sanity:AddSanityPenalty("shadowmodebuff",
+            1 - inst.components.sanity.current / inst.components.sanity.max) -- Note: AddSanityPenalty(key, modifier:pct)
+        inst.task_updatesanitypenalty = inst:DoPeriodicTask(TUNING.musha.charactermode.shadow.sanitypenaltyrecaltime,
+            function()
+                inst.components.sanity:AddSanityPenalty("shadowmodebuff",
+                    math.min(1, inst.components.sanity.sanity_penalties["shadowmodebuff"] +
+                        TUNING.musha.charactermode.shadow.sanitypenaltyrecaltime *
+                        TUNING.musha.charactermode.shadow.sanitypenaltyongoing / inst.components.sanity.max))
+            end, TUNING.musha.charactermode.shadow.sanitypenaltyrecaltime)
+        inst:ListenForEvent("killed", RemoveSanityPenaltyOnKilled)
 
         inst.shadowmushafollowonly = false
         for _, v in pairs(inst.components.petleash:GetPets()) do
@@ -2263,7 +2366,8 @@ local function master_postinit(inst)
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
-    inst.RemoveSneakEffects = RemoveSneakEffects
+    inst.StartSneaking = StartSneaking
+    inst.StopSneaking = StopSneaking
     inst.SetShieldDurability = SetShieldDurability
     inst.ShieldOff = ShieldOff
     inst.FreezingSpell = FreezingSpell

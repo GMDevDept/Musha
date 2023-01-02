@@ -147,7 +147,7 @@ local function dofreeze(inst)
             end
         end
 
-        if v.components.locomotor then
+        if v.components.locomotor and not v:HasOneOfTags(NO_DAMAGE_TAGS) then
             v:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
                 speedmult = TUNING.musha.skills.launchelement.whitefrost.charged.speedmultiplier,
                 duration = interval,

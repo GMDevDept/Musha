@@ -1,4 +1,3 @@
----@diagnostic disable: need-check-nil, undefined-field
 -- Add customized states to SGwison and SGwilson_client
 
 local UserCommands = require("usercommands")
@@ -47,12 +46,16 @@ AddStategraphPostInit("wilson", function(self)
     end
 end)
 
--- Thaw
+-- Thaw (frozen -> thaw) can be interrupted under valkyrie mode
 AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["thaw"].onenter
     self.states["thaw"].onenter = function(inst)
         if inst:HasTag("musha") then
-            inst.sg:AddStateTag("musha_nointerrupt")
+            if inst.mode:value() == 2 then
+                inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            else
+                inst.sg:AddStateTag("musha_nointerrupt")
+            end
         end
         _onenter(inst)
     end
@@ -225,7 +228,7 @@ end)
 
 local musha_smite = State {
     name = "musha_smite",
-    tags = { "musha_smite", "attack", "notalking", "abouttoattack", "autopredict" },
+    tags = { "musha_smite", "attack", "notalking", "abouttoattack", "autopredict", "nointerrupt" },
 
     onenter = function(inst)
         if inst.components.combat:InCooldown() then
@@ -302,7 +305,7 @@ local musha_smite = State {
 -- Smite client
 local musha_smite_client = State {
     name = "musha_smite",
-    tags = { "musha_smite", "attack", "notalking", "abouttoattack" },
+    tags = { "musha_smite", "attack", "notalking", "abouttoattack", "nointerrupt" },
 
     onenter = function(inst)
         local buffaction = inst:GetBufferedAction()
@@ -1524,6 +1527,9 @@ local musha_phoenixadvent = State {
         inst.AnimState:PushAnimation("lunge_pst", false)
         inst:ForceFacePoint(target.x, target.y, target.z)
 
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.phoenixadvent.damagetakenmultiplier, "phoenixadvent")
+
         inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
     end,
 
@@ -1564,6 +1570,7 @@ local musha_phoenixadvent = State {
     },
 
     onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "phoenixadvent")
         inst.components.bloomer:PopBloom("lunge")
         inst.components.colouradder:PopColour("lunge")
     end,
@@ -1954,8 +1961,6 @@ local musha_desolatedive_pre = State {
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
-        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
-
         if inst.mode:value() == 2 then
             inst.components.timer:StartTimer("cooldown_desolatedive", TUNING.musha.skills.desolatedive.cooldown)
             inst:ListenForEvent("timerdone", DesolateDiveOnTimerDone)
@@ -1986,10 +1991,8 @@ local musha_desolatedive_pre_client = State {
     events =
     {
         EventHandler("startdesolatedive", function(inst)
-            if TheCamera.shake ~= nil then
-                TheCamera.shake:StopShaking()
-            end
-        end)
+            inst.sg:GoToState("idle")
+        end),
     },
 
     onupdate = function(inst)
@@ -2533,12 +2536,12 @@ local musha_phantomblossom_pre = State {
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
-        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         inst.components.timer:StartTimer("cooldown_phantomblossom", TUNING.musha.skills.phantomblossom.cooldown)
         inst:ListenForEvent("timerdone", PhantomBlossomOnTimerDone)
     end,
 
     onexit = function(inst)
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         inst.components.colouradder:PopColour("phantomblossom")
         if TheCamera.shake ~= nil then
             TheCamera.shake:StopShaking()

@@ -22,10 +22,15 @@ local fuel_list = {
 }
 
 local function fuelsetup(inst)
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
     if not inst.components.fuel then
         inst:AddComponent("fuel")
         inst.components.fuel.fuelvalue = TUNING.MED_LARGE_FUEL
     end
+
     inst.components.fuel.fueltype = "MUSHA"
 end
 

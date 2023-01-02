@@ -6,7 +6,7 @@ TUNING.musha = {
     maxmana = 200,
     manaregenspeed = 1,
 
-    maxstamina = 100,
+    maxstamina = 200,
     staminarate = 0,
 
     maxfatigue = 100,
@@ -44,10 +44,27 @@ TUNING.musha = {
     areaattackrange = 3,
 
     charactermode = {
+        valkyrie = {
+            damagetakenmultiplier = 0.8,
+            bonusdamagetomonster = 0.5,
+            manaregenbyelectric = 10,
+            manaongoingmodifier = 0,
+            healthregenonkill = 0.01,
+            sanityregenonkill = 0.01,
+            drowningdamage = {
+                HEALTH_PENALTY = 0,
+                HUNGER = 0,
+                SANITY = 0,
+                WETNESS = 50,
+            },
+        },
         shadow = {
-            maxsanity = 50,
-            sanityregen = 5,
-            negsanityauraabsorb = 0.5,
+            sanitypenaltyongoing = 0.5, -- per second
+            sanitypenaltyrecaltime = 10,
+            sanitypenaltydeltaonrefuel = 25,
+            sanitypenaltydeltaonkill = 25,
+            sanityregen = 3,
+            negsanityauraabsorb = 1,
             bonusdamagetoshadow = 0.5,
         },
     },
@@ -57,10 +74,6 @@ TUNING.musha = {
     fullmodesanityregen = 0.1,
     fullmodestaminaregen = 1,
     fullmodehungerdrain = 1.3,
-
-    valkyriebonusdamagemultiplier = 0.5,
-    valkyriedamagetakenmultiplier = 0.8,
-    valkyriemanaongoingmodifier = 0,
 
     freezecooldowntime = 5,
 
@@ -158,16 +171,16 @@ TUNING.musha = {
         freezingspell = {
             manacost = 5,
             maxmanacost = 15,
-            range = 12,
-            rangegrowth = 0.2,
+            range = 18,
+            rangegrowth = 0.4,
             coldness = 1,
             coldnessgrowth = 0.1,
             cooldown = 3,
         },
         thunderspell = {
-            manacost = 10,
-            maxmanacost = 30,
-            range = 12,
+            manacost = 5,
+            maxmanacost = 15,
+            range = 18,
             damage = 20,
             damagegrowth = 1,
             cooldown = 10,
@@ -214,9 +227,10 @@ TUNING.musha = {
         sneak = {
             sanitycost = 50,
             backstabbasedamage = 100,
+            preparetime = 4,
         },
         sneakspeedboost = {
-            min = 2,
+            min = 1.5,
             max = 2.5,
             staminacost = 10,
             backstabbonustime = 2,
@@ -227,17 +241,17 @@ TUNING.musha = {
                 manacost = 5,
                 damage = 45,
                 radius = 4,
-                forceignitecounter = 3,
+                forceignitecounter = 1,
                 igniteframe = 10,
-                cooldown = 3,
+                cooldown = 1,
                 duration = 3,
                 charged = {
-                    extramanacost = 25,
+                    extramanacost = 10,
                     range = 10,
-                    chargetime = 3,
+                    chargetime = 1,
                     mincount = 15,
                     maxcount = 20,
-                    cooldown = 10,
+                    cooldown = 5,
                 },
             },
             whitefrost = {
@@ -262,7 +276,7 @@ TUNING.musha = {
                     speedmultiplier = 0.25,
                     basedamage = 100,
                     percentdamage = 0.2,
-                    maxdamage = 2000,
+                    maxdamage = 2500,
                     cooldown = 15,
                 },
             },
@@ -289,7 +303,7 @@ TUNING.musha = {
             manacost = 0,
             staminacost = 10,
             damagemultiplier = 0.5,
-            damagetakenmultiplier = 0.2,
+            damagetakenmultiplier = 0.25,
             radius = 3,
             mindist = 4,
             usewindow = 1.5,
@@ -297,6 +311,7 @@ TUNING.musha = {
         },
         phoenixadvent = {
             damagemultiplier = 2.5,
+            damagetakenmultiplier = 0.25,
             radius = 4.5,
             staminaregen = 35,
         },
@@ -310,7 +325,7 @@ TUNING.musha = {
             cooldown = 8,
         },
         desolatedive = {
-            staminacost = 0,
+            staminacost = 20, -- Minimum required
             staminacostrate = 2,
             radius = 10,
             mindist = 10,
@@ -355,7 +370,7 @@ TUNING.musha = {
         },
         phantomspells = {
             teleport = {
-                sanitycost = 5,
+                sanitycost = 10,
             },
         },
     },
