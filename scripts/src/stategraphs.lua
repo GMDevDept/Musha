@@ -1916,7 +1916,7 @@ end
 
 local musha_desolatedive_pre = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -1961,10 +1961,6 @@ local musha_desolatedive_pre = State {
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
-        if inst.mode:value() == 2 then
-            inst.components.timer:StartTimer("cooldown_desolatedive", TUNING.musha.skills.desolatedive.cooldown)
-            inst:ListenForEvent("timerdone", DesolateDiveOnTimerDone)
-        end
     end,
 
     onexit = function(inst)
@@ -1978,7 +1974,7 @@ local musha_desolatedive_pre = State {
 
 local musha_desolatedive_pre_client = State {
     name = "musha_desolatedive_pre",
-    tags = { "musha_desolatedive_pre", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pre", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -2467,7 +2463,7 @@ end
 
 local musha_phantomblossom_pre = State {
     name = "musha_phantomblossom_pre",
-    tags = { "musha_phantomblossom_pre", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phantomblossom_pre", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -2512,15 +2508,15 @@ local musha_phantomblossom_pre = State {
                     elseif inst.sg.statemem.animcounter == 3 then
                         inst.sg.statemem.ready = true
                         inst.AnimState:PlayAnimation("channel_loop", false)
-                        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+                        inst.fx_phantomblossom1 = CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
                         inst:ShakeCamera(CAMERASHAKE.FULL, TUNING.musha.skills.phantomblossom.maxchargingtime, .01, .1)
                         inst.sg:SetTimeout(TUNING.musha.skills.phantomblossom.maxchargingtime)
                     else
                         inst.AnimState:PlayAnimation("channel_loop", false)
-                        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+                        inst.fx_phantomblossom1 = CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
                     end
                 end
-                CustomAttachFx(inst, "waxwell_shadow_book_fx")
+                inst.fx_phantomblossom2 = CustomAttachFx(inst, "waxwell_shadow_book_fx")
                 inst.sg.statemem.animcounter = inst.sg.statemem.animcounter + 1
             end
         end),
@@ -2536,11 +2532,11 @@ local musha_phantomblossom_pre = State {
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
-        inst.components.timer:StartTimer("cooldown_phantomblossom", TUNING.musha.skills.phantomblossom.cooldown)
-        inst:ListenForEvent("timerdone", PhantomBlossomOnTimerDone)
     end,
 
     onexit = function(inst)
+        CustomRemoveEntity(inst.fx_phantomblossom1)
+        CustomRemoveEntity(inst.fx_phantomblossom2)
         inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
         inst.components.colouradder:PopColour("phantomblossom")
         if TheCamera.shake ~= nil then
@@ -2551,7 +2547,7 @@ local musha_phantomblossom_pre = State {
 
 local musha_phantomblossom_pre_client = State {
     name = "musha_phantomblossom_pre",
-    tags = { "musha_phantomblossom_pre", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phantomblossom_pre", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()

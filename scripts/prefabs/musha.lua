@@ -1392,46 +1392,47 @@ local function ValkyrieKeyLongPressed(inst, data)
     if data.name == "valkyriekeyonlongpress" then
         -- Delayed event, need to check again
         if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-            or inst.sg:HasStateTag("musha_nointerrupt") then return end
+            or inst.sg:HasStateTag("musha_nointerrupt") then
+            inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
+            return
+        end
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if inst:HasDebuff("elementloaded") then
                 local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+                if TUNING.musha.skills.launchelement[element].charged then
+                    if TUNING.musha.skills.launchelement[element].charged.extramanacost and
+                        inst.components.mana.current < TUNING.musha.skills.launchelement[element].charged.extramanacost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                        CustomPlayFailedAnim(inst)
+                    elseif TUNING.musha.skills.launchelement[element].charged.extrasanitycost and
+                        inst.components.sanity.current <
+                        TUNING.musha.skills.launchelement[element].charged.extrasanitycost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                        CustomPlayFailedAnim(inst)
+                    else
+                        inst.components.mana:DoDelta(-
+                            (TUNING.musha.skills.launchelement[element].charged.extramanacost or 0))
+                        inst.components.sanity:DoDelta(-
+                            (TUNING.musha.skills.launchelement[element].charged.extrasanitycost or 0))
 
-                if not TUNING.musha.skills.launchelement[element].charged then
-                    return
-                elseif TUNING.musha.skills.launchelement[element].charged.extramanacost and
-                    inst.components.mana.current < TUNING.musha.skills.launchelement[element].charged.extramanacost then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-                    CustomPlayFailedAnim(inst)
-                elseif TUNING.musha.skills.launchelement[element].charged.extrasanitycost and
-                    inst.components.sanity.current < TUNING.musha.skills.launchelement[element].charged.extrasanitycost then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-                    CustomPlayFailedAnim(inst)
-                else
-                    inst.components.mana:DoDelta(-
-                        (TUNING.musha.skills.launchelement[element].charged.extramanacost or 0))
-                    inst.components.sanity:DoDelta(-
-                        (TUNING.musha.skills.launchelement[element].charged.extrasanitycost or 0))
-
-                    local function ElementRemoved(inst, data)
-                        if data.name == "elementloaded" then
-                            inst:RemoveEventCallback("timerdone", OnElementCharged)
-                            inst.components.timer:SetTimeLeft("chargingelement", 0) -- After RemoveEventCallback
-                            inst.SoundEmitter:KillSound("charging")
-                            inst:RemoveEventCallback("debuffremoved", ElementRemoved)
+                        local function ElementRemoved(inst, data)
+                            if data.name == "elementloaded" then
+                                inst:RemoveEventCallback("timerdone", OnElementCharged)
+                                inst.components.timer:SetTimeLeft("chargingelement", 0) -- After RemoveEventCallback
+                                inst.SoundEmitter:KillSound("charging")
+                                inst:RemoveEventCallback("debuffremoved", ElementRemoved)
+                            end
                         end
+
+                        local chargetime = TUNING.musha.skills.launchelement[element].charged.chargetime
+                        inst.components.timer:StartTimer("chargingelement", chargetime)
+                        inst:ListenForEvent("timerdone", OnElementCharged)
+                        inst:ListenForEvent("debuffremoved", ElementRemoved)
+                        inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
                     end
-
-                    local chargetime = TUNING.musha.skills.launchelement[element].charged.chargetime
-                    inst.components.timer:StartTimer("chargingelement", chargetime)
-                    inst:ListenForEvent("timerdone", OnElementCharged)
-                    inst:ListenForEvent("debuffremoved", ElementRemoved)
-                    inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
                 end
-            else
-                if inst.sg:HasStateTag("nomorph") then return end
-
+            elseif not inst.sg:HasStateTag("nomorph") then
                 if not inst.skills.valkyriemode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.rider:IsRiding() then
@@ -1512,6 +1513,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
     -- Can recharge when using skills
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
         or inst.valkyriekeypressed or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
+        inst.novalkyriekeyonlongpress = nil
         return
     end
 
@@ -1519,13 +1521,11 @@ local function ValkyrieKeyDown(inst, x, y, z)
 
     inst.bufferedcursorpos = Vector3(x, y, z)
 
-    if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("nomorph") then
-        inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
-        inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
-    elseif inst.mode:value() == 2 then
+    if inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("premagpiestep") and not inst.components.rider:IsRiding() then
             inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregen)
             inst.startmagpiestep:push()
+            inst.novalkyriekeyonlongpress = true
         else
             if not inst:HasTag("lightningstrikeready") then
                 if inst.components.mana.current < TUNING.musha.skills.lightningstrike.manacost then
@@ -1538,19 +1538,27 @@ local function ValkyrieKeyDown(inst, x, y, z)
                 end
             end
 
-            if not attacking then
-                inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
-                inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
+            if attacking then
+                inst.novalkyriekeyonlongpress = true
             end
         end
-    elseif inst.mode:value() == 3 then
+    end
+
+    if not inst.novalkyriekeyonlongpress then
         inst.components.timer:StartTimer("valkyriekeyonlongpress", TUNING.musha.singleclicktimewindow)
         inst:ListenForEvent("timerdone", ValkyrieKeyLongPressed)
     end
+
+    inst.novalkyriekeyonlongpress = nil
 end
 
 local function ValkyrieKeyUp(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+        or inst.sg:HasStateTag("musha_nointerrupt") then
+        inst.noannihilation = nil
+        inst.valkyriekeypressed = nil
+        inst.components.timer:StopTimer("valkyriekeyonlongpress")
+        inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
         return
     end
 
@@ -1648,112 +1656,146 @@ local function ValkyrieKeyUp(inst, x, y, z)
 end
 
 -- Hotkey: G
-local function ToggleBerserk(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") then
+local function ShadowKeyLongPressed(inst, data)
+    if data.name == "shadowkeyonlongpress" then
+        -- Delayed event, need to check again
+        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+            or inst.sg:HasStateTag("musha_nointerrupt") then
+            inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
+            return
+        end
+
+        inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
+    end
+end
+
+local function ShadowKeyDown(inst, x, y, z)
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
+        or inst.shadowkeypressed or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
-    local previousmode = inst.mode:value()
+    inst.shadowkeypressed = true -- Prevent continuous triggering on long press
+
+    inst.components.timer:StartTimer("shadowkeyonlongpress", TUNING.musha.singleclicktimewindow)
+    inst:ListenForEvent("timerdone", ShadowKeyLongPressed)
+end
+
+local function ShadowKeyUp(inst, x, y, z)
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+        inst.sg:HasStateTag("musha_nointerrupt") then
+        inst.shadowkeypressed = nil
+        inst.components.timer:StopTimer("shadowkeyonlongpress")
+        inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
+        return
+    end
 
     inst.bufferedcursorpos = Vector3(x, y, z)
 
-    if previousmode == 0 or previousmode == 1 and not inst.sg:HasStateTag("nomorph") then
-        if inst:HasDebuff("elementloaded") then
-            inst:RemoveDebuff("elementloaded")
+    if inst.mode:value() == 0 or inst.mode:value() == 1 then
+        if inst.components.timer:TimerExists("shadowkeyonlongpress") then
+            if inst:HasDebuff("elementloaded") then
+                inst:RemoveDebuff("elementloaded")
 
-            local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+                local element = CustomFindKeyByValue(elementlist, inst.elementmode)
 
-            if TUNING.musha.skills.launchelement[element].manacost then
-                inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
-            end
-            if TUNING.musha.skills.launchelement[element].sanitycost then
-                inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
-            end
+                if TUNING.musha.skills.launchelement[element].manacost then
+                    inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
+                end
+                if TUNING.musha.skills.launchelement[element].sanitycost then
+                    inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
+                end
 
-            local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
+                local success, reason = ElementTakeTurns(inst, { CursorPosition = Vector3(x, y, z) })
 
-            if success then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "noskill" then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif reason == "noalter" then
-                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-            elseif reason == "complete" then
-                return
-            end
-        else
-            if not inst.skills.shadowmode then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
-                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                    .. STRINGS.musha.skills.shadowmode.name
-                    .. STRINGS.musha.skills.incooldown.part2
-                    .. STRINGS.musha.skills.incooldown.part3
-                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
-                    .. STRINGS.musha.skills.incooldown.part4)
-            elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
-                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-                CustomPlayFailedAnim(inst)
-            else
-                inst.activateberserk:push()
-            end
-        end
-    elseif previousmode == 2 and not inst.components.rider:IsRiding() then
-        if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
-            and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
-                or not inst.skills.setsugetsukaredux) then
-            inst.startphoenixadvent:push()
-        elseif not inst.skills.setsugetsuka then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-            CustomPlayFailedAnim(inst)
-        elseif inst.components.stamina.current < TUNING.musha.skills.setsugetsuka.staminacost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
-            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent then
-                inst.startphoenixadvent:push()
-            else
-                CustomPlayFailedAnim(inst)
-            end
-        else
-            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.setsugetsuka_counter < 3
-                and inst.skills.setsugetsukaredux then
-                inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
-                inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
-                inst:PushEvent("startsetsugetsuka")
-            else
-                if inst.components.timer:TimerExists("cooldown_setsugetsuka") then
+                if success then
+                    LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+                elseif reason == "noskill" then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif reason == "noalter" then
+                    LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+                end
+            elseif not inst.sg:HasStateTag("nomorph") then
+                if not inst.skills.shadowmode then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                        .. STRINGS.musha.skills.setsugetsuka.name
+                        .. STRINGS.musha.skills.shadowmode.name
                         .. STRINGS.musha.skills.incooldown.part2
                         .. STRINGS.musha.skills.incooldown.part3
-                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_setsugetsuka"))
+                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
                         .. STRINGS.musha.skills.incooldown.part4)
+                elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                    CustomPlayFailedAnim(inst)
                 else
-                    inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
-                    inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
-                    inst.startsetsugetsuka_pre:push()
+                    inst.activateberserk:push()
                 end
             end
         end
-    elseif previousmode == 3 then
-        if inst:HasTag("sneaking") then
-            StopSneaking(inst)
-            inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
-            inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
-        else
-            if not inst.skills.sneak then
+    elseif inst.mode:value() == 2 and not inst.components.rider:IsRiding() then
+        if inst.components.timer:TimerExists("shadowkeyonlongpress") then
+            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
+                and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
+                    or not inst.skills.setsugetsukaredux) then
+                inst.startphoenixadvent:push()
+            elseif not inst.skills.setsugetsuka then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-            elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
-                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+            elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                 CustomPlayFailedAnim(inst)
+            elseif inst.components.stamina.current < TUNING.musha.skills.setsugetsuka.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent then
+                    inst.startphoenixadvent:push()
+                else
+                    CustomPlayFailedAnim(inst)
+                end
             else
-                inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
-                StartSneaking(inst)
+                if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.setsugetsuka_counter < 3
+                    and inst.skills.setsugetsukaredux then
+                    inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
+                    inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
+                    inst:PushEvent("startsetsugetsuka")
+                else
+                    if inst.components.timer:TimerExists("cooldown_setsugetsuka") then
+                        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                            .. STRINGS.musha.skills.setsugetsuka.name
+                            .. STRINGS.musha.skills.incooldown.part2
+                            .. STRINGS.musha.skills.incooldown.part3
+                            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_setsugetsuka"))
+                            .. STRINGS.musha.skills.incooldown.part4)
+                    else
+                        inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
+                        inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
+                        inst.startsetsugetsuka_pre:push()
+                    end
+                end
+            end
+        end
+    elseif inst.mode:value() == 3 then
+        if inst.components.timer:TimerExists("shadowkeyonlongpress") then
+            if inst:HasTag("sneaking") then
+                StopSneaking(inst)
+                inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
+                inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
+            else
+                if not inst.skills.sneak then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.components.sanity:DoDelta(-TUNING.musha.skills.sneak.sanitycost)
+                    StartSneaking(inst)
+                end
             end
         end
     end
+
+    inst.shadowkeypressed = nil
+    inst.components.timer:StopTimer("shadowkeyonlongpress")
+    inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
 end
 
 -- Resist freeze
@@ -2395,7 +2437,8 @@ end
 -- Set up remote procedure calls for client side
 AddModRPCHandler("musha", "valkyriekeydown", ValkyrieKeyDown)
 AddModRPCHandler("musha", "valkyriekeyup", ValkyrieKeyUp)
-AddModRPCHandler("musha", "toggleberserk", ToggleBerserk)
+AddModRPCHandler("musha", "shadowkeydown", ShadowKeyDown)
+AddModRPCHandler("musha", "shadowkeyup", ShadowKeyUp)
 AddModRPCHandler("musha", "toggleshield", ToggleShield)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)
 AddModRPCHandler("musha", "playelfmelody", PlayElfMelody)

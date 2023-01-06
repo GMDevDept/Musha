@@ -320,7 +320,7 @@ TUNING.musha = {
             staminacost = 15,
             damagemultiplier = 1,
             radius = 3.5,
-            maxdist = 10,
+            maxdist = 15,
             paralysisduration = 8,
             cooldown = 8,
         },
