@@ -39,7 +39,19 @@ end)
 -- T: ToggleShield
 TheInput:AddKeyDownHandler(GetModConfigData("hotkey_shield"), function()
     if ThePlayer:HasTag("musha") and not IsPaused() then
-        SendModRPCToServer(MOD_RPC.musha.toggleshield)
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+
+        SendModRPCToServer(MOD_RPC.musha.shieldkeydown, CursorPosition.x, CursorPosition.y, CursorPosition.z)
+    end
+end)
+
+TheInput:AddKeyUpHandler(GetModConfigData("hotkey_shield"), function()
+    if ThePlayer:HasTag("musha") and not IsPaused() then
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+
+        SendModRPCToServer(MOD_RPC.musha.shieldkeyup, CursorPosition.x, CursorPosition.y, CursorPosition.z)
     end
 end)
 

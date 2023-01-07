@@ -110,11 +110,230 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Pet leash related
+
+local function ShadowMinionFx(pet)
+    local x, y, z = pet.Transform:GetWorldPosition()
+    SpawnPrefab("statue_transition_2").Transform:SetPosition(x, y, z)
+end
+
+local function KillPet(pet)
+    pet.components.health:Kill()
+end
+
+local function OnSpawnPet(inst, pet)
+    if pet:HasTag("shadowminion") then -- Shadow Musha and Maxwell's shadow puppets
+        pet:DoTaskInTime(0, ShadowMinionFx) -- Delayed in case we need to relocate for migration spawning
+
+        if not (inst.components.health:IsDead() or inst:HasTag("playerghost")) then
+            if not pet:HasTag("musha_companion") then -- Shadow maxwell
+                if not inst.components.builder.freebuildmode then
+                    inst.components.sanity:AddSanityPenalty(pet,
+                        TUNING.SHADOWWAXWELL_SANITY_PENALTY[string.upper(pet.prefab)])
+                end
+                inst:ListenForEvent("onremove", inst._onpetlost, pet)
+            end
+        elseif pet._killtask == nil then
+            pet._killtask = pet:DoTaskInTime(math.random(), KillPet)
+        end
+    elseif inst._OnSpawnPet ~= nil then
+        inst:_OnSpawnPet(pet)
+    end
+end
+
+local function OnDespawnPet(inst, pet)
+    if pet:HasTag("shadowminion") then
+        ShadowMinionFx(pet)
+        pet:Remove()
+    elseif inst._OnDespawnPet ~= nil then
+        inst:_OnDespawnPet(pet)
+    end
+end
+
+local function OnDeathForPetLeash(inst)
+    for _, v in pairs(inst.components.petleash:GetPets()) do
+        if (not v:HasTag("musha_companion")) and v:HasTag("shadowminion") and v._killtask == nil then
+            v._killtask = v:DoTaskInTime(math.random(), KillPet)
+        end
+    end
+end
+
+local function OnRerollForPetLeash(inst)
+    local todespawn = {}
+    for _, v in pairs(inst.components.petleash:GetPets()) do
+        if v:HasTag("musha_companion") or v:HasTag("shadowminion") then
+            table.insert(todespawn, v)
+        end
+    end
+    for _, v in ipairs(todespawn) do
+        inst.components.petleash:DespawnPet(v)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Spells
+
+-- Freezing spell
+local function FreezingSpellOnTimerDone(inst, data)
+    if data.name == "cooldown_freezingspell" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.freezingspell.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", FreezingSpellOnTimerDone)
+    end
+end
+
+local function FreezingSpell(inst)
+    local validtargets = 0
+    local must_tags = { "_combat" }
+    local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.freezingspell.range +
+        TUNING.musha.skills.freezingspell.rangegrowth * inst.components.leveler.lvl
+    local coldness = TUNING.musha.skills.freezingspell.coldness +
+        TUNING.musha.skills.freezingspell.coldnessgrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
+        if v.components.freezable and not v.components.freezable:IsFrozen() then
+            v.components.freezable:AddColdness(coldness)
+            v.components.freezable:SpawnShatterFX()
+            if v.components.freezable:IsFrozen() then
+                CustomOnFreeze(v)
+            else
+                v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not frozen
+            end
+            validtargets = validtargets + 1
+        elseif not v.components.freezable and v:HasTag("locomotor") then
+            v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not freezable
+            validtargets = validtargets + 1
+        end
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+
+    inst.components.mana:DoDelta(-
+        math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
+    inst.components.talker:Say(STRINGS.musha.skills.manaspells.freezingspell.cast)
+
+    inst.components.timer:StartTimer("cooldown_freezingspell", TUNING.musha.skills.freezingspell.cooldown)
+    inst:ListenForEvent("timerdone", FreezingSpellOnTimerDone)
+end
+
+-- Thunder spell
+local function ThunderSpellOnTimerDone(inst, data)
+    if data.name == "cooldown_thunderspell" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.thunderspell.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ThunderSpellOnTimerDone)
+    end
+end
+
+local function ThunderSpell(inst)
+    local validtargets = 0
+    local must_tags = { "_combat" }
+    local ignore_tags = { "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.thunderspell.range
+    local damage = TUNING.musha.skills.thunderspell.damage +
+        TUNING.musha.skills.thunderspell.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+    local duration = TUNING.musha.skills.thunderspell.duration +
+        TUNING.musha.skills.thunderspell.durationgrowth * inst.components.leveler.lvl
+
+    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
+        v:DoTaskInTime(validtargets * (.3 + math.random() * .2), function()
+            v.components.combat:GetAttacked(inst, damage, nil, "electric")
+            v:AddDebuff("thunderspell", "debuff_paralysis")
+            if v.components.debuffable:GetDebuff("thunderspell") then
+                v.components.debuffable:GetDebuff("thunderspell"):SetDuration(duration)
+            end
+            CustomAttachFx(v, "lightning_musha")
+        end)
+        validtargets = validtargets + 1
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+
+    inst.components.mana:DoDelta(-
+        math.min(TUNING.musha.skills.thunderspell.manacost * validtargets, TUNING.musha.skills.thunderspell.maxmanacost))
+    inst.components.talker:Say(STRINGS.musha.skills.manaspells.thunderspell.cast)
+
+    inst.components.timer:StartTimer("cooldown_thunderspell", TUNING.musha.skills.thunderspell.cooldown)
+    inst:ListenForEvent("timerdone", ThunderSpellOnTimerDone)
+end
+
+-- Shadow prison
+local function ShadowPrisonOnTimerDone(inst, data)
+    if data.name == "cooldown_shadowprison" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.manaspells.shadowprison.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShadowPrisonOnTimerDone)
+    end
+end
+
+local function ShadowPrison(inst)
+    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
+    spellprefab.caster = inst
+    spellprefab.item = inst.components.combat:GetWeapon()
+    spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())
+
+    inst.components.timer:StartTimer("cooldown_shadowprison", TUNING.musha.skills.shadowprison.cooldown)
+    inst:ListenForEvent("timerdone", ShadowPrisonOnTimerDone)
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- F1-F12 keybinds
+
+local function NyaNya(inst)
+    local emote = Emotes[math.random(#Emotes)]
+    inst:PushEvent("emote", emote)
+end
+
+-- Enable/disable hotkeys
+local function SwitchKeyBindings(inst)
+    if inst.companionhotkeysenabled then
+        inst.companionhotkeysenabled = false
+        inst.components.talker:Say(STRINGS.musha.switchkeybindings_off)
+        UserCommands.RunTextUserCommand("no", inst, false)
+    else
+        inst.companionhotkeysenabled = true
+        inst.components.talker:Say(STRINGS.musha.switchkeybindings_on)
+        UserCommands.RunTextUserCommand("wave", inst, false)
+    end
+end
+
+-- Order shadow musha to toggle follow-only mode
+local function DoShadowMushaOrder(inst)
+    if not inst.companionhotkeysenabled then
+        NyaNya(inst)
+    elseif inst.shadowmushafollowonly then
+        inst.shadowmushafollowonly = false
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume, nil, true)
+        UserCommands.RunTextUserCommand("rude", inst, false)
+        for _, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") then
+                v:RemoveTag("followonly")
+                v.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "followonlybuff")
+            end
+        end
+    else
+        inst.shadowmushafollowonly = true
+        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow, nil, true)
+        UserCommands.RunTextUserCommand("happy", inst, false)
+        for _, v in pairs(inst.components.petleash:GetPets()) do
+            if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
+                v:AddTag("followonly")
+                v.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+                    TUNING.musha.creatures.shadowmusha.followonlydamagetakenmultplier, "followonlybuff")
+            end
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sleep
 
 local function ToggleSleep(inst)
     -- Can interrupt sleep (wake up)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or
         (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("sleeping")) then
         return
     end
@@ -323,8 +542,8 @@ local function StopMelodyBuff(inst)
 end
 
 local function PlayElfMelody(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_elfmelody") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
+        or inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_elfmelody") then
         return
     end
 
@@ -499,71 +718,69 @@ local function RemoveShieldCommonEffects(inst)
 end
 
 local function ShieldOn(inst)
+    inst:AddTag("manashieldactivated")
+    AddShieldCommonEffects(inst)
+    inst:SetShieldDurability()
+    inst.components.mana.modifiers:SetModifier(inst, -TUNING.musha.skills.manashield.manaongoingcost, "manashield")
+    inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
+end
 
-    if not inst.skills.manashield_area then
-        inst:AddTag("manashieldactivated")
-        AddShieldCommonEffects(inst)
-        inst:SetShieldDurability()
-        inst.components.mana.modifiers:SetModifier(inst, -TUNING.musha.skills.manashield.manaongoingcost, "manashield")
-        inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
-    else
-        local validtargets = 0
-        local must_tags = { "_combat" }
-        local ignore_tags = { "manashieldactivated" }
-        local one_of_tags = { "player", "companion", "musha_companion" }
-        local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
-            TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
+local function AreaShieldOn(inst) local validtargets = 0
+    local must_tags = { "_combat" }
+    local ignore_tags = { "manashieldactivated" }
+    local one_of_tags = { "player", "companion", "musha_companion" }
+    local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
+        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
 
-        local function cancel_manashield_area(v, data)
-            if data.name == "cancel_manashield_area" then
-                if v == inst then -- Only be triggered by caster himself, even not by other musha players
-                    v:ShieldOff()
-                    v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
-                else
-                    RemoveShieldCommonEffects(v)
-                end
-                v:RemoveTag("areamanashieldactivated")
-                v:RemoveEventCallback("timerdone", cancel_manashield_area)
+    local function cancel_manashield_area(v, data)
+        if data.name == "cancel_manashield_area" then
+            if v == inst then -- Only be triggered by caster himself, even not by other musha players
+                v:ShieldOff()
+                v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
+            else
+                RemoveShieldCommonEffects(v)
             end
+            v:RemoveTag("areamanashieldactivated")
+            v:RemoveEventCallback("timerdone", cancel_manashield_area)
+        end
+    end
+
+    CustomDoAOE(inst, TUNING.musha.skills.manashield_area.range, must_tags, ignore_tags, one_of_tags, function(v)
+        if not v.components.health then
+            return
+        elseif not v.components.timer then
+            v:AddComponent("timer")
         end
 
-        CustomDoAOE(inst, TUNING.musha.skills.manashield_area.range, must_tags, ignore_tags, one_of_tags, function(v)
-            if not v.components.health then
-                return
-            elseif not v.components.timer then
-                v:AddComponent("timer")
-            end
+        if not v:HasTag("areamanashieldactivated") then
+            v:AddTag("areamanashieldactivated")
+            AddShieldCommonEffects(v)
+            v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
+            v:ListenForEvent("timerdone", cancel_manashield_area)
+        else
+            v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
+        end
 
-            if not v:HasTag("areamanashieldactivated") then
-                v:AddTag("areamanashieldactivated")
-                AddShieldCommonEffects(v)
-                v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
-                v:ListenForEvent("timerdone", cancel_manashield_area)
-            else
-                v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
-            end
+        v.shielddurability = shielddurability -- Refresh durability
+        if v.task_shieldbrokendelay then CustomCancelTask(v.task_shieldbrokendelay) end -- Cancel delayed broken effect
 
-            v.shielddurability = shielddurability -- Refresh durability
-            if v.task_shieldbrokendelay then CustomCancelTask(v.task_shieldbrokendelay) end -- Cancel delayed broken effect
+        validtargets = validtargets + 1
+    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
-            validtargets = validtargets + 1
-        end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+    inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
+        TUNING.musha.skills.manashield_area.maxmanacost))
 
-        inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
-            TUNING.musha.skills.manashield_area.maxmanacost))
-
-        inst.bufferedspell = "SetShieldDurability" -- Refresh durability (mainly for SG related, check this namespace in stategraphs.lua)
-        inst.bufferedbookfx = {
-            swap_build = "swap_books",
-            swap_prefix = "book_horticulture_upgraded",
-            def = {
-                fx = "fx_book_moon",
-                fx_under_prefab = "fx_plants_big_under_book",
-                layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
-            }
+    inst.bufferedspell = "SetShieldDurability" -- Refresh durability (mainly for SG related, check this namespace in stategraphs.lua)
+    inst.bufferedbookfx = {
+        swap_build = "swap_books",
+        swap_prefix = "book_horticulture_upgraded",
+        def = {
+            fx = "fx_book_moon",
+            fx_under_prefab = "fx_plants_big_under_book",
+            layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
         }
-        inst.castmanaspell:push()
-    end
+    }
+    inst.castmanaspell:push()
 end
 
 local function ShieldOff(inst)
@@ -577,392 +794,97 @@ local function ShieldOff(inst)
     inst:ListenForEvent("timerdone", ShieldOnTimerDone)
 end
 
-local function ToggleShield(inst)
-    -- Can interrupt wake up state
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("waking")) then
+local function ShieldKeyLongPressed(inst, data)
+    if data.name == "shieldkeyonlongpress" then
+        -- Delayed event, need to check again
+        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
+            inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
+            return
+        end
+
+        inst.bufferedcursorpos = Vector3(x, y, z)
+
+        inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
+    end
+end
+
+local function ShieldKeyDown(inst)
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
+        or inst.shieldkeypressed then
         return
     end
 
-    local manarequired = inst.skills.manashield_area and TUNING.musha.skills.manashield_area.maxmanacost or
-        TUNING.musha.skills.manashield.manacost
+    inst.shieldkeypressed = true -- Prevent continuous triggering on long press
 
-    if inst:HasTag("manashieldactivated") then -- Shield is on (not area shield)
-        inst:ShieldOff()
-        inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
-    elseif inst:HasTag("areamanashieldactivated") then -- Area Shield is on (by self or other)
-        inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
-    elseif not inst.skills.manashield then
-        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-    elseif inst.components.timer:TimerExists("cooldown_manashield") then
-        inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-            .. STRINGS.musha.skills.manashield.name
-            .. STRINGS.musha.skills.incooldown.part2
-            .. STRINGS.musha.skills.incooldown.part3
-            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
-            .. STRINGS.musha.skills.incooldown.part4)
-    elseif inst.components.mana.current < manarequired then
-        inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-        CustomPlayFailedAnim(inst)
-    else
-        ShieldOn(inst)
-    end
+    inst.components.timer:StartTimer("shieldkeyonlongpress", TUNING.musha.singleclicktimewindow)
+    inst:ListenForEvent("timerdone", ShieldKeyLongPressed)
 end
 
----------------------------------------------------------------------------------------------------------
-
--- Spells
-
--- Freezing spell
-local function FreezingSpellOnTimerDone(inst, data)
-    if data.name == "cooldown_freezingspell" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.manaspells.freezingspell.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", FreezingSpellOnTimerDone)
+local function ShieldKeyUp(inst)
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
+        inst.shieldkeypressed = nil
+        inst.components.timer:StopTimer("shieldkeyonlongpress")
+        inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
+        return
     end
-end
 
-local function FreezingSpell(inst)
-    local validtargets = 0
-    local must_tags = { "_combat" }
-    local ignore_tags = { "freeze_cooldown", "nofreeze", "companion", "musha_companion", "player" }
-    local range = TUNING.musha.skills.freezingspell.range +
-        TUNING.musha.skills.freezingspell.rangegrowth * inst.components.leveler.lvl
-    local coldness = TUNING.musha.skills.freezingspell.coldness +
-        TUNING.musha.skills.freezingspell.coldnessgrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+    inst.bufferedcursorpos = Vector3(x, y, z)
 
-    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
-        if v.components.freezable and not v.components.freezable:IsFrozen() then
-            v.components.freezable:AddColdness(coldness)
-            v.components.freezable:SpawnShatterFX()
-            if v.components.freezable:IsFrozen() then
-                CustomOnFreeze(v)
-            else
-                v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not frozen
-            end
-            validtargets = validtargets + 1
-        elseif not v.components.freezable and v:HasTag("locomotor") then
-            v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not freezable
-            validtargets = validtargets + 1
+    if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+        if inst:HasTag("manashieldactivated") then -- Shield is on (not area shield)
+            inst:ShieldOff()
+            inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
+        elseif inst:HasTag("areamanashieldactivated") then -- Area Shield is on (by self or other)
+            inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
+        elseif not inst.skills.manashield then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.timer:TimerExists("cooldown_manashield") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.manashield.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.manashield.manacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        else
+            -- Mana cost handled at the time shield set off
+            ShieldOn(inst)
         end
-    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
-
-    inst.components.mana:DoDelta(-
-        math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))
-    inst.components.talker:Say(STRINGS.musha.skills.manaspells.freezingspell.cast)
-
-    inst.components.timer:StartTimer("cooldown_freezingspell", TUNING.musha.skills.freezingspell.cooldown)
-    inst:ListenForEvent("timerdone", FreezingSpellOnTimerDone)
-end
-
--- Thunder spell
-local function ThunderSpellOnTimerDone(inst, data)
-    if data.name == "cooldown_thunderspell" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.manaspells.thunderspell.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", ThunderSpellOnTimerDone)
-    end
-end
-
-local function ThunderSpell(inst)
-    local validtargets = 0
-    local must_tags = { "_combat" }
-    local ignore_tags = { "companion", "musha_companion", "player" }
-    local range = TUNING.musha.skills.thunderspell.range
-    local damage = TUNING.musha.skills.thunderspell.damage +
-        TUNING.musha.skills.thunderspell.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
-    local duration = TUNING.musha.skills.thunderspell.duration +
-        TUNING.musha.skills.thunderspell.durationgrowth * inst.components.leveler.lvl
-
-    CustomDoAOE(inst, range, must_tags, ignore_tags, nil, function(v)
-        v:DoTaskInTime(validtargets * (.3 + math.random() * .2), function()
-            v.components.combat:GetAttacked(inst, damage, nil, "electric")
-            v:AddDebuff("thunderspell", "debuff_paralysis")
-            if v.components.debuffable:GetDebuff("thunderspell") then
-                v.components.debuffable:GetDebuff("thunderspell"):SetDuration(duration)
-            end
-            CustomAttachFx(v, "lightning_musha")
-        end)
-        validtargets = validtargets + 1
-    end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
-
-    inst.components.mana:DoDelta(-
-        math.min(TUNING.musha.skills.thunderspell.manacost * validtargets, TUNING.musha.skills.thunderspell.maxmanacost))
-    inst.components.talker:Say(STRINGS.musha.skills.manaspells.thunderspell.cast)
-
-    inst.components.timer:StartTimer("cooldown_thunderspell", TUNING.musha.skills.thunderspell.cooldown)
-    inst:ListenForEvent("timerdone", ThunderSpellOnTimerDone)
-end
-
--- Shadow prison
-local function ShadowPrisonOnTimerDone(inst, data)
-    if data.name == "cooldown_shadowprison" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.manaspells.shadowprison.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", ShadowPrisonOnTimerDone)
-    end
-end
-
-local function ShadowPrison(inst)
-    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
-    spellprefab.caster = inst
-    spellprefab.item = inst.components.combat:GetWeapon()
-    spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())
-
-    inst.components.timer:StartTimer("cooldown_shadowprison", TUNING.musha.skills.shadowprison.cooldown)
-    inst:ListenForEvent("timerdone", ShadowPrisonOnTimerDone)
-end
-
----------------------------------------------------------------------------------------------------------
-
--- Pet leash related
-
-local function ShadowMinionFx(pet)
-    local x, y, z = pet.Transform:GetWorldPosition()
-    SpawnPrefab("statue_transition_2").Transform:SetPosition(x, y, z)
-end
-
-local function KillPet(pet)
-    pet.components.health:Kill()
-end
-
-local function OnSpawnPet(inst, pet)
-    if pet:HasTag("shadowminion") then -- Shadow Musha and Maxwell's shadow puppets
-        pet:DoTaskInTime(0, ShadowMinionFx) -- Delayed in case we need to relocate for migration spawning
-
-        if not (inst.components.health:IsDead() or inst:HasTag("playerghost")) then
-            if not pet:HasTag("musha_companion") then -- Shadow maxwell
-                if not inst.components.builder.freebuildmode then
-                    inst.components.sanity:AddSanityPenalty(pet,
-                        TUNING.SHADOWWAXWELL_SANITY_PENALTY[string.upper(pet.prefab)])
-                end
-                inst:ListenForEvent("onremove", inst._onpetlost, pet)
-            end
-        elseif pet._killtask == nil then
-            pet._killtask = pet:DoTaskInTime(math.random(), KillPet)
+    elseif inst.mode:value() == 0 or inst.mode:value() == 1 then
+        if not inst.skills.manashield_area then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.timer:TimerExists("cooldown_manashield") then
+            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                .. STRINGS.musha.skills.manashield.name
+                .. STRINGS.musha.skills.incooldown.part2
+                .. STRINGS.musha.skills.incooldown.part3
+                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
+                .. STRINGS.musha.skills.incooldown.part4)
+        elseif inst.components.mana.current < TUNING.musha.skills.manashield_area.maxmanacost then
+            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+            CustomPlayFailedAnim(inst)
+        else
+            -- Mana cost handled during casting spell
+            AreaShieldOn(inst)
         end
-    elseif inst._OnSpawnPet ~= nil then
-        inst:_OnSpawnPet(pet)
-    end
-end
-
-local function OnDespawnPet(inst, pet)
-    if pet:HasTag("shadowminion") then
-        ShadowMinionFx(pet)
-        pet:Remove()
-    elseif inst._OnDespawnPet ~= nil then
-        inst:_OnDespawnPet(pet)
-    end
-end
-
-local function OnDeathForPetLeash(inst)
-    for _, v in pairs(inst.components.petleash:GetPets()) do
-        if (not v:HasTag("musha_companion")) and v:HasTag("shadowminion") and v._killtask == nil then
-            v._killtask = v:DoTaskInTime(math.random(), KillPet)
+    elseif inst.mode:value() == 2 then
+        if not inst.skills.valkyrieparry then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        elseif inst.components.rider:IsRiding() then
+            inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+            CustomPlayFailedAnim(inst)
         end
-    end
-end
-
-local function OnRerollForPetLeash(inst)
-    local todespawn = {}
-    for _, v in pairs(inst.components.petleash:GetPets()) do
-        if v:HasTag("musha_companion") or v:HasTag("shadowminion") then
-            table.insert(todespawn, v)
-        end
-    end
-    for _, v in ipairs(todespawn) do
-        inst.components.petleash:DespawnPet(v)
-    end
-end
-
----------------------------------------------------------------------------------------------------------
-
--- F1-F12 keybinds
-
-local function NyaNya(inst)
-    local emote = Emotes[math.random(#Emotes)]
-    inst:PushEvent("emote", emote)
-end
-
--- Enable/disable hotkeys
-local function SwitchKeyBindings(inst)
-    if inst.companionhotkeysenabled then
-        inst.companionhotkeysenabled = false
-        inst.components.talker:Say(STRINGS.musha.switchkeybindings_off)
-        UserCommands.RunTextUserCommand("no", inst, false)
-    else
-        inst.companionhotkeysenabled = true
-        inst.components.talker:Say(STRINGS.musha.switchkeybindings_on)
-        UserCommands.RunTextUserCommand("wave", inst, false)
-    end
-end
-
--- Order shadow musha to toggle follow-only mode
-local function DoShadowMushaOrder(inst)
-    if not inst.companionhotkeysenabled then
-        NyaNya(inst)
-    elseif inst.shadowmushafollowonly then
-        inst.shadowmushafollowonly = false
-        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_resume, nil, true)
-        UserCommands.RunTextUserCommand("rude", inst, false)
-        for _, v in pairs(inst.components.petleash:GetPets()) do
-            if v:HasTag("shadowmusha") then
-                v:RemoveTag("followonly")
-                v.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "followonlybuff")
-            end
-        end
-    else
-        inst.shadowmushafollowonly = true
-        inst.components.talker:Say(STRINGS.musha.shadowmushaorder_follow, nil, true)
-        UserCommands.RunTextUserCommand("happy", inst, false)
-        for _, v in pairs(inst.components.petleash:GetPets()) do
-            if v:HasTag("shadowmusha") and not v:HasTag("followonly") then
-                v:AddTag("followonly")
-                v.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
-                    TUNING.musha.creatures.shadowmusha.followonlydamagetakenmultplier, "followonlybuff")
-            end
-        end
-    end
-end
-
----------------------------------------------------------------------------------------------------------
-
--- Lightning strike
-
-local function LightningStrike(inst, data)
-    if not data.target then return end
-
-    local target = data.target
-    local damage = TUNING.musha.skills.lightningstrike.damage +
-        TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
-
-    target.components.combat:GetAttacked(inst, damage, inst.components.combat:GetWeapon(), "electric")
-    CustomAttachFx(target, { "lightning_musha", "shock_fx" })
-    inst:LightningDischarge()
-end
-
-local function LightningRecharge(inst)
-    if not inst.components.electricattacks then
-        inst:AddComponent("electricattacks")
-    end
-    inst.components.electricattacks:AddSource("lightningstrike")
-
-    if inst.components.stamina.current >= TUNING.musha.skills.lightningstrike.staminacost then
-        inst.components.stamina:DoDelta(-TUNING.musha.skills.lightningstrike.staminacost)
-        inst.components.combat:SetRange(TUNING.musha.skills.lightningstrike.range)
-    end
-
-    inst.components.timer:StopTimer("lightningrecharge")
-    inst:ListenForEvent("onattackother", LightningStrike)
-    inst:AddTag("lightningstrikeready")
-
-    if not inst.sg:HasStateTag("musha_desolatedive_pst") then -- No sound on mode change
-        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
-    end
-    CustomAttachFx(inst, "electricchargedfx")
-    inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
-        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", 0)
-    end, 0)
-end
-
-local function LightningDischarge(inst)
-    inst:RemoveTag("lightningstrikeready")
-    inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-    inst:RemoveEventCallback("onattackother", LightningStrike)
-
-    if inst.components.electricattacks then
-        inst.components.electricattacks:RemoveSource("lightningstrike")
-    end
-
-    CustomCancelTask(inst.task_lightningfx)
-    CustomRemoveEntity(inst.fx_lightning)
-    if inst.mode:value() == 2 then
-        inst.components.timer:StartTimer("lightningrecharge", TUNING.musha.skills.lightningstrike.cooldown)
-    end
-end
-
-local function LightningStrikeOnTimerDone(inst, data)
-    if data.name == "lightningrecharge" then
-        LightningRecharge(inst)
-    end
-end
-
----------------------------------------------------------------------------------------------------------
-
--- Void phantom
-
-local function VoidPhantomOnTimerDone(inst, data)
-    if data.name == "cooldown_voidphantom" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.voidphantom.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", VoidPhantomOnTimerDone)
-    end
-end
-
-local function ClearPhantomSlashTarget(inst, data)
-    if data.name == "phantomslashready" then
-        inst.bufferedphantomslashtarget = nil
-    end
-end
-
-local function StartPhantomAttack(inst, data)
-    if not (data.target and data.target:IsValid()) then return end
-
-    local x, y, z = inst.Transform:GetWorldPosition()
-    local offset = FindValidPositionByFan(
-        math.random() * 2 * PI,
-        math.random() * 5,
-        8,
-        function(offset)
-            local x1 = x + offset.x
-            local z1 = z + offset.z
-            return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
-                and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
-        end
-    )
-    local voidphantom = SpawnPrefab("musha_voidphantom")
-    voidphantom.owner = inst
-    voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
-    voidphantom.sg:GoToState("lunge_pre", data.target)
-
-    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
-    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range,
-        { "musha_voidphantom" }, nil, nil)
-
-    if phantoms then
-        for _, phantom in pairs(phantoms) do
-            if phantom.owner == inst and not phantom.sg:HasStateTag("busy") then
-                phantom.sg:GoToState("lunge_pre", data.target)
-            end
+    elseif inst.mode:value() == 3 then
+        if not inst.skills.shadowparry then
+            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
         end
     end
 
-    inst.bufferedphantomslashtarget = data.target
-    inst.components.timer:StartTimer("phantomslashready", TUNING.musha.skills.phantomslash.usewindow)
-    inst:ListenForEvent("timerdone", ClearPhantomSlashTarget)
-
-    inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
-    inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
-end
-
-local function StartPhantomSlash(inst, data)
-    if not (data.target and data.target:IsValid()) then return end
-
-    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
-    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range * 2,
-        { "musha_voidphantom" }, nil, nil)
-
-    if phantoms then
-        for _, phantom in pairs(phantoms) do
-            if phantom.owner == inst and phantom.sg:HasStateTag("attack") then
-                phantom.phantomslashready = true
-            end
-        end
-    end
+    inst.shieldkeypressed = nil
+    inst.components.timer:StopTimer("shieldkeyonlongpress")
+    inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -1228,6 +1150,143 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Lightning strike
+
+local function LightningStrike(inst, data)
+    if not data.target then return end
+
+    local target = data.target
+    local damage = TUNING.musha.skills.lightningstrike.damage +
+        TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+
+    target.components.combat:GetAttacked(inst, damage, inst.components.combat:GetWeapon(), "electric")
+    CustomAttachFx(target, { "lightning_musha", "shock_fx" })
+    inst:LightningDischarge()
+end
+
+local function LightningRecharge(inst)
+    if not inst.components.electricattacks then
+        inst:AddComponent("electricattacks")
+    end
+    inst.components.electricattacks:AddSource("lightningstrike")
+
+    if inst.components.stamina.current >= TUNING.musha.skills.lightningstrike.staminacost then
+        inst.components.stamina:DoDelta(-TUNING.musha.skills.lightningstrike.staminacost)
+        inst.components.combat:SetRange(TUNING.musha.skills.lightningstrike.range)
+    end
+
+    inst.components.timer:StopTimer("lightningrecharge")
+    inst:ListenForEvent("onattackother", LightningStrike)
+    inst:AddTag("lightningstrikeready")
+
+    if not inst.sg:HasStateTag("musha_desolatedive_pst") then -- No sound on mode change
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+    end
+    CustomAttachFx(inst, "electricchargedfx")
+    inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
+        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", 0)
+    end, 0)
+end
+
+local function LightningDischarge(inst)
+    inst:RemoveTag("lightningstrikeready")
+    inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+    inst:RemoveEventCallback("onattackother", LightningStrike)
+
+    if inst.components.electricattacks then
+        inst.components.electricattacks:RemoveSource("lightningstrike")
+    end
+
+    CustomCancelTask(inst.task_lightningfx)
+    CustomRemoveEntity(inst.fx_lightning)
+    if inst.mode:value() == 2 then
+        inst.components.timer:StartTimer("lightningrecharge", TUNING.musha.skills.lightningstrike.cooldown)
+    end
+end
+
+local function LightningStrikeOnTimerDone(inst, data)
+    if data.name == "lightningrecharge" then
+        LightningRecharge(inst)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Void phantom
+
+local function VoidPhantomOnTimerDone(inst, data)
+    if data.name == "cooldown_voidphantom" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.voidphantom.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", VoidPhantomOnTimerDone)
+    end
+end
+
+local function ClearPhantomSlashTarget(inst, data)
+    if data.name == "phantomslashready" then
+        inst.bufferedphantomslashtarget = nil
+    end
+end
+
+local function StartPhantomAttack(inst, data)
+    if not (data.target and data.target:IsValid()) then return end
+
+    local x, y, z = inst.Transform:GetWorldPosition()
+    local offset = FindValidPositionByFan(
+        math.random() * 2 * PI,
+        math.random() * 5,
+        8,
+        function(offset)
+            local x1 = x + offset.x
+            local z1 = z + offset.z
+            return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
+                and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
+        end
+    )
+    local voidphantom = SpawnPrefab("musha_voidphantom")
+    voidphantom.owner = inst
+    voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+    voidphantom.sg:GoToState("lunge_pre", data.target)
+
+    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
+    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range,
+        { "musha_voidphantom" }, nil, nil)
+
+    if phantoms then
+        for _, phantom in pairs(phantoms) do
+            if phantom.owner == inst and not phantom.sg:HasStateTag("busy") then
+                phantom.sg:GoToState("lunge_pre", data.target)
+            end
+        end
+    end
+
+    inst.bufferedphantomslashtarget = data.target
+    inst.components.timer:StartTimer("phantomslashready", TUNING.musha.skills.phantomslash.usewindow)
+    inst:ListenForEvent("timerdone", ClearPhantomSlashTarget)
+
+    inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
+    inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
+end
+
+local function StartPhantomSlash(inst, data)
+    if not (data.target and data.target:IsValid()) then return end
+
+    local x1, y1, z1 = data.target.Transform:GetWorldPosition()
+    local phantoms = TheSim:FindEntities(x1, y1, z1, TUNING.musha.skills.voidphantom.range * 2,
+        { "musha_voidphantom" }, nil, nil)
+
+    if phantoms then
+        for _, phantom in pairs(phantoms) do
+            if phantom.owner == inst and phantom.sg:HasStateTag("attack") then
+                phantom.phantomslashready = true
+            end
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Sneak
 
 local function ResetSneakSpeedMultiplier(inst)
@@ -1357,8 +1416,7 @@ end
 
 -- Decide normal mode or full mode
 local function DecideNormalOrFull(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("nomorph") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
@@ -1391,11 +1449,12 @@ end
 local function ValkyrieKeyLongPressed(inst, data)
     if data.name == "valkyriekeyonlongpress" then
         -- Delayed event, need to check again
-        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-            or inst.sg:HasStateTag("musha_nointerrupt") then
+        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
             inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
             return
         end
+
+        inst.bufferedcursorpos = Vector3(x, y, z)
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if inst:HasDebuff("elementloaded") then
@@ -1432,7 +1491,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                         inst.SoundEmitter:PlaySound("dontstarve/creatures/together/deer/fx/charge_LP", "charging")
                     end
                 end
-            elseif not inst.sg:HasStateTag("nomorph") then
+            else
                 if not inst.skills.valkyriemode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.rider:IsRiding() then
@@ -1511,8 +1570,8 @@ local function ValkyrieKeyDown(inst, x, y, z)
         or inst.sg:HasStateTag("musha_magpiestep")
 
     -- Can recharge when using skills
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-        or inst.valkyriekeypressed or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.valkyriekeypressed
+        or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
         inst.novalkyriekeyonlongpress = nil
         return
     end
@@ -1553,8 +1612,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
 end
 
 local function ValkyrieKeyUp(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-        or inst.sg:HasStateTag("musha_nointerrupt") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         inst.noannihilation = nil
         inst.valkyriekeypressed = nil
         inst.components.timer:StopTimer("valkyriekeyonlongpress")
@@ -1659,8 +1717,7 @@ end
 local function ShadowKeyLongPressed(inst, data)
     if data.name == "shadowkeyonlongpress" then
         -- Delayed event, need to check again
-        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-            or inst.sg:HasStateTag("musha_nointerrupt") then
+        if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
             inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
             return
         end
@@ -1670,8 +1727,8 @@ local function ShadowKeyLongPressed(inst, data)
 end
 
 local function ShadowKeyDown(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-        or inst.shadowkeypressed or inst.sg:HasStateTag("musha_nointerrupt") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
+        or inst.shadowkeypressed then
         return
     end
 
@@ -1682,8 +1739,7 @@ local function ShadowKeyDown(inst, x, y, z)
 end
 
 local function ShadowKeyUp(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild") or
-        inst.sg:HasStateTag("musha_nointerrupt") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         inst.shadowkeypressed = nil
         inst.components.timer:StopTimer("shadowkeyonlongpress")
         inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
@@ -1715,7 +1771,7 @@ local function ShadowKeyUp(inst, x, y, z)
                 elseif reason == "noalter" then
                     LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
                 end
-            elseif not inst.sg:HasStateTag("nomorph") then
+            else
                 if not inst.skills.shadowmode then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
@@ -2113,8 +2169,7 @@ local function SetCarefulWalkingAlwaysOn(inst, data)
 end
 
 local function DecideFatigueLevel(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("ghostbuild")
-        or inst.sg:HasStateTag("musha_nointerrupt") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
 
@@ -2439,7 +2494,8 @@ AddModRPCHandler("musha", "valkyriekeydown", ValkyrieKeyDown)
 AddModRPCHandler("musha", "valkyriekeyup", ValkyrieKeyUp)
 AddModRPCHandler("musha", "shadowkeydown", ShadowKeyDown)
 AddModRPCHandler("musha", "shadowkeyup", ShadowKeyUp)
-AddModRPCHandler("musha", "toggleshield", ToggleShield)
+AddModRPCHandler("musha", "shieldkeydown", ShieldKeyDown)
+AddModRPCHandler("musha", "shieldkeyup", ShieldKeyUp)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)
 AddModRPCHandler("musha", "playelfmelody", PlayElfMelody)
 AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)

@@ -21,11 +21,15 @@ local timerlist = {
     "chargingelement",
     "lightningrecharge",
     "cancel_manashield_areas",
+    "entersneak",
 
     -- Not quite necessary
     "premagpiestep",
     "clearsetsugetsukacounter",
     "valkyriekeyonlongpress",
+    "shadowkeyonlongpress",
+    "shieldkeyonlongpress",
+    "phantomslashready",
 }
 
 return timerlist

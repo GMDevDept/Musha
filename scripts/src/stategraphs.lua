@@ -2465,8 +2465,10 @@ local musha_phantomblossom_pre = State {
     name = "musha_phantomblossom_pre",
     tags = { "musha_phantomblossom_pre", "nointerrupt" },
 
-    onenter = function(inst)
+    onenter = function(inst, data)
+        local target = data.target
         inst.components.locomotor:Stop()
+        inst:ForceFacePoint(target.x, target.y, target.z)
         inst.AnimState:PlayAnimation("channel_pre")
         inst.sg.statemem.animcounter = 0
     end,
@@ -2549,8 +2551,10 @@ local musha_phantomblossom_pre_client = State {
     name = "musha_phantomblossom_pre",
     tags = { "musha_phantomblossom_pre", "nointerrupt" },
 
-    onenter = function(inst)
+    onenter = function(inst, data)
+        local target = data.target
         inst.components.locomotor:Stop()
+        inst:ForceFacePoint(target.x, target.y, target.z)
         inst.AnimState:PlayAnimation("channel_pre")
         inst.AnimState:PushAnimation("channel_loop")
 
@@ -2624,13 +2628,21 @@ AddStategraphState("wilson", musha_phantomblossom)
 
 AddStategraphEvent("wilson", EventHandler("startphantomblossom_pre",
     function(inst)
-        inst.sg:GoToState("musha_phantomblossom_pre")
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_phantomblossom_pre", { target = target })
+        end
+        inst.bufferedcursorpos = nil
     end)
 )
 
 AddStategraphEvent("wilson_client", EventHandler("startphantomblossom_pre",
     function(inst)
-        inst.sg:GoToState("musha_phantomblossom_pre")
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_phantomblossom_pre", { target = target })
+        end
     end)
 )
 

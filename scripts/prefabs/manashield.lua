@@ -3,6 +3,39 @@ local assets =
     Asset("ANIM", "anim/general/manashield.zip"),
 }
 
+---------------------------------------------------------------------------------------------------------
+
+-- Debuff component
+
+local function OnAttached(inst, target, followsymbol, followoffset, data) -- Note: components.debuff.onattachedfn(self.inst, target, followsymbol, followoffset, data)
+
+end
+
+local function OnExtended(inst, target, followsymbol, followoffset, data) -- Note: components.debuff.onextendedfn(self.inst, self.target, followsymbol, followoffset, data)
+
+end
+
+local function OnDetached(inst, target) -- Note: components.debuff.ondetachedfn(self.inst, target)
+
+end
+
+local function OnBuffOverTimerDone(inst, data)
+    if data.name == "buffover" then
+        inst.components.debuff:Stop()
+    end
+end
+
+local function SetDuration(inst, duration)
+    if duration and duration > 0 then
+        inst.components.timer:StartTimer("buffover", duration)
+        inst:ListenForEvent("timerdone", OnBuffOverTimerDone)
+    elseif inst.components.timer:TimerExists("buffover") then
+        inst.components.timer:SetTimeLeft("buffover", 0)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 local MAX_LIGHT_FRAME = 6
 
 local function OnUpdateLight(inst, dframes)
@@ -107,13 +140,18 @@ local function fn()
 
     inst.persists = false
 
-    inst:AddComponent("timer")
+    inst:AddComponent("debuff")
+    inst.components.debuff:SetAttachedFn(OnAttached)
+    inst.components.debuff:SetDetachedFn(OnDetached)
+    inst.components.debuff:SetExtendedFn(OnExtended)
 
-    inst:ListenForEvent("manashieldonattacked", OnAttacked)
+    inst:AddComponent("timer")
     inst:ListenForEvent("timerdone", OnTimerDone)
 
+    inst.SetDuration = SetDuration
     inst.kill_fx = kill_fx
 
+    inst:ListenForEvent("manashieldonattacked", OnAttacked)
 
     return inst
 end
