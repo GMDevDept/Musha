@@ -91,8 +91,7 @@ function Mana:SetRateLevel(ratelevel)
 end
 
 function Mana:ModifierOnly()
-    return self.inst:HasTag("manashieldactivated") or self.inst:HasTag("areamanashieldactivated") or
-        self.inst.mode:value() == 2
+    return self.inst:HasTag("manashieldactivated") or self.inst.mode:value() == 2
 end
 
 function Mana:Recalc(dt)

@@ -109,6 +109,7 @@ STRINGS.musha = {
             },
             shadowprison = {
                 name = "暗影囚牢",
+                cast = "暗之精灵, 降下束缚的枷锁!",
             },
         },
         manashield = {
@@ -117,8 +118,9 @@ STRINGS.musha = {
             broken_other = "[精灵护盾] 耐久已耗尽",
             broken_manadepleted = "Musha已经没有足够的魔力来维持护盾了。",
         },
-        manashield_passive = {
-            name = "精灵庇佑",
+        princessblessing = {
+            name = "公主庇佑",
+            cast = "将精灵公主的加护传递给大家!",
         },
         valkyriemode = {
             name = "女武神模式",

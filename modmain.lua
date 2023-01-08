@@ -31,10 +31,10 @@ modimport("scripts/src/tuning.lua") -- Settings, values and parameters
 modimport("scripts/src/util.lua") -- Define global functions used in this mod
 modimport("scripts/src/prefablist.lua") -- Prefab list
 modimport("scripts/src/assetlist.lua") -- Asset list
-modimport("scripts/src/skinbuild.lua") -- Redefine skin register functions
 modimport("scripts/src/recipes.lua") -- Recipe list
+modimport("scripts/src/skinbuild.lua") -- Redefine skin register functions
 modimport("scripts/src/entityscript.lua") -- AddClassPostConstruct
-modimport("scripts/src/combat.lua") -- Redefine components/combat for manashield
+modimport("scripts/src/combat.lua") -- Redefine components/combat for manashieldonattacked event
 modimport("scripts/src/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
 modimport("scripts/src/hotkeys.lua") -- Add key handlers
 modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,etc.)

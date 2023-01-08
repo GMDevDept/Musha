@@ -6,6 +6,7 @@ local timerlist = {
     "cooldown_shadowspell",
     "cooldown_shadowprison",
     "cooldown_manashield",
+    "cooldown_princessblessing",
     "cooldown_rollingmagma",
     "cooldown_whitefrost",
     "cooldown_poisonspore",
@@ -20,7 +21,6 @@ local timerlist = {
     "premelody",
     "chargingelement",
     "lightningrecharge",
-    "cancel_manashield_areas",
     "entersneak",
 
     -- Not quite necessary

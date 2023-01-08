@@ -556,12 +556,6 @@ local musha_spell = State {
     tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
-        if inst.bufferedspell == "SetShieldDurability" then
-            inst.sg:AddStateTag("busy")
-            inst.sg:AddStateTag("nopredict")
-            inst.sg:AddStateTag("musha_nointerrupt")
-        end
-
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("action_uniqueitem_pre")
         inst.AnimState:PushAnimation("book", false)
@@ -2465,10 +2459,8 @@ local musha_phantomblossom_pre = State {
     name = "musha_phantomblossom_pre",
     tags = { "musha_phantomblossom_pre", "nointerrupt" },
 
-    onenter = function(inst, data)
-        local target = data.target
+    onenter = function(inst)
         inst.components.locomotor:Stop()
-        inst:ForceFacePoint(target.x, target.y, target.z)
         inst.AnimState:PlayAnimation("channel_pre")
         inst.sg.statemem.animcounter = 0
     end,
@@ -2628,11 +2620,8 @@ AddStategraphState("wilson", musha_phantomblossom)
 
 AddStategraphEvent("wilson", EventHandler("startphantomblossom_pre",
     function(inst)
-        local target = inst.bufferedcursorpos
-        if target ~= nil then
-            inst.sg:GoToState("musha_phantomblossom_pre", { target = target })
-        end
-        inst.bufferedcursorpos = nil
+        -- Long press event, current cursor position not available on server side
+        inst.sg:GoToState("musha_phantomblossom_pre")
     end)
 )
 

@@ -273,6 +273,8 @@ local function ShadowPrison(inst)
     spellprefab.item = inst.components.combat:GetWeapon()
     spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())
 
+    inst.components.talker:Say(STRINGS.musha.skills.manaspells.shadowprison.cast)
+
     inst.components.timer:StartTimer("cooldown_shadowprison", TUNING.musha.skills.shadowprison.cooldown)
     inst:ListenForEvent("timerdone", ShadowPrisonOnTimerDone)
 end
@@ -625,152 +627,43 @@ end
 
 -- Mana Shield
 
-local function ShieldOnAttacked(inst, data)
-    inst.fx_manashield:PushEvent("manashieldonattacked")
-
-    if inst.shielddurability and inst.shielddurability > 0 then
-        local delta = TUNING.musha.skills.manashield.durabilitydamage
-        if data.damage and data.damage > 0 then
-            delta = delta + data.damage
-        end
-        if data.stimuli and data.stimuli == "darkness" then
-            delta = math.max(delta, inst.shielddurability - 1)
-        end
-        inst.shielddurability = inst.shielddurability - delta
-        if inst.shielddurability <= 0 then
-            if inst:HasTag("musha") then
-                inst.components.talker:Say(STRINGS.musha.skills.manashield.broken)
-            elseif inst.components.talker then
-                inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_other)
-            end
-            if inst.SoundEmitter then
-                inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
-            end
-            inst.task_shieldbrokendelay = inst:DoTaskInTime(TUNING.musha.skills.manashield.brokendelay, function()
-                if inst:HasTag("manashieldactivated") then
-                    inst:ShieldOff()
-                elseif inst:HasTag("areamanashieldactivated") then
-                    inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
-                end
-            end)
-        end
-    end
-end
-
-local function ShieldOnTimerDone(inst, data)
-    if data.name == "cooldown_manashield" then
+local function PrincessBlessingOnTimerDone(inst, data)
+    if data.name == "cooldown_princessblessing" then
         inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.manashield.name
+            .. STRINGS.musha.skills.princessblessing.name
             .. STRINGS.musha.skills.cooldownfinished.part2)
-        inst:RemoveEventCallback("timerdone", ShieldOnTimerDone)
+        inst:RemoveEventCallback("timerdone", PrincessBlessingOnTimerDone)
     end
 end
 
-local function ShieldOnManaDepleted(inst)
-    inst.fx_manashield:PushEvent("manashieldonattacked")
-    inst.components.talker:Say(STRINGS.musha.skills.manashield.broken_manadepleted)
-    inst.task_shieldbrokendelay = inst:DoTaskInTime(TUNING.musha.skills.manashield.brokendelay, function()
-        inst:ShieldOff()
-    end)
-    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
-end
-
-local function SetShieldDurability(inst)
-    local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
-        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
-
-    inst.shielddurability = shielddurability
-end
-
-local function AdjustShieldSize(inst)
-    if not inst.components.rider then return end
-    if inst.components.rider:IsRiding() then
-        inst.fx_manashield.Transform:SetScale(2, 2, 2)
-    else
-        inst.fx_manashield.Transform:SetScale(0.9, 0.9, 0.9)
-    end
-end
-
-local function AddShieldCommonEffects(inst)
-    inst.fx_manashield = CustomAttachFx(inst, "manashield", 0, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.2, 0))
-    inst.components.health.externalabsorbmodifiers:SetModifier(inst, 1, "manashield")
-    inst:ListenForEvent("manashieldonattacked", ShieldOnAttacked) -- Pushed from combat.lua
-    inst:ListenForEvent("mounted", AdjustShieldSize)
-    inst:ListenForEvent("dismounted", AdjustShieldSize)
-    AdjustShieldSize(inst)
-    if inst.SoundEmitter then
-        inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
-        inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
-    end
-end
-
-local function RemoveShieldCommonEffects(inst)
-    inst.fx_manashield:kill_fx()
-    inst.components.health.externalabsorbmodifiers:RemoveModifier(inst, "manashield")
-    inst:RemoveEventCallback("manashieldonattacked", ShieldOnAttacked)
-    inst:RemoveEventCallback("mounted", AdjustShieldSize)
-    inst:RemoveEventCallback("dismounted", AdjustShieldSize)
-    inst.shielddurability = nil
-    if inst.SoundEmitter then
-        inst.SoundEmitter:PlaySound("moonstorm/common/moonstorm/glass_break")
-        inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-    end
-end
-
-local function ShieldOn(inst)
-    inst:AddTag("manashieldactivated")
-    AddShieldCommonEffects(inst)
-    inst:SetShieldDurability()
-    inst.components.mana.modifiers:SetModifier(inst, -TUNING.musha.skills.manashield.manaongoingcost, "manashield")
-    inst:ListenForEvent("manadepleted", ShieldOnManaDepleted)
-end
-
-local function AreaShieldOn(inst) local validtargets = 0
+local function PrincessBlessing(inst) local validtargets = 0
     local must_tags = { "_combat" }
-    local ignore_tags = { "manashieldactivated" }
+    local ignore_tags = { "playerghost", "INLIMBO", "isdead" }
     local one_of_tags = { "player", "companion", "musha_companion" }
-    local shielddurability = (TUNING.musha.skills.manashield.durabilitybase +
+    local durability = (TUNING.musha.skills.manashield.durabilitybase +
         TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
 
-    local function cancel_manashield_area(v, data)
-        if data.name == "cancel_manashield_area" then
-            if v == inst then -- Only be triggered by caster himself, even not by other musha players
-                v:ShieldOff()
-                v.components.timer:SetTimeLeft("cooldown_manashield", TUNING.musha.skills.manashield_area.cooldown)
-            else
-                RemoveShieldCommonEffects(v)
-            end
-            v:RemoveTag("areamanashieldactivated")
-            v:RemoveEventCallback("timerdone", cancel_manashield_area)
-        end
-    end
-
-    CustomDoAOE(inst, TUNING.musha.skills.manashield_area.range, must_tags, ignore_tags, one_of_tags, function(v)
+    CustomDoAOE(inst, TUNING.musha.skills.princessblessing.range, must_tags, ignore_tags, one_of_tags, function(v)
         if not v.components.health then
             return
-        elseif not v.components.timer then
-            v:AddComponent("timer")
         end
 
-        if not v:HasTag("areamanashieldactivated") then
-            v:AddTag("areamanashieldactivated")
-            AddShieldCommonEffects(v)
-            v.components.timer:StartTimer("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
-            v:ListenForEvent("timerdone", cancel_manashield_area)
-        else
-            v.components.timer:SetTimeLeft("cancel_manashield_area", TUNING.musha.skills.manashield_area.duration)
-        end
-
-        v.shielddurability = shielddurability -- Refresh durability
-        if v.task_shieldbrokendelay then CustomCancelTask(v.task_shieldbrokendelay) end -- Cancel delayed broken effect
+        v:AddDebuff("manashield", "manashield",
+            { durability = durability, duration = TUNING.musha.skills.princessblessing.duration }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
 
         validtargets = validtargets + 1
     end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
 
-    inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.manashield_area.manacost * validtargets,
-        TUNING.musha.skills.manashield_area.maxmanacost))
+    inst.components.talker:Say(STRINGS.musha.skills.princessblessing.cast)
+    inst.components.mana:DoDelta(-math.min(TUNING.musha.skills.princessblessing.manacost * validtargets,
+        TUNING.musha.skills.princessblessing.maxmanacost))
 
-    inst.bufferedspell = "SetShieldDurability" -- Refresh durability (mainly for SG related, check this namespace in stategraphs.lua)
+    inst.components.timer:StartTimer("cooldown_princessblessing", TUNING.musha.skills.princessblessing.cooldown)
+    inst:ListenForEvent("timerdone", PrincessBlessingOnTimerDone)
+end
+
+local function DoPrincessBlessing(inst)
+    inst.bufferedspell = "PrincessBlessing" -- Refresh durability (mainly for SG related, check this namespace in stategraphs.lua)
     inst.bufferedbookfx = {
         swap_build = "swap_books",
         swap_prefix = "book_horticulture_upgraded",
@@ -783,17 +676,6 @@ local function AreaShieldOn(inst) local validtargets = 0
     inst.castmanaspell:push()
 end
 
-local function ShieldOff(inst)
-    RemoveShieldCommonEffects(inst)
-    CustomCancelTask(inst.task_shieldbrokendelay)
-    inst.components.mana.modifiers:RemoveModifier(inst, "manashield")
-    inst:RemoveEventCallback("manadepleted", ShieldOnManaDepleted)
-    inst:RemoveTag("manashieldactivated")
-
-    inst.components.timer:StartTimer("cooldown_manashield", TUNING.musha.skills.manashield.cooldown)
-    inst:ListenForEvent("timerdone", ShieldOnTimerDone)
-end
-
 local function ShieldKeyLongPressed(inst, data)
     if data.name == "shieldkeyonlongpress" then
         -- Delayed event, need to check again
@@ -802,13 +684,41 @@ local function ShieldKeyLongPressed(inst, data)
             return
         end
 
-        inst.bufferedcursorpos = Vector3(x, y, z)
+        if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("musha_spell") then
+            if not inst.skills.princessblessing then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_princessblessing") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.princessblessing.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_princessblessing"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.mana.current < TUNING.musha.skills.princessblessing.maxmanacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_mana)
+                CustomPlayFailedAnim(inst)
+            else
+                -- Mana cost handled during casting spell
+                DoPrincessBlessing(inst)
+            end
+        elseif inst.mode:value() == 2 then
+            if not inst.skills.valkyrieparry then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.rider:IsRiding() then
+                inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
+                CustomPlayFailedAnim(inst)
+            end
+        elseif inst.mode:value() == 3 then
+            if not inst.skills.shadowparry then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            end
+        end
 
         inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
     end
 end
 
-local function ShieldKeyDown(inst)
+local function ShieldKeyDown(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
         or inst.shieldkeypressed then
         return
@@ -820,7 +730,7 @@ local function ShieldKeyDown(inst)
     inst:ListenForEvent("timerdone", ShieldKeyLongPressed)
 end
 
-local function ShieldKeyUp(inst)
+local function ShieldKeyUp(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         inst.shieldkeypressed = nil
         inst.components.timer:StopTimer("shieldkeyonlongpress")
@@ -830,12 +740,9 @@ local function ShieldKeyUp(inst)
 
     inst.bufferedcursorpos = Vector3(x, y, z)
 
-    if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
-        if inst:HasTag("manashieldactivated") then -- Shield is on (not area shield)
-            inst:ShieldOff()
-            inst.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
-        elseif inst:HasTag("areamanashieldactivated") then -- Area Shield is on (by self or other)
-            inst.components.timer:SetTimeLeft("cancel_manashield_area", 0)
+    if inst.components.timer:TimerExists("shieldkeyonlongpress") then
+        if inst:HasTag("manashieldactivated") then
+            inst:RemoveDebuff("manashield")
         elseif not inst.skills.manashield then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
         elseif inst.components.timer:TimerExists("cooldown_manashield") then
@@ -849,37 +756,13 @@ local function ShieldKeyUp(inst)
             inst.components.talker:Say(STRINGS.musha.lack_of_mana)
             CustomPlayFailedAnim(inst)
         else
-            -- Mana cost handled at the time shield set off
-            ShieldOn(inst)
-        end
-    elseif inst.mode:value() == 0 or inst.mode:value() == 1 then
-        if not inst.skills.manashield_area then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.timer:TimerExists("cooldown_manashield") then
-            inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                .. STRINGS.musha.skills.manashield.name
-                .. STRINGS.musha.skills.incooldown.part2
-                .. STRINGS.musha.skills.incooldown.part3
-                .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_manashield"))
-                .. STRINGS.musha.skills.incooldown.part4)
-        elseif inst.components.mana.current < TUNING.musha.skills.manashield_area.maxmanacost then
-            inst.components.talker:Say(STRINGS.musha.lack_of_mana)
-            CustomPlayFailedAnim(inst)
-        else
-            -- Mana cost handled during casting spell
-            AreaShieldOn(inst)
+            -- Mana cost handled at the time shield set off by debuff:OnDetached
+            local durability = TUNING.musha.skills.manashield.durabilitybase
+                + TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl
+            inst:AddDebuff("manashield", "manashield", { durability = durability, single = true }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
         end
     elseif inst.mode:value() == 2 then
-        if not inst.skills.valkyrieparry then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        elseif inst.components.rider:IsRiding() then
-            inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
-            CustomPlayFailedAnim(inst)
-        end
     elseif inst.mode:value() == 3 then
-        if not inst.skills.shadowparry then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-        end
     end
 
     inst.shieldkeypressed = nil
@@ -1453,8 +1336,6 @@ local function ValkyrieKeyLongPressed(inst, data)
             inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
             return
         end
-
-        inst.bufferedcursorpos = Vector3(x, y, z)
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if inst:HasDebuff("elementloaded") then
@@ -2255,31 +2136,28 @@ end
 
 -- When level up
 local function OnLevelUp(inst, data)
-    inst.skills.freezingspell      = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
-    inst.skills.manashield         = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
-    inst.skills.manashield_area    = data.lvl >= TUNING.musha.leveltounlockskill.manashield_area and true or nil -- TODO: Set unchangable when HasTag("manashieldactivated")
-    inst.skills.manashield_passive = data.lvl >= TUNING.musha.leveltounlockskill.manashield_passive and true or nil
-    inst.skills.valkyriemode       = data.lvl >= TUNING.musha.leveltounlockskill.valkyriemode and true or nil -- Should be same as desolatedive?
-    inst.skills.shadowmode         = data.lvl >= TUNING.musha.leveltounlockskill.shadowmode and true or nil
-    inst.skills.thunderspell       = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
-    inst.skills.shadowspell        = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
-    inst.skills.shadowprison       = data.lvl >= TUNING.musha.leveltounlockskill.shadowprison and true or nil
-    inst.skills.sneak              = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
-    inst.skills.sneakspeedboost    = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
-    inst.skills.rollingmagma       = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
-    inst.skills.whitefrost         = data.lvl >= TUNING.musha.leveltounlockskill.whitefrost and true or nil
-    inst.skills.poisonspore        = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
-    inst.skills.shadowshield       = data.lvl >= TUNING.musha.leveltounlockskill.shadowshield and true or nil
-    inst.skills.instantcast        = data.lvl >= TUNING.musha.leveltounlockskill.instantcast and true or nil
-    inst.skills.setsugetsuka       = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
-    inst.skills.setsugetsukaredux  = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
-    inst.skills.phoenixadvent      = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
-    inst.skills.desolatedive       = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
-    inst.skills.magpiestep         = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
-    inst.skills.annihilation       = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
-    inst.skills.voidphantom        = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
-    inst.skills.phantomslash       = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
-    inst.skills.phantomblossom     = data.lvl >= TUNING.musha.leveltounlockskill.phantomblossom and true or nil
+    inst.skills.freezingspell     = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
+    inst.skills.manashield        = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
+    inst.skills.princessblessing  = data.lvl >= TUNING.musha.leveltounlockskill.princessblessing and true or nil
+    inst.skills.valkyriemode      = data.lvl >= TUNING.musha.leveltounlockskill.valkyriemode and true or nil -- Should be same as desolatedive?
+    inst.skills.shadowmode        = data.lvl >= TUNING.musha.leveltounlockskill.shadowmode and true or nil
+    inst.skills.thunderspell      = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
+    inst.skills.shadowspell       = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
+    inst.skills.shadowprison      = data.lvl >= TUNING.musha.leveltounlockskill.shadowprison and true or nil
+    inst.skills.sneak             = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
+    inst.skills.sneakspeedboost   = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
+    inst.skills.rollingmagma      = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
+    inst.skills.whitefrost        = data.lvl >= TUNING.musha.leveltounlockskill.whitefrost and true or nil
+    inst.skills.poisonspore       = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
+    inst.skills.setsugetsuka      = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
+    inst.skills.setsugetsukaredux = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
+    inst.skills.phoenixadvent     = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
+    inst.skills.desolatedive      = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
+    inst.skills.magpiestep        = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
+    inst.skills.annihilation      = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
+    inst.skills.voidphantom       = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
+    inst.skills.phantomslash      = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
+    inst.skills.phantomblossom    = data.lvl >= TUNING.musha.leveltounlockskill.phantomblossom and true or nil
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2465,8 +2343,7 @@ local function master_postinit(inst)
     inst.DecideFatigueLevel = DecideFatigueLevel
     inst.StartSneaking = StartSneaking
     inst.StopSneaking = StopSneaking
-    inst.SetShieldDurability = SetShieldDurability
-    inst.ShieldOff = ShieldOff
+    inst.PrincessBlessing = PrincessBlessing
     inst.FreezingSpell = FreezingSpell
     inst.ThunderSpell = ThunderSpell
     inst.ShadowPrison = ShadowPrison
