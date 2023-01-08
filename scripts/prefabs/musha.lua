@@ -645,7 +645,7 @@ local function PrincessBlessingOnTimerDone(inst, data)
 end
 
 local function PrincessBlessing(inst) local validtargets = 0
-    local must_tags = { "_combat" }
+    local must_tags = { "_combat", "_health" }
     local ignore_tags = { "playerghost", "INLIMBO", "isdead" }
     local one_of_tags = { "player", "companion", "musha_companion" }
     local durability = (TUNING.musha.skills.manashield.durabilitybase +

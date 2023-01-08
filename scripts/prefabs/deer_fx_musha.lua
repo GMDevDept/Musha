@@ -281,6 +281,7 @@ local function OnUpdateFireCircle(inst, x, z)
                     break
                 end
             end
+
             if not iced then
                 if v.components.freezable ~= nil then
                     if v.components.freezable:IsFrozen() then
@@ -314,6 +315,11 @@ local function OnUpdateFireCircle(inst, x, z)
                         v.components.temperature:SetTemperature(newtemp)
                     end
                 end
+            end
+
+            local nodamage = v:HasTag("player") or v:HasTag("companion") or v:HasTag("musha_companion")
+            if not nodamage and v.components.health ~= nil then
+                v.components.health:DoDelta(-TUNING.musha.skills.launchelement.rollingmagma.damageperhit)
             end
         end
     end
