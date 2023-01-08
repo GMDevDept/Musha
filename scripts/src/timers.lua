@@ -16,14 +16,17 @@ local timerlist = {
     "cooldown_desolatedive",
     "cooldown_voidphantom",
     "cooldown_phantomblossom",
+
     "stopelfmelody_full",
     "stopelfmelody_partial",
-    "premelody",
     "chargingelement",
     "lightningrecharge",
     "entersneak",
 
+    "jellybeanineffect",
+
     -- Not quite necessary
+    "premelody",
     "premagpiestep",
     "clearsetsugetsukacounter",
     "valkyriekeyonlongpress",

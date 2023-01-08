@@ -111,7 +111,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
     local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
     if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_spell") then
-        return false
+        return
     elseif (inst.mode:value() == 0 or inst.mode:value() == 1) then
         if not inst.skills.freezingspell then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -138,7 +138,6 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             }
             inst.castmanaspell:push()
         end
-        return true
     elseif inst.mode:value() == 2 then
         if not inst.skills.thunderspell then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
@@ -165,7 +164,6 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             }
             inst.castmanaspell:push()
         end
-        return true
     elseif inst.mode:value() == 3 then
         if inst:HasTag("shadowprisonready") then
             if inst.components.timer:TimerExists("cooldown_shadowprison") then
@@ -182,8 +180,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                 inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                 CustomPlayFailedAnim(inst)
             else
-                inst.components.mana:DoDelta(-TUNING.musha.skills.shadowprison.manacost)
-                inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowprison.sanitycost)
+                -- Mana and sanity cost handled when casting spell
                 inst.bufferedspell = "ShadowPrison"
                 inst.bufferedbookfx = {
                     swap_build = "swap_books",
@@ -214,9 +211,6 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                 inst.activateberserk:push()
             end
         end
-        return true
-    else
-        return false
     end
 end)
 
@@ -248,15 +242,13 @@ AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENER
     local inst = act.doer
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
     if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") then
-        return false
+        return
     elseif inst.mode:value() == 3 then
         if act.target.owner ~= inst then
             inst.components.talker:Say(STRINGS.musha.skills.phantomspells.fail_notowner)
-            return false
         elseif inst.components.sanity.current < TUNING.musha.skills.phantomspells.teleport.sanitycost then
             inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
             CustomPlayFailedAnim(inst)
-            return false
         else
             inst.components.sanity:DoDelta(-TUNING.musha.skills.phantomspells.teleport.sanitycost)
 
@@ -276,11 +268,7 @@ AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENER
             act.target.Physics:Teleport(doerpos:Get())
             act.target:ForceFacePoint(targetpos:Get())
             act.target.sg:GoToState("appear")
-
-            return true
         end
-    else
-        return false
     end
 end)
 
@@ -318,7 +306,7 @@ AddAction("EATBYMUSHA", STRINGS.musha.eatbymusha.actionstrings.GENERIC, function
     -- No need to worry whether player is dead, action.ghost_valid is disabled by default
     -- No need to check busy state since action.instant = false and buffered action will be performed in 'eat' sg
     if inst.sg:HasStateTag("musha_nointerrupt") then
-        return false
+        return
     elseif obj ~= nil then
         if obj:IsValid() then
             if obj.components.stackable ~= nil then
@@ -330,10 +318,6 @@ AddAction("EATBYMUSHA", STRINGS.musha.eatbymusha.actionstrings.GENERIC, function
 
         inst:PushEvent("oneat", { food = obj })
         CustomAttachFx(inst, "sanity_lower")
-
-        return true
-    else
-        return false
     end
 end)
 
@@ -349,20 +333,16 @@ end
 
 local EatByMushaHandler = ActionHandler(ACTIONS.EATBYMUSHA,
     function(inst, action)
-        print("EatByMushaHandler", 1111)
         if inst.sg:HasStateTag("busy") then
             return
         end
-        print("EatByMushaHandler", 2222)
+
         local obj = action.target or action.invobject
         if obj == nil then
-
-            print("EatByMushaHandler", 4444)
             return
         elseif obj:HasTag("quickeat") then
             return "quickeat"
         else
-            print("EatByMushaHandler", 3333)
             return "eat"
         end
     end)

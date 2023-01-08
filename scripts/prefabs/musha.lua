@@ -73,6 +73,15 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Additional effects on eating certain foods
+
+local function RemoveJellyBeanEffect(inst, data)
+    if data.name == "jellybeanineffect" then
+        inst.components.mana.modifiers:RemoveModifier(inst, "jellybean")
+        inst.components.stamina.modifiers:RemoveModifier(inst, "jellybean")
+        inst:RemoveEventCallback("timerdone", RemoveJellyBeanEffect)
+    end
+end
+
 local function OnEatFood(inst, data)
     if data.food then
         if data.food.prefab == "taffy" then
@@ -80,18 +89,15 @@ local function OnEatFood(inst, data)
             inst.components.mana:DoDelta(TUNING.musha.foodbonus.taffy.mana)
             inst.components.stamina:DoDelta(TUNING.musha.foodbonus.taffy.stamina)
         elseif data.food.prefab == "jellybean" then
-            if not inst.task_canceljellybeaneffects then
+            if not inst.components.timer:TimerExists("jellybeanineffect") then
                 inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.foodbonus.jellybean.mana, "jellybean")
                 inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.foodbonus.jellybean.stamina, "jellybean")
-            else
-                CustomCancelTask(inst.task_canceljellybeaneffects)
-            end
 
-            inst.task_canceljellybeaneffects = inst:DoTaskInTime(TUNING.musha.foodbonus.jellybean.duration,
-                function()
-                    inst.components.mana.modifiers:RemoveModifier(inst, "jellybean")
-                    inst.components.stamina.modifiers:RemoveModifier(inst, "jellybean")
-                end)
+                inst.components.timer:StartTimer("jellybeanineffect", TUNING.musha.foodbonus.jellybean.duration)
+                inst:ListenForEvent("timerdone", RemoveJellyBeanEffect)
+            else
+                inst.components.timer:SetTimeLeft("jellybeanineffect", TUNING.musha.foodbonus.jellybean.duration)
+            end
         elseif data.food.prefab == "nightmarefuel" and inst.mode:value() == 3 then
             inst.components.sanity:AddSanityPenalty("shadowmodebuff",
                 math.max(0, inst.components.sanity.sanity_penalties["shadowmodebuff"] -
@@ -273,6 +279,8 @@ local function ShadowPrison(inst)
     spellprefab.item = inst.components.combat:GetWeapon()
     spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())
 
+    inst.components.mana:DoDelta(-TUNING.musha.skills.shadowprison.manacost)
+    inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowprison.sanitycost)
     inst.components.talker:Say(STRINGS.musha.skills.manaspells.shadowprison.cast)
 
     inst.components.timer:StartTimer("cooldown_shadowprison", TUNING.musha.skills.shadowprison.cooldown)

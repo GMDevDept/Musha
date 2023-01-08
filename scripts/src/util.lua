@@ -4,13 +4,11 @@ GLOBAL.CustomRemoveEntity = function(entity, delay)
         TheWorld:DoTaskInTime(delay, function()
             if entity then
                 entity:Remove()
-                entity = nil
             end
         end)
     else
         if entity then
             entity:Remove()
-            entity = nil
         end
     end
 end
@@ -24,19 +22,11 @@ GLOBAL.CustomCancelTask = function(task, delay, inst)
         entity:DoTaskInTime(delay, function()
             if task then
                 task:Cancel()
-                if inst then
-                    inst:PushEvent("customtaskcancled", { task = task })
-                end
-                task = nil
             end
         end)
     else
         if task then
             task:Cancel()
-            if inst then
-                inst:PushEvent("customtaskcancled", { task = task })
-            end
-            task = nil
         end
     end
 end
@@ -97,7 +87,6 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
             else
                 fx:Remove()
             end
-            fx = nil
         end)
     end
 
@@ -137,34 +126,6 @@ GLOBAL.CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags,
         for _, target in pairs(targets) do
             fn(target)
         end
-    end
-end
-
----------------------------------------------------------------------------------------------------------
-
--- Add modifier to SourceModifierList and set duration
-
--- Copied from scheduler.lua
-local function task_finish(task, success, inst)
-    task:fn() -- Execute fn on cancel
-    --print ("TASK DONE", task, success, inst)
-    if inst and inst.pendingtasks and inst.pendingtasks[task] then
-        inst.pendingtasks[task] = nil
-    else
-        print("   NOT FOUND")
-    end
-end
-
--- Source can be an object or a name. If it is an object, then it will handle removing the multiplier if the object is forcefully removed from the game.
--- Key is optional if you are only going to have one multiplier from a source.
-GLOBAL.CustomSetModifier = function(SourceModifierList, source, m, key, duration)
-    SourceModifierList:SetModifier(source, m, key)
-    if duration then
-        local task = TheWorld:DoTaskInTime(duration, function()
-            SourceModifierList:RemoveModifier(source, key)
-        end)
-        task.onfinish = task_finish
-        return task
     end
 end
 

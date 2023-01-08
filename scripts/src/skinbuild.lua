@@ -141,7 +141,6 @@ local mt = getmetatable(TheInventory)
 --检查所有权
 local oldCheckOwnership = TheInventory.CheckOwnership
 mt.__index.CheckOwnership = function(i, name, ...)
-    --print(i,name,...)
     if type(name) == "string" and (characterskins[name] or itemskins[name]) then
         if characterskins[name] and characterskins[name].checkfn then
             return characterskins[name].checkfn(i, name, ...)
@@ -158,7 +157,6 @@ end
 --查看所有权获取最新信息
 local oldCheckOwnershipGetLatest = TheInventory.CheckOwnershipGetLatest
 mt.__index.CheckOwnershipGetLatest = function(i, name, ...)
-    --print(i,name,...)
     if type(name) == "string" and (characterskins[name] or itemskins[name]) then
         if characterskins[name] and characterskins[name].checkfn then
             return characterskins[name].checkfn(i, name, ...)
