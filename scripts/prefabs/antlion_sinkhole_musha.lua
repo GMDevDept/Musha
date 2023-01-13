@@ -75,7 +75,7 @@ local COLLAPSIBLE_TAGS = { "_combat", "pickable", "NPC_workable" }
 for k, v in pairs(COLLAPSIBLE_WORK_ACTIONS) do
     table.insert(COLLAPSIBLE_TAGS, k .. "_workable")
 end
-local NON_COLLAPSIBLE_TAGS = { "player", "companion", "musha_companion", "flying", "bird", "ghost", "playerghost", "FX",
+local NON_COLLAPSIBLE_TAGS = { "player", "companion", "musha_companion", "flight", "ghost", "playerghost", "FX",
     "NOCLICK", "DECOR", "INLIMBO" }
 
 local function SmallLaunch(inst, launcher, basespeed)
@@ -92,7 +92,7 @@ local TOSS_MUST_TAGS = { "_inventoryitem" }
 local TOSS_CANT_TAGS = { "locomotor", "INLIMBO" }
 
 local SLOWDOWN_MUST_TAGS = { "locomotor" }
-local SLOWDOWN_CANT_TAGS = { "player", "flying", "playerghost", "INLIMBO" }
+local SLOWDOWN_CANT_TAGS = { "player", "flight", "playerghost", "INLIMBO" }
 
 local function SlowDownTaskUpdate(inst, x, y, z)
     for i, v in ipairs(TheSim:FindEntities(x, y, z, TUNING.musha.skills.desolatedive.radius, SLOWDOWN_MUST_TAGS,

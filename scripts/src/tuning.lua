@@ -1,4 +1,8 @@
 TUNING.musha = {
+    singleclicktimewindow = 0.2,
+
+    freezecooldowntime = 5,
+
     health = 200,
     hunger = 200,
     sanity = 200,
@@ -75,10 +79,6 @@ TUNING.musha = {
     fullmodestaminaregen = 1,
     fullmodehungerdrain = 1.3,
 
-    freezecooldowntime = 5,
-
-    singleclicktimewindow = 0.5,
-
     debuffslowdownmult = 0.25,
     debuffslowdownduration = 5,
 
@@ -128,9 +128,12 @@ TUNING.musha = {
         setsugetsuka      = 0,
         setsugetsukaredux = 0,
         phoenixadvent     = 0,
+        annihilation      = 0,
         desolatedive      = 0,
         magpiestep        = 0,
-        annihilation      = 0,
+        valkyrieparry     = 0,
+        valkyriewhirl     = 0,
+        shadowparry       = 0,
         voidphantom       = 0,
         phantomslash      = 0,
         phantomblossom    = 0,
@@ -199,12 +202,14 @@ TUNING.musha = {
         manashield = {
             manacost = 10,
             manaongoingcost = 1,
-            damageabsorbrate = 1, -- Only affect health:DoDelta, combat:GetAttacked will always be cancelled
+            damageabsorbrate = 0.5, -- Only affect health:DoDelta, combat:GetAttacked will always be cancelled
             lighttime = 4,
             brokendelay = 3,
-            durabilitybase = 400,
-            durabilitygrowth = 40,
-            durabilitydamage = 20,
+            durabilitybase = 600,
+            durabilitygrowth = 30,
+            durabilitydamage = 10,
+            durabilitydamagemultiplier = 5,
+            healthtodurabilitymultiplier = 2,
             cooldown = 30,
         },
         princessblessing = {
@@ -247,7 +252,7 @@ TUNING.musha = {
                 charged = {
                     extramanacost = 10,
                     range = 10,
-                    chargetime = 1,
+                    chargetime = 1.5,
                     mincount = 20,
                     maxcount = 30,
                     cooldown = 5,
@@ -283,7 +288,7 @@ TUNING.musha = {
                 manacost = 10,
                 sanitycost = 20,
                 radius = 3.5,
-                damage = 20,
+                damage = 30,
                 rot = 0.1,
                 duration = 20,
                 tickperiod = 1,
@@ -302,7 +307,7 @@ TUNING.musha = {
             manacost = 0,
             staminacost = 10,
             damagemultiplier = 0.5,
-            damagetakenmultiplier = 0.25,
+            damagetakenmultiplier = 0.5,
             radius = 3,
             mindist = 4,
             usewindow = 1.5,
@@ -310,9 +315,9 @@ TUNING.musha = {
         },
         phoenixadvent = {
             damagemultiplier = 2.5,
-            damagetakenmultiplier = 0.25,
+            damagetakenmultiplier = 0.5,
             radius = 4.5,
-            staminaregen = 35,
+            staminaregen = 30,
         },
         annihilation = {
             manacost = 0,
@@ -329,6 +334,8 @@ TUNING.musha = {
             radius = 10,
             mindist = 10,
             damagemultiplier = 0.5,
+            extradamagemultiplier = 0.05, -- by target's max health
+            maxdamagemultiplier = 5,
             speedmultiplier = 0.25,
             maxchargingtime = 10,
             cooldown = 20,
@@ -345,6 +352,29 @@ TUNING.musha = {
             usewindow = 0.5,
             radius = 2,
             damagemultiplier = 1,
+        },
+        valkyrieparry = {
+            staminacostonhit = 5,
+            damagetakenmultiplier = 0,
+            cooldown = 10,
+            perfecttimewindow = 6, -- Frames
+            shieldduration = 4,
+            staminaregen = 50,
+            damagereflectionbase = 50,
+            damagereflectionrate = 2,
+        },
+        valkyriestab = {
+            damageperhit = 10 / 3, -- per frame
+            maxdist = 15,
+            radius = 2,
+        },
+        valkyriewhirl = {
+            staminacost = 15,
+            basedamagemultiplier = 0.5,
+            extradamagemultiplier = 0.05, -- by target's max health
+            maxdamagemultiplier = 2.5,
+            radius = 3.5,
+            usewindow = 1,
         },
         voidphantom = {
             manacost = 10,

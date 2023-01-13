@@ -179,6 +179,18 @@ STRINGS.musha = {
         desolatedive = {
             name = "荒芜俯冲",
         },
+        magpiestep = {
+            name = "鹊踏斩",
+        },
+        valkyrieparry = {
+            name = "十方无敌",
+        },
+        valkyriewhirl = {
+            name = "横扫千军",
+        },
+        shadowparry = {
+            name = "",
+        },
         voidphantom = {
             name = "影幻身",
         },

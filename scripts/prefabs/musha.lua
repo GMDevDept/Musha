@@ -649,7 +649,8 @@ local function PrincessBlessing(inst) local validtargets = 0
     local ignore_tags = { "playerghost", "INLIMBO", "isdead" }
     local one_of_tags = { "player", "companion", "musha_companion" }
     local durability = (TUNING.musha.skills.manashield.durabilitybase +
-        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl)
+        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl +
+        TUNING.musha.skills.manashield.healthtodurabilitymultiplier * inst.components.health.maxhealth)
 
     CustomDoAOE(inst, TUNING.musha.skills.princessblessing.range, must_tags, ignore_tags, one_of_tags, function(v)
         if not v.components.health then
@@ -684,6 +685,11 @@ local function DoPrincessBlessing(inst)
     inst.castmanaspell:push()
 end
 
+local function RemoveStabStartedFlag(inst, data)
+    inst.valkyriestabstarted = nil
+    inst:RemoveEventCallback("newstate", RemoveStabStartedFlag)
+end
+
 local function ShieldKeyLongPressed(inst, data)
     if data.name == "shieldkeyonlongpress" then
         -- Delayed event, need to check again
@@ -715,6 +721,18 @@ local function ShieldKeyLongPressed(inst, data)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
                 CustomPlayFailedAnim(inst)
+            elseif inst.components.timer:TimerExists("cooldown_valkyrieparry") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.valkyrieparry.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_valkyrieparry"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.stamina.current < TUNING.musha.skills.valkyrieparry.staminacostonhit then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.startvalkyrieparry:push()
             end
         elseif inst.mode:value() == 3 then
             if not inst.skills.shadowparry then
@@ -727,12 +745,9 @@ local function ShieldKeyLongPressed(inst, data)
 end
 
 local function ShieldKeyDown(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
-        or inst.shieldkeypressed then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
-
-    inst.shieldkeypressed = true -- Prevent continuous triggering on long press
 
     inst.components.timer:StartTimer("shieldkeyonlongpress", TUNING.musha.singleclicktimewindow)
     inst:ListenForEvent("timerdone", ShieldKeyLongPressed)
@@ -740,7 +755,6 @@ end
 
 local function ShieldKeyUp(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
-        inst.shieldkeypressed = nil
         inst.components.timer:StopTimer("shieldkeyonlongpress")
         inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
         return
@@ -767,13 +781,18 @@ local function ShieldKeyUp(inst, x, y, z)
             -- Mana cost handled at the time shield set off by debuff:OnDetached
             local durability = TUNING.musha.skills.manashield.durabilitybase
                 + TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl
+                + TUNING.musha.skills.manashield.healthtodurabilitymultiplier * inst.components.health.maxhealth
             inst:AddDebuff("manashield", "manashield", { durability = durability, single = true }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
         end
     elseif inst.mode:value() == 2 then
+        if inst.sg:HasStateTag("musha_valkyrieparrying") then
+            inst.valkyriestabstarted = true
+            inst:ListenForEvent("newstate", RemoveStabStartedFlag)
+            inst.startvalkyriestab:push()
+        end
     elseif inst.mode:value() == 3 then
     end
 
-    inst.shieldkeypressed = nil
     inst.components.timer:StopTimer("shieldkeyonlongpress")
     inst:RemoveEventCallback("timerdone", ShieldKeyLongPressed)
 end
@@ -1241,25 +1260,24 @@ end
 
 local function EnterSneak(inst, data)
     if data.name == "entersneak" then
-        if inst:HasTag("sneaking") then
-            inst:AddTag("notarget")
-            CustomDoAOE(inst, 25, { "_combat" }, nil, nil, function(v)
-                if v.components.combat and v.components.combat.target == inst then
-                    v.components.combat.target = nil
-                end
-            end)
-
-            inst:ListenForEvent("onattackother", BackStab)
-
-            if inst:HasTag("sneakspeedbooston") then
-                CancelSneakSpeedBoost(inst)
+        inst:AddTag("notarget")
+        CustomDoAOE(inst, 25, { "_combat" }, nil, nil, function(v)
+            if v.components.combat and v.components.combat.target == inst then
+                v.components.combat.target = nil
             end
+        end)
 
-            inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
-            inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
-            inst.Physics:SetCollisionMask(COLLISION.WORLD)
-            CustomAttachFx(inst, "statue_transition")
+        inst:ListenForEvent("onattackother", BackStab)
+
+        if inst:HasTag("sneakspeedbooston") then
+            CancelSneakSpeedBoost(inst)
         end
+
+        inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
+        inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
+        inst.Physics:SetCollisionMask(COLLISION.WORLD)
+        CustomAttachFx(inst, { "statue_transition", "shadow_shield" .. math.random(1, 6) })
+
         inst:RemoveEventCallback("timerdone", EnterSneak)
     end
 end
@@ -1456,16 +1474,15 @@ end
 local function ValkyrieKeyDown(inst, x, y, z)
     local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
         or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
-        or inst.sg:HasStateTag("musha_magpiestep")
+        or inst.sg:HasStateTag("musha_magpiestep") or inst.sg:HasStateTag("musha_valkyrieparrying")
+        or inst.sg:HasStateTag("musha_valkyriestab") or inst.sg:HasStateTag("musha_valkyriewhirl")
 
     -- Can recharge when using skills
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.valkyriekeypressed
+    if inst.components.health:IsDead() or inst:HasTag("playerghost")
         or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
         inst.novalkyriekeyonlongpress = nil
         return
     end
-
-    inst.valkyriekeypressed = true -- Prevent continuous triggering on long press
 
     inst.bufferedcursorpos = Vector3(x, y, z)
 
@@ -1503,7 +1520,6 @@ end
 local function ValkyrieKeyUp(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         inst.noannihilation = nil
-        inst.valkyriekeypressed = nil
         inst.components.timer:StopTimer("valkyriekeyonlongpress")
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
         return
@@ -1597,7 +1613,6 @@ local function ValkyrieKeyUp(inst, x, y, z)
     end
 
     inst.noannihilation = nil
-    inst.valkyriekeypressed = nil
     inst.components.timer:StopTimer("valkyriekeyonlongpress")
     inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
 end
@@ -1611,17 +1626,32 @@ local function ShadowKeyLongPressed(inst, data)
             return
         end
 
+        if inst.mode:value() == 0 or inst.mode:value() == 1 then
+            if not inst.skills.shadowmode then
+                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.shadowmode.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            else
+                inst.activateberserk:push()
+            end
+        end
+
         inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
     end
 end
 
 local function ShadowKeyDown(inst, x, y, z)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt")
-        or inst.shadowkeypressed then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         return
     end
-
-    inst.shadowkeypressed = true -- Prevent continuous triggering on long press
 
     inst.components.timer:StartTimer("shadowkeyonlongpress", TUNING.musha.singleclicktimewindow)
     inst:ListenForEvent("timerdone", ShadowKeyLongPressed)
@@ -1629,7 +1659,6 @@ end
 
 local function ShadowKeyUp(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
-        inst.shadowkeypressed = nil
         inst.components.timer:StopTimer("shadowkeyonlongpress")
         inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
         return
@@ -1660,27 +1689,19 @@ local function ShadowKeyUp(inst, x, y, z)
                 elseif reason == "noalter" then
                     LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
                 end
-            else
-                if not inst.skills.shadowmode then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
-                elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
-                    inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
-                        .. STRINGS.musha.skills.shadowmode.name
-                        .. STRINGS.musha.skills.incooldown.part2
-                        .. STRINGS.musha.skills.incooldown.part3
-                        .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowmode"))
-                        .. STRINGS.musha.skills.incooldown.part4)
-                elseif inst.components.sanity.current < TUNING.musha.skills.shadowmode.sanitycost then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
-                    CustomPlayFailedAnim(inst)
-                else
-                    inst.activateberserk:push()
-                end
             end
         end
     elseif inst.mode:value() == 2 and not inst.components.rider:IsRiding() then
         if inst.components.timer:TimerExists("shadowkeyonlongpress") then
-            if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
+            if inst.components.timer:TimerExists("prevalkyriewhirl") and inst.skills.valkyriewhirl then
+                if inst.components.stamina.current < TUNING.musha.skills.valkyriewhirl.staminacost then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                    CustomPlayFailedAnim(inst)
+                else
+                    inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyriewhirl.staminacost)
+                    inst.startvalkyriewhirl:push()
+                end
+            elseif inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
                 and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
                     or not inst.skills.setsugetsukaredux) then
                 inst.startphoenixadvent:push()
@@ -1738,7 +1759,6 @@ local function ShadowKeyUp(inst, x, y, z)
         end
     end
 
-    inst.shadowkeypressed = nil
     inst.components.timer:StopTimer("shadowkeyonlongpress")
     inst:RemoveEventCallback("timerdone", ShadowKeyLongPressed)
 end
@@ -2160,9 +2180,12 @@ local function OnLevelUp(inst, data)
     inst.skills.setsugetsuka      = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
     inst.skills.setsugetsukaredux = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
     inst.skills.phoenixadvent     = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
+    inst.skills.annihilation      = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
     inst.skills.desolatedive      = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
     inst.skills.magpiestep        = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
-    inst.skills.annihilation      = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
+    inst.skills.valkyrieparry     = data.lvl >= TUNING.musha.leveltounlockskill.valkyrieparry and true or nil
+    inst.skills.valkyriewhirl     = data.lvl >= TUNING.musha.leveltounlockskill.valkyriewhirl and true or nil
+    inst.skills.shadowparry       = data.lvl >= TUNING.musha.leveltounlockskill.shadowparry and true or nil
     inst.skills.voidphantom       = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
     inst.skills.phantomslash      = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
     inst.skills.phantomblossom    = data.lvl >= TUNING.musha.leveltounlockskill.phantomblossom and true or nil
@@ -2268,6 +2291,9 @@ local function common_postinit(inst)
     inst.startdesolatedive_pre = net_event(inst.GUID, "startdesolatedive_pre") -- Handler set in SG
     inst.startdesolatedive = net_event(inst.GUID, "startdesolatedive") -- Handler set in SG
     inst.startmagpiestep = net_event(inst.GUID, "startmagpiestep") -- Handler set in SG
+    inst.startvalkyrieparry = net_event(inst.GUID, "startvalkyrieparry") -- Handler set in SG
+    inst.startvalkyriestab = net_event(inst.GUID, "startvalkyriestab") -- Handler set in SG
+    inst.startvalkyriewhirl = net_event(inst.GUID, "startvalkyriewhirl") -- Handler set in SG
     inst.startphantomblossom_pre = net_event(inst.GUID, "startphantomblossom_pre") -- Handler set in SG
     inst.startphantomblossom = net_event(inst.GUID, "startphantomblossom") -- Handler set in SG
 

@@ -81,7 +81,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["hit"].onenter
     self.states["hit"].onenter = function(inst)
         if inst:HasTag("musha") then
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:StartTimer("premagpiestep", 2 * TUNING.musha.skills.magpiestep.usewindow)
         end
         _onenter(inst)
     end
@@ -678,23 +678,17 @@ local musha_spell_client = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("action_uniqueitem_lag", false)
-        inst.sg:SetTimeout(2)
+        inst.AnimState:PushAnimation("book", false)
     end,
 
-    onupdate = function(inst)
-        if inst:HasTag("doing") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
             end
-        elseif inst.bufferedaction == nil then
-            inst.sg:GoToState("idle")
-        end
-    end,
-
-    ontimeout = function(inst)
-        inst.sg:GoToState("idle")
-    end,
+        end),
+    },
 }
 
 AddStategraphState("wilson", musha_spell)
@@ -1261,7 +1255,7 @@ end
 
 local musha_setsugetsuka_pre = State {
     name = "musha_setsugetsuka_pre",
-    tags = { "musha_setsugetsuka_pre", "doing", "busy", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka_pre", "busy", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1291,25 +1285,14 @@ local musha_setsugetsuka_pre = State {
 
 local musha_setsugetsuka_pre_client = State {
     name = "musha_setsugetsuka_pre",
-    tags = { "musha_setsugetsuka_pre", "doing", "busy", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka_pre", "busy", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("multithrust_yell")
         inst:ForceFacePoint(target.x, target.y, target.z)
-
         inst.sg:SetTimeout(2)
-    end,
-
-    onupdate = function(inst)
-        if inst:HasTag("doing") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
-            end
-        elseif inst.bufferedaction == nil then
-            inst.sg:GoToState("idle")
-        end
     end,
 
     ontimeout = function(inst)
@@ -1319,7 +1302,7 @@ local musha_setsugetsuka_pre_client = State {
 
 local musha_setsugetsuka = State {
     name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1346,7 +1329,7 @@ local musha_setsugetsuka = State {
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.setsugetsuka.damagetakenmultiplier, "setsugetsuka")
 
-        inst.components.timer:SetTimeLeft("premagpiestep", 0)
+        inst.components.timer:StopTimer("premagpiestep") -- To enable recharging
         inst.components.timer:StopTimer("cooldown_setsugetsuka")
         inst:RemoveEventCallback("timerdone", SetsuGetsuKaOnTimerDone)
         inst.components.timer:StopTimer("clearsetsugetsukacounter")
@@ -1444,7 +1427,6 @@ AddStategraphEvent("wilson", EventHandler("startsetsugetsuka_pre",
         if target ~= nil then
             inst.sg:GoToState("musha_setsugetsuka_pre", { target = target })
         end
-        inst.bufferedcursorpos = nil
     end)
 )
 
@@ -1464,7 +1446,6 @@ AddStategraphEvent("wilson", EventHandler("startsetsugetsuka",
         if target ~= nil then
             inst.sg:GoToState("musha_setsugetsuka", { target = target })
         end
-        inst.bufferedcursorpos = nil
     end)
 )
 
@@ -1474,8 +1455,7 @@ AddStategraphEvent("wilson", EventHandler("startsetsugetsuka",
 
 local function DoAdvent(inst)
     local must_tags = { "_combat" }
-    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
-        "companion", "musha_companion" }
+    local ignore_tags = { "player", "companion", "musha_companion" }
     local radius = TUNING.musha.skills.phoenixadvent.radius
     local lightning = inst:HasTag("lightningstrikeready")
     local weapon = inst.components.combat:GetWeapon()
@@ -1511,7 +1491,7 @@ end
 
 local musha_phoenixadvent = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1572,7 +1552,7 @@ local musha_phoenixadvent = State {
 
 local musha_phoenixadvent_client = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1602,7 +1582,6 @@ AddStategraphEvent("wilson", EventHandler("startphoenixadvent",
         if target ~= nil then
             inst.sg:GoToState("musha_phoenixadvent", { target = target })
         end
-        inst.bufferedcursorpos = nil
     end)
 )
 
@@ -1631,8 +1610,7 @@ end
 
 local function DoAnnihilation(inst)
     local must_tags = { "_combat" }
-    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
-        "companion", "musha_companion" }
+    local ignore_tags = { "player", "companion", "musha_companion" }
     local radius = TUNING.musha.skills.annihilation.radius
     local lightning = inst:HasTag("lightningstrikeready")
     local weapon = inst.components.combat:GetWeapon()
@@ -1677,7 +1655,7 @@ end
 
 local musha_annihilation_pre = State {
     name = "musha_annihilation_pre",
-    tags = { "musha_annihilation_pre", "doing", "busy", "musha_nointerrupt" },
+    tags = { "musha_annihilation_pre", "busy", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1699,7 +1677,7 @@ local musha_annihilation_pre = State {
 
 local musha_annihilation_pre_client = State {
     name = "musha_annihilation_pre",
-    tags = { "musha_annihilation_pre", "doing", "busy", "musha_nointerrupt" },
+    tags = { "musha_annihilation_pre", "busy", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1710,16 +1688,6 @@ local musha_annihilation_pre_client = State {
         inst.sg:SetTimeout(2)
     end,
 
-    onupdate = function(inst)
-        if inst:HasTag("doing") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
-            end
-        elseif inst.bufferedaction == nil then
-            inst.sg:GoToState("idle")
-        end
-    end,
-
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
     end,
@@ -1727,7 +1695,7 @@ local musha_annihilation_pre_client = State {
 
 local musha_annihilation = State {
     name = "musha_annihilation",
-    tags = { "musha_annihilation", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_annihilation", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1828,7 +1796,6 @@ AddStategraphEvent("wilson", EventHandler("startannihilation",
         if target ~= nil then
             inst.sg:GoToState("musha_annihilation_pre", { target = target })
         end
-        inst.bufferedcursorpos = nil
     end)
 )
 
@@ -1857,20 +1824,22 @@ end
 
 local function DoDive(inst)
     local must_tags = { "_combat" }
-    local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
-        "companion", "musha_companion", "wall" }
+    local ignore_tags = { "player", "companion", "musha_companion", "wall" }
     local radius = TUNING.musha.skills.desolatedive.radius
     local lightning = inst:HasTag("lightningstrikeready")
     local weapon = inst.components.combat:GetWeapon()
 
     local function fn(target)
-        local damage = inst.components.combat:CalcDamage(target, weapon) *
+        local basedamage = inst.components.combat:CalcDamage(target, weapon) *
             TUNING.musha.skills.desolatedive.damagemultiplier
+
+        local damage = math.min(basedamage + (target.components.health ~= nil and
+            target.components.health.maxhealth * TUNING.musha.skills.desolatedive.extradamagemultiplier or 0),
+            inst.components.combat:CalcDamage(target, weapon) * TUNING.musha.skills.desolatedive.maxdamagemultiplier)
 
         if lightning then
             local extradamage = (TUNING.musha.skills.lightningstrike.damage +
                 TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5)
-                * TUNING.musha.skills.desolatedive.damagemultiplier
             target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
             CustomAttachFx(target, { "lightning_musha", "shock_fx" })
         else
@@ -1928,7 +1897,6 @@ local musha_desolatedive_pre = State {
             else
                 inst.sg:GoToState("idle")
             end
-            inst.bufferedcursorpos = nil
         end),
         EventHandler("animover", function(inst)
             if inst.AnimState:AnimDone() then
@@ -1984,15 +1952,6 @@ local musha_desolatedive_pre_client = State {
             inst.sg:GoToState("idle")
         end),
     },
-
-    onupdate = function(inst)
-        if inst:HasTag("musha_desolatedive_pre") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
-            end
-        end
-    end,
-
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
     end,
@@ -2006,7 +1965,7 @@ local musha_desolatedive_pre_client = State {
 
 local musha_desolatedive = State {
     name = "musha_desolatedive",
-    tags = { "musha_desolatedive", "doing", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         if inst.AnimState:IsCurrentAnimation("superjump_lag") then
@@ -2119,7 +2078,7 @@ local musha_desolatedive = State {
 
 local musha_desolatedive_pst = State {
     name = "musha_desolatedive_pst",
-    tags = { "musha_desolatedive_pst", "doing", "busy", "nopredict", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pst", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         if data ~= nil then
@@ -2248,7 +2207,7 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive_pre",
 
 local musha_magpiestep = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -2261,8 +2220,9 @@ local musha_magpiestep = State {
         inst.AnimState:PlayAnimation("asa_dodge")
         inst.SoundEmitter:PlaySound("wanda1/wanda/jump_whoosh")
         inst.components.health:SetInvincible(true)
-        inst.components.timer:SetTimeLeft("premagpiestep", 0)
+        inst.components.timer:StopTimer("premagpiestep")
         inst.components.timer:PauseTimer("clearsetsugetsukacounter")
+        inst.components.timer:PauseTimer("prevalkyriewhirl")
 
         inst.sg.statemem.startingpos = inst:GetPosition()
         inst.sg.statemem.targetpos = inst.sg.statemem.startingpos + (target - inst.sg.statemem.startingpos) * mult -- Numeric value must behind Vector3
@@ -2272,38 +2232,37 @@ local musha_magpiestep = State {
             inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end
-
-        inst.task_phantom = inst:DoPeriodicTask(FRAMES, function()
-            ApplyPhantom(inst, "asa_dodge")
-        end)
     end,
 
     onupdate = function(inst)
-        if inst.sg.statemem.attackdone then
-            return
+        if not inst.sg.statemem.nophantom then
+            ApplyPhantom(inst, "asa_dodge")
         end
 
-        local radius = TUNING.musha.skills.magpiestep.radius
-        local must_tags = { "_combat" }
-        local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost", "player",
-            "companion", "musha_companion" }
-        local target = FindEntity(inst, radius, nil, must_tags, ignore_tags)
+        if not inst.sg.statemem.attackdone then
+            local radius = TUNING.musha.skills.magpiestep.radius
+            local must_tags = { "_combat" }
+            local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
+                "player",
+                "companion", "musha_companion" }
+            local target = FindEntity(inst, radius, nil, must_tags, ignore_tags)
 
-        if target ~= nil and target:IsValid() then
-            local fx = SpawnPrefab(math.random() < .5 and "shadowstrike_slash_fx" or "shadowstrike_slash2_fx")
-            local x, y, z = target.Transform:GetWorldPosition()
-            fx.Transform:SetPosition(x, y + 1.5, z)
-            fx.Transform:SetRotation(inst.Transform:GetRotation())
-            fx.Transform:SetScale(2, 2, 2)
+            if target ~= nil and target:IsValid() then
+                local fx = SpawnPrefab(math.random() < .5 and "shadowstrike_slash_fx" or "shadowstrike_slash2_fx")
+                local x, y, z = target.Transform:GetWorldPosition()
+                fx.Transform:SetPosition(x, y + 1.5, z)
+                fx.Transform:SetRotation(inst.Transform:GetRotation())
+                fx.Transform:SetScale(2, 2, 2)
 
-            local weapon = inst.components.combat:GetWeapon()
-            local damage = inst.components.combat:CalcDamage(target, weapon,
-                TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
-            target.components.combat:GetAttacked(inst, damage, weapon)
+                local weapon = inst.components.combat:GetWeapon()
+                local damage = inst.components.combat:CalcDamage(target, weapon,
+                    TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
+                target.components.combat:GetAttacked(inst, damage, weapon)
 
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
-            inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
-            inst.sg.statemem.attackdone = true
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
+                inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
+                inst.sg.statemem.attackdone = true
+            end
         end
     end,
 
@@ -2318,17 +2277,18 @@ local musha_magpiestep = State {
                 , inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end),
         TimeEvent(9 * FRAMES, function(inst)
-            CustomCancelTask(inst.task_phantom)
             ToggleOnPhysics(inst)
             inst.Physics:Stop()
             inst.Physics:SetMotorVel(0, 0, 0)
             inst.Physics:Teleport(inst.sg.statemem.targetpos.x, 0, inst.sg.statemem.targetpos.z)
+            inst.sg.statemem.nophantom = true
             inst.sg:RemoveStateTag("busy")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("nointerrupt")
             inst.sg:RemoveStateTag("musha_magpiestep")
             inst.sg:RemoveStateTag("musha_nointerrupt")
             inst.components.timer:ResumeTimer("clearsetsugetsukacounter")
+            inst.components.timer:ResumeTimer("prevalkyriewhirl")
         end),
     },
 
@@ -2342,7 +2302,6 @@ local musha_magpiestep = State {
     },
 
     onexit = function(inst)
-        CustomCancelTask(inst.task_phantom)
         inst.components.health:SetInvincible(false)
         if inst.sg.statemem.isphysicstoggle then
             ToggleOnPhysics(inst)
@@ -2360,23 +2319,13 @@ local musha_magpiestep = State {
 
 local musha_magpiestep_client = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "doing", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("asa_dodge")
 
         inst.sg:SetTimeout(9 * FRAMES)
-    end,
-
-    onupdate = function(inst)
-        if inst:HasTag("doing") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
-            end
-        elseif inst.bufferedaction == nil then
-            inst.sg:GoToState("idle")
-        end
     end,
 
     ontimeout = function(inst)
@@ -2393,7 +2342,6 @@ AddStategraphEvent("wilson", EventHandler("startmagpiestep",
         if target ~= nil then
             inst.sg:GoToState("musha_magpiestep", { target = target })
         end
-        inst.bufferedcursorpos = nil
     end)
 )
 
@@ -2402,6 +2350,566 @@ AddStategraphEvent("wilson_client", EventHandler("startmagpiestep",
         inst.sg:GoToState("musha_magpiestep")
     end)
 )
+
+---------------------------------------------------------------------------------------------------------
+
+-- Valkyrie parry
+
+local function ValkyrieParryOnTimerDone(inst, data)
+    if data.name == "cooldown_valkyrieparry" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.valkyrieparry.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ValkyrieParryOnTimerDone)
+    end
+end
+
+local function ValkyrieParryOnNewState(inst, data)
+    if data.statename ~= "musha_valkyrieparry_idle" and data.statename ~= "musha_valkyrieparry_hit" then
+        if inst.valkyrieparrycooldownpending then
+            if inst.sg.statemem.perfect then
+                inst.components.timer:StartTimer("cooldown_valkyrieparry", 0.1)
+            else
+                inst.components.timer:StartTimer("cooldown_valkyrieparry", TUNING.musha.skills.valkyrieparry.cooldown)
+            end
+            inst:ListenForEvent("timerdone", ValkyrieParryOnTimerDone)
+        end
+        inst:RemoveEventCallback("newstate", ValkyrieParryOnNewState)
+        inst.valkyrieparrycooldownpending = nil
+    end
+end
+
+local musha_valkyrieparry_pre = State {
+    name = "musha_valkyrieparry_pre",
+    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("parry_pre")
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_valkyrieparry_idle")
+            end
+        end),
+        EventHandler("startvalkyriestab", function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+            inst.AnimState:PlayAnimation("parry_pst")
+            inst.sg:GoToState("idle", true)
+        end),
+    },
+}
+
+local musha_valkyrieparry_idle = State {
+    name = "musha_valkyrieparry_idle",
+    tags = { "musha_valkyrieparry_idle", "musha_valkyrieparry_pre", "nomorph", "musha_valkyrieparrying" },
+
+    onenter = function(inst, data)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("parry_loop", true)
+        inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.valkyrieparry.damagetakenmultiplier, "valkyrieparry")
+
+        inst.fx_valkyrieparryshield = CustomAttachFx(inst, "abigailforcefield", 0,
+            Vector3(1.4, 1.4, 1.4), Vector3(0, -2.5, 0))
+        inst.fx_valkyrieparryshield.AnimState:SetMultColour(1, 1, 1, 0.6)
+        inst.fx_valkyrieparryshield.AnimState:SetSortOrder(2)
+
+        if data and data.stabready then
+            inst.sg.statemem.stabready = true
+        end
+
+        inst:ListenForEvent("newstate", ValkyrieParryOnNewState)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .025)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("valkyrieparry", c, c, 0, 0)
+        end
+    end,
+
+    timeline = {
+        TimeEvent(60 * FRAMES, function(inst)
+            if not inst.sg.statemem.stabready then
+                inst.sg.statemem.stabready = true
+                inst.sg.statemem.flash = 0.8
+                inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+            end
+        end),
+    },
+
+    events =
+    {
+        EventHandler("startvalkyriestab", function(inst)
+            if inst.sg.statemem.stabready then
+                inst.sg:GoToState("musha_valkyriestab")
+            else
+                inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+                inst.AnimState:PlayAnimation("parry_pst")
+                inst.sg:GoToState("idle", true)
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyrieparry")
+        inst.components.colouradder:PopColour("valkyrieparry")
+        CustomRemoveEntity(inst.fx_valkyrieparryshield)
+    end,
+}
+
+local musha_valkyrieparry_pre_client = State {
+    name = "musha_valkyrieparry_pre",
+    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying" },
+
+    onenter = function(inst, data)
+        local target = data.target
+        inst.components.locomotor:Stop()
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.AnimState:PlayAnimation("parry_pre")
+        inst.AnimState:PushAnimation("parry_loop", true)
+    end,
+
+    timeline = {
+        TimeEvent(60 * FRAMES, function(inst)
+            inst.sg.statemem.stabready = true
+        end),
+    },
+
+    events =
+    {
+        EventHandler("startvalkyriestab", function(inst)
+            if not inst.sg.statemem.stabready then
+                inst.AnimState:PlayAnimation("parry_pst")
+            end
+            inst.sg:GoToState("idle", true)
+        end)
+    },
+}
+
+AddStategraphState("wilson", musha_valkyrieparry_pre)
+AddStategraphState("wilson", musha_valkyrieparry_idle)
+AddStategraphState("wilson_client", musha_valkyrieparry_pre_client)
+
+AddStategraphEvent("wilson", EventHandler("startvalkyrieparry",
+    function(inst)
+        -- Long press event, current cursor position not available on server side
+        inst.sg:GoToState("musha_valkyrieparry_pre")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startvalkyrieparry",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_valkyrieparry_pre", { target = target })
+        end
+    end)
+)
+
+local function DoParryAttack(inst, target)
+    if target ~= nil and target:IsValid() and target.components.combat then
+        local fx_phantom = SpawnPrefab("musha_phantom")
+        fx_phantom.Transform:SetPosition(inst.Transform:GetWorldPosition())
+        fx_phantom.AnimState:SetDeltaTimeMultiplier(0.7)
+        fx_phantom.AnimState:PlayAnimation("lunge_pst", false)
+        fx_phantom.AnimState:OverrideSymbol("swap_object", "swap_spear_gungnir", "swap_spear_gungnir")
+        fx_phantom:ForceFacePoint(target.Transform:GetWorldPosition())
+        fx_phantom.AnimState:SetMultColour(0.3, 0.3, 1, 0.7)
+        fx_phantom.Physics:SetMotorVel(math.sqrt(target:GetDistanceSqToPoint(inst.Transform:GetWorldPosition())) /
+            (3 * FRAMES), 0, 0)
+
+        fx_phantom:DoTaskInTime(3 * FRAMES, function()
+            local weapon = inst.components.combat:GetWeapon()
+            local damage = TUNING.musha.skills.valkyrieparry.damagereflectionbase
+                + TUNING.musha.skills.valkyrieparry.damagereflectionrate
+                * (target.components.combat.defaultdamage > 0 and target.components.combat.defaultdamage
+                    or inst.components.combat:CalcDamage(target, weapon))
+            target.components.combat:GetAttacked(inst, damage, weapon)
+            inst:PushEvent("onattackother", { target = target })
+
+            local fx = SpawnPrefab(math.random() < .5 and "shadowstrike_slash_fx" or "shadowstrike_slash2_fx")
+            local x, y, z = target.Transform:GetWorldPosition()
+            fx.Transform:SetPosition(x, y + 1.5, z)
+            fx.Transform:SetRotation(inst.Transform:GetRotation())
+            fx.Transform:SetScale(2, 2, 2)
+
+            fx_phantom.Physics:SetMotorVel(3 / (7 * FRAMES), 0, 0)
+        end)
+
+        fx_phantom:DoTaskInTime(10 * FRAMES, function()
+            fx_phantom.Physics:SetMotorVel(0, 0, 0)
+        end)
+
+        fx_phantom:DoTaskInTime(1, function()
+            fx_phantom:Remove()
+        end)
+    end
+end
+
+local musha_valkyrieparry_hit = State {
+    name = "musha_valkyrieparry_hit",
+    tags = { "musha_valkyrieparry_hit", "nomorph", "busy", "nopredict", "nointerrupt", "musha_valkyrieparrying" },
+
+    onenter = function(inst, data)
+        inst.valkyrieparrycooldownpending = true
+        inst.components.locomotor:Stop()
+        if data and data.attacker then
+            inst:ForceFacePoint(data.attacker.Transform:GetWorldPosition())
+            inst.sg.statemem.parrytarget = data.attacker
+        end
+
+        inst.AnimState:PlayAnimation("parryblock")
+        inst.SoundEmitter:PlaySound("dontstarve/wilson/hit")
+
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.valkyrieparry.damagetakenmultiplier, "valkyrieparry")
+
+        inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+
+        inst.sg.statemem.flash = 0.9
+        inst.sg:SetTimeout(TUNING.musha.skills.valkyrieparry.perfecttimewindow * FRAMES)
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .1)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("valkyrieparry", c, c, c, 0.5)
+        end
+    end,
+
+    events =
+    {
+        EventHandler("startvalkyriestab", function(inst)
+            if inst.sg.statemem.parrytarget then
+                DoParryAttack(inst, inst.sg.statemem.parrytarget)
+            end
+            inst.components.stamina:DoDelta(TUNING.musha.skills.valkyrieparry.staminaregen)
+            inst:AddDebuff("manashield", "manashield",
+                { duration = TUNING.musha.skills.valkyrieparry.shieldduration })
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
+            inst.sg:GoToState("musha_valkyriestab", { perfect = true })
+        end),
+    },
+
+    ontimeout = function(inst)
+        if not inst.valkyriestabstarted then
+            inst.sg:GoToState("musha_valkyrieparry_idle", { stabready = true })
+        end
+    end,
+
+    onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyrieparry")
+        inst.components.colouradder:PopColour("valkyrieparry")
+    end,
+}
+
+AddStategraphState("wilson", musha_valkyrieparry_hit)
+
+-- Redefine attacked event handlers
+AddStategraphPostInit("wilson", function(self)
+    local _fn = self.events["blocked"].fn
+    self.events["blocked"].fn = function(inst, data)
+        if not inst.components.health:IsDead() and not inst.sg:HasStateTag("drowning")
+            and inst.sg:HasStateTag("musha_valkyrieparrying") and not inst.valkyriestabstarted then
+            if inst.components.stamina.current < TUNING.musha.skills.valkyrieparry.staminacostonhit then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                return self.events["attacked"].fn(inst, data)
+            else
+                inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyrieparry.staminacostonhit)
+                inst.sg:GoToState("musha_valkyrieparry_hit", data)
+            end
+        else
+            return _fn(inst, data)
+        end
+    end
+end)
+
+local musha_valkyriestab = State {
+    name = "musha_valkyriestab",
+    tags = { "musha_valkyriestab", "busy", "nopredict", "nomorph", "nointerrupt" },
+
+    onenter = function(inst, data)
+        inst.valkyrieparrycooldownpending = true
+
+        local target = inst.bufferedcursorpos
+        inst.components.locomotor:Stop()
+        inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.AnimState:PlayAnimation("spearjab_pre")
+        inst.AnimState:PushAnimation("spearjab", false)
+
+        if data and data.perfect then
+            inst.sg.statemem.perfect = true
+        end
+
+        inst.sg.statemem.nophantom = true
+    end,
+
+    onupdate = function(inst)
+        if not inst.sg.statemem.nophantom then
+            ApplyPhantom(inst, "spearjab")
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/hit")
+        end
+
+        if inst.sg.statemem.attacking then
+            local must_tags = { "_combat" }
+            local ignore_tags = { "player", "companion", "musha_companion" }
+            local radius = TUNING.musha.skills.valkyriestab.radius
+            local weapon = inst.components.combat:GetWeapon()
+
+            local function fn(target)
+                local x, y, z = inst.Physics:GetMotorVel()
+                local damage = TUNING.musha.skills.valkyriestab.damageperhit
+                target.components.combat:GetAttacked(inst, damage, weapon)
+
+                if target.components.locomotor then
+                    target.Transform:SetRotation(inst:GetAngleToPoint(inst.sg.statemem.startingpos.x, 0,
+                        inst.sg.statemem.startingpos.z))
+                    target.Physics:SetMotorVelOverride(-x, 0, 0)
+                    target:DoTaskInTime(2 * FRAMES, function()
+                        target.Physics:ClearMotorVelOverride()
+                    end)
+                end
+            end
+
+            CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
+        end
+    end,
+
+    timeline = {
+        TimeEvent(3 * FRAMES, function(inst)
+            local target = inst.bufferedcursorpos
+            local dist = math.sqrt(inst:GetDistanceSqToPoint(target))
+            local maxdist = TUNING.musha.skills.valkyriestab.maxdist
+            local mult = math.min(1, maxdist / dist)
+
+            inst.sg.statemem.startingpos = inst:GetPosition()
+            inst.sg.statemem.targetpos = inst.sg.statemem.startingpos + (target - inst.sg.statemem.startingpos) * mult -- Numeric value must behind Vector3
+            if inst.sg.statemem.startingpos.x ~= inst.sg.statemem.targetpos.x
+                or inst.sg.statemem.startingpos.z ~= inst.sg.statemem.targetpos.z then
+                inst:ForceFacePoint(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y,
+                    inst.sg.statemem.targetpos.z)
+                inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z
+                    , inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
+            end
+            inst.sg.statemem.nophantom = nil
+            inst.sg.statemem.attacking = true
+        end),
+        TimeEvent(12 * FRAMES, function(inst)
+            inst.sg.statemem.nophantom = true
+            inst.sg.statemem.attacking = nil
+            inst.Physics:SetMotorVel(0, 0, 0)
+            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:StartTimer("prevalkyriewhirl", TUNING.musha.skills.valkyriewhirl.usewindow)
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.Physics:SetMotorVel(0, 0, 0)
+    end,
+}
+
+AddStategraphState("wilson", musha_valkyriestab)
+
+local function DoWhirl(inst, data)
+    local must_tags = { "_combat" }
+    local ignore_tags = { "player", "companion", "musha_companion", "wall" }
+    local radius = 2 * TUNING.musha.skills.valkyriewhirl.radius
+    local lightning = inst:HasTag("lightningstrikeready")
+    local weapon = inst.components.combat:GetWeapon()
+
+    local function fn(target)
+        local basedamage = inst.components.combat:CalcDamage(target, weapon) *
+            TUNING.musha.skills.valkyriewhirl.basedamagemultiplier
+
+        local damage = math.min(basedamage + (target.components.health ~= nil and
+            target.components.health.maxhealth * TUNING.musha.skills.valkyriewhirl.extradamagemultiplier or 0),
+            inst.components.combat:CalcDamage(target, weapon) * TUNING.musha.skills.valkyriewhirl.maxdamagemultiplier)
+
+        if lightning then
+            local extradamage = TUNING.musha.skills.lightningstrike.damage +
+                TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
+            target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
+            CustomAttachFx(target, { "lightning_musha", "shock_fx" })
+        else
+            target.components.combat:GetAttacked(inst, damage, weapon)
+        end
+
+        if data and data.pushback then
+            if target.components.locomotor and target.brain then
+                local x, y, z = inst.Transform:GetWorldPosition()
+                local distsq = target:GetDistanceSqToPoint(x, y, z)
+                target.brain:Pause()
+                target:ForceFacePoint(x, y, z)
+                target.Physics:SetMotorVelOverride(-(radius - math.sqrt(distsq)) / (10 * FRAMES), 0, 0)
+                target:DoTaskInTime(10 * FRAMES, function()
+                    target.brain:Resume()
+                    target.Physics:ClearMotorVelOverride()
+                end)
+            end
+        end
+    end
+
+    CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
+
+    inst.SoundEmitter:PlaySound("wanda1/wanda/jump_whoosh")
+    inst.SoundEmitter:PlaySound("dontstarve/wilson/hit")
+    ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5, inst, 40) -- Renew camera shaking effect caused by lightnings
+
+    if lightning then
+        inst:LightningDischarge()
+    end
+
+    if weapon and weapon.components.stackable then
+        weapon.components.stackable:Get():Remove()
+    end
+end
+
+local musha_valkyriewhirl = State {
+    name = "musha_valkyriewhirl",
+    tags = { "musha_valkyriewhirl", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        inst.components.locomotor:Stop()
+
+        inst.Transform:SetTwoFaced()
+        inst.AnimState:SetDeltaTimeMultiplier(2)
+        inst.AnimState:PlayAnimation("galeatk_circle0")
+        inst.AnimState:PushAnimation("galeatk_circle2")
+        inst.AnimState:PushAnimation("galeatk_circle3")
+        inst.AnimState:PushAnimation("galeatk_circle2")
+        inst.AnimState:PushAnimation("galeatk_circle3", false)
+
+        local fx = SpawnPrefab("groundpoundring_fx")
+        fx.Transform:SetPosition(inst:GetPosition():Get())
+        fx.Transform:SetScale(0.75, 0.75, 0.75)
+        inst.SoundEmitter:PlaySound("dontstarve_DLC001/common/tornado", "spinLoop")
+        ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5, inst, 40)
+        inst.sg.statemem.flash = 0.9
+
+        inst.components.timer:StopTimer("prevalkyriewhirl")
+    end,
+
+    onupdate = function(inst)
+        if inst.sg.statemem.speed ~= nil then
+            inst.sg.statemem.speed = .75 * inst.sg.statemem.speed
+            inst.Physics:SetMotorVel(inst.sg.statemem.reverse and -inst.sg.statemem.speed or inst.sg.statemem.speed, 0, 0)
+        end
+
+        if inst.sg.statemem.flash and inst.sg.statemem.flash > 0 then
+            inst.sg.statemem.flash = math.max(0, inst.sg.statemem.flash - .1)
+            local c = math.min(1, inst.sg.statemem.flash)
+            inst.components.colouradder:PushColour("valkyriewhirl", c, c, c, 0.5)
+        end
+    end,
+
+    timeline = {
+        TimeEvent(3 * FRAMES, function(inst)
+            local fx = SpawnPrefab("groundpoundring_fx")
+            fx.Transform:SetPosition(inst:GetPosition():Get())
+            fx.Transform:SetScale(0.75, 0.75, 0.75)
+            DoWhirl(inst)
+        end),
+        TimeEvent(5 * FRAMES, function(inst)
+            DoWhirl(inst, { pushback = true })
+        end),
+        TimeEvent(10 * FRAMES, function(inst)
+            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+        end),
+    },
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.AnimState:SetDeltaTimeMultiplier(1)
+        inst.Transform:SetFourFaced()
+        inst.components.colouradder:PopColour("valkyriewhirl")
+        inst.SoundEmitter:KillSound("spinLoop")
+    end,
+}
+
+local musha_valkyriewhirl_client = State {
+    name = "musha_valkyriewhirl",
+    tags = { "musha_valkyriewhirl", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
+
+    onenter = function(inst, data)
+        inst.components.locomotor:Stop()
+
+        inst.Transform:SetTwoFaced()
+        inst.AnimState:SetDeltaTimeMultiplier(2)
+        inst.AnimState:PlayAnimation("galeatk_circle0")
+        inst.AnimState:PushAnimation("galeatk_circle2")
+        inst.AnimState:PushAnimation("galeatk_circle3")
+        inst.AnimState:PushAnimation("galeatk_circle1")
+        inst.AnimState:PushAnimation("galeatk_circle2")
+        inst.AnimState:PushAnimation("galeatk_circle3", false)
+    end,
+
+    events =
+    {
+        EventHandler("animqueueover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("idle")
+            end
+        end),
+    },
+
+    onexit = function(inst)
+        inst.AnimState:SetDeltaTimeMultiplier(1)
+        inst.Transform:SetFourFaced()
+    end,
+}
+
+AddStategraphState("wilson", musha_valkyriewhirl)
+AddStategraphState("wilson_client", musha_valkyriewhirl_client)
+
+AddStategraphEvent("wilson", EventHandler("startvalkyriewhirl",
+    function(inst)
+        local target = inst.bufferedcursorpos
+        if target ~= nil then
+            inst.sg:GoToState("musha_valkyriewhirl", { target = target })
+        end
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startvalkyriewhirl",
+    function(inst)
+        local target = TheInput:GetWorldEntityUnderMouse() and TheInput:GetWorldEntityUnderMouse():GetPosition()
+            or TheInput:GetWorldPosition()
+        if target ~= nil then
+            inst.sg:GoToState("musha_valkyriewhirl", { target = target })
+        end
+    end)
+)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Shadow parry
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -2488,7 +2996,6 @@ local musha_phantomblossom_pre = State {
             else
                 inst.sg:GoToState("idle")
             end
-            inst.bufferedcursorpos = nil
         end),
         EventHandler("animover", function(inst)
             if inst.AnimState:AnimDone() then
@@ -2559,14 +3066,6 @@ local musha_phantomblossom_pre_client = State {
             inst.sg:GoToState("idle")
         end)
     },
-
-    onupdate = function(inst)
-        if inst:HasTag("musha_phantomblossom_pre") then
-            if inst.entity:FlattenMovementPrediction() then
-                inst.sg:GoToState("idle", "noanim")
-            end
-        end
-    end,
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")

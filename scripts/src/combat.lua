@@ -6,6 +6,7 @@ local function ClassPostConstructFn(self)
         if not (self.inst.components.health and self.inst.components.health:IsDead())
             and self.inst:HasTag("manashieldactivated") then
 
+            self.inst:PushEvent("blocked", { attacker = attacker })
             self.inst:PushEvent("manashieldonattacked",
                 { attacker = attacker, damage = damage, weapon = weapon, stimuli = stimuli }) -- Here is original damage before calculating equipments and health absorb multipliers
             return

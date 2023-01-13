@@ -40,7 +40,9 @@ Assets = {
     Asset("ANIM", "anim/musha/swap_telescope.zip"), -- Treasure sniffing: telescope
     Asset("ANIM", "anim/musha/player_actions_uniqueitem_2.zip"), -- Treasure sniffing: scroll: have to be added here or else character anim will be broken
     Asset("ANIM", "anim/musha/messagebottle.zip"), -- Treasure sniffing: scroll
-    Asset("ANIM", "anim/musha/asa_action.zip"), -- Dodge: Appreciate to Asakiri!!!
+    Asset("ANIM", "anim/musha/asa_action.zip"), -- Dodge and slash: Appreciate to Asakiri!!!
+    Asset("ANIM", "anim/musha/gale_speedrun.zip"), -- Dash: Appreciate to Gale!!!
+    Asset("ANIM", "anim/musha/gale_actions_harpy_whirl.zip"), -- Whirlling attack: Appreciate to Gale!!!
 
     -- Map icon
     Asset("IMAGE", "images/map_icons/musha_mapicon.tex"),

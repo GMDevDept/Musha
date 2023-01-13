@@ -15,9 +15,11 @@ local function fn()
     inst.entity:AddTransform()
     inst.entity:AddAnimState()
 
+    MakeTinyFlyingCharacterPhysics(inst, 1, .1)
+
     inst.AnimState:SetBank("wilson")
     inst.AnimState:SetBuild("musha_valkyrie")
-    inst.AnimState:SetSortOrder(-1)
+    inst.AnimState:SetSortOrder(1)
 
     inst.Transform:SetFourFaced()
 

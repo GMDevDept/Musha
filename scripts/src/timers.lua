@@ -7,6 +7,8 @@ local timerlist = {
     "cooldown_shadowprison",
     "cooldown_manashield",
     "cooldown_princessblessing",
+    "cooldown_valkyrieparry",
+    "cooldown_shadowparry",
     "cooldown_rollingmagma",
     "cooldown_whitefrost",
     "cooldown_poisonspore",
@@ -28,6 +30,7 @@ local timerlist = {
     -- Not quite necessary
     "premelody",
     "premagpiestep",
+    "prevalkyriewhirl",
     "clearsetsugetsukacounter",
     "valkyriekeyonlongpress",
     "shadowkeyonlongpress",

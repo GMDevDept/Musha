@@ -377,7 +377,7 @@ local function ChargedFireOnExplode(inst)
                 local x1 = x + offset.x
                 local z1 = z + offset.z
                 return not map:IsPointNearHole(Vector3(x1, 0, z1), .4)
-                    and #TheSim:FindEntities(x1, 0, z1, 3, nil, nil, { "dummyplaceholder", "deer_fire_circle" }) == 0
+                    and #TheSim:FindEntities(x1, 0, z1, 2, nil, nil, { "dummyplaceholder", "deer_fire_circle" }) == 0
             end
         )
 
