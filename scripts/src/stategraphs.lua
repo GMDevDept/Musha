@@ -556,12 +556,15 @@ local musha_spell = State {
     tags = { "musha_spell", "doing", "nomorph", "nointerrupt" },
 
     onenter = function(inst)
-        inst.components.locomotor:Stop()
-        inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("book", false)
-
         local book = inst.bufferedbookfx
-        if book ~= nil then
+        if not book then
+            inst.sg:GoToState("idle")
+            return
+        else
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("action_uniqueitem_pre")
+            inst.AnimState:PushAnimation("book", false)
+
             if book.def ~= nil then
                 inst.sg.statemem.fx_over_prefab = book.def.fx_over_prefab
                 inst.sg.statemem.fx_under_prefab = book.def.fx_under_prefab
@@ -604,10 +607,10 @@ local musha_spell = State {
                 inst.AnimState:OverrideSymbol("book_closed", swap_build, swap_prefix .. "_closed")
                 inst.sg.statemem.symbolsoverridden = true
             end
-        end
 
-        inst.sg.statemem.castsound = book ~= nil and book.castsound ~= nil and book.castsound
-            or "dontstarve/common/book_spell"
+            inst.sg.statemem.castsound = book ~= nil and book.castsound ~= nil and book.castsound
+                or "dontstarve/common/book_spell"
+        end
     end,
 
     timeline =
@@ -632,6 +635,9 @@ local musha_spell = State {
             end
             inst.SoundEmitter:PlaySound(inst.sg.statemem.castsound)
             inst.sg.statemem.book_fx = nil --Don't cancel anymore
+
+            inst.bufferedspell = nil
+            inst.bufferedbookfx = nil
 
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end)
@@ -678,7 +684,18 @@ local musha_spell_client = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("action_uniqueitem_pre")
-        inst.AnimState:PushAnimation("book", false)
+        inst.AnimState:PushAnimation("action_uniqueitem_lag", false)
+        inst.sg:SetTimeout(2)
+    end,
+
+    onupdate = function(inst)
+        if inst:HasTag("doing") then
+            if inst.entity:FlattenMovementPrediction() then
+                inst.sg:GoToState("idle", "noanim")
+            end
+        else
+            inst.sg:GoToState("idle")
+        end
     end,
 
     events =
@@ -689,6 +706,10 @@ local musha_spell_client = State {
             end
         end),
     },
+
+    ontimeout = function(inst)
+        inst.sg:GoToState("idle")
+    end,
 }
 
 AddStategraphState("wilson", musha_spell)
@@ -1160,6 +1181,13 @@ local musha_treasuresniffing = State {
             end
         end),
     },
+
+    onexit = function(inst)
+        inst.AnimState:ClearOverrideSymbol("swap_object")
+        inst.AnimState:ClearOverrideSymbol("scroll")
+        inst.AnimState:Hide("ARM_carry")
+        inst.AnimState:Show("ARM_normal")
+    end,
 }
 
 local musha_treasuresniffing_client = State {
@@ -1192,6 +1220,13 @@ local musha_treasuresniffing_client = State {
             end
         end),
     },
+
+    onexit = function(inst)
+        inst.AnimState:ClearOverrideSymbol("swap_object")
+        inst.AnimState:ClearOverrideSymbol("scroll")
+        inst.AnimState:Hide("ARM_carry")
+        inst.AnimState:Show("ARM_normal")
+    end,
 }
 
 AddStategraphState("wilson", musha_treasuresniffing)
@@ -1255,13 +1290,15 @@ end
 
 local musha_setsugetsuka_pre = State {
     name = "musha_setsugetsuka_pre",
-    tags = { "musha_setsugetsuka_pre", "busy", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka_pre", "busy", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("multithrust_yell")
         inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.setsugetsuka.damagetakenmultiplier, "setsugetsuka")
         inst.sg.statemem.target = target
         inst.components.timer:SetTimeLeft("clearsetsugetsukacounter", 0)
     end,
@@ -1281,6 +1318,10 @@ local musha_setsugetsuka_pre = State {
             end
         end),
     },
+
+    onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "setsugetsuka")
+    end,
 }
 
 local musha_setsugetsuka_pre_client = State {
@@ -1623,10 +1664,8 @@ local function DoAnnihilation(inst)
             local extradamage = TUNING.musha.skills.lightningstrike.damage +
                 TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
             target.components.combat:GetAttacked(inst, damage + extradamage, weapon, "electric")
-            target:AddDebuff("annihilation", "debuff_paralysis")
-            if target.components.debuffable:GetDebuff("annihilation") then
-                target.components.debuffable:GetDebuff("annihilation"):SetDuration(TUNING.musha.skills.annihilation.paralysisduration)
-            end
+            target:AddDebuff("annihilation", "debuff_paralysis",
+                { duration = TUNING.musha.skills.annihilation.paralysisduration })
         else
             target.components.combat:GetAttacked(inst, damage, weapon)
         end
@@ -1662,6 +1701,8 @@ local musha_annihilation_pre = State {
         inst.components.locomotor:Stop()
         inst:ForceFacePoint(target.x, target.y, target.z)
         inst.AnimState:PlayAnimation("atk_leap_pre")
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.annihilation.damagetakenmultiplier, "annihilation")
         inst.sg.statemem.target = target
     end,
 
@@ -1672,7 +1713,11 @@ local musha_annihilation_pre = State {
                 inst.sg:GoToState("musha_annihilation", { target = inst.sg.statemem.target })
             end
         end),
-    }
+    },
+
+    onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "annihilation")
+    end,
 }
 
 local musha_annihilation_pre_client = State {
@@ -1707,6 +1752,8 @@ local musha_annihilation = State {
         inst.Transform:SetEightFaced()
         inst.AnimState:PlayAnimation("atk_leap")
         inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.annihilation.damagetakenmultiplier, "annihilation")
 
         inst.sg.statemem.flash = 0
         inst.sg.statemem.startingpos = inst:GetPosition()
@@ -1780,6 +1827,7 @@ local musha_annihilation = State {
         inst.components.bloomer:PopBloom("leap")
         inst.components.colouradder:PopColour("leap")
 
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "annihilation")
         inst.components.timer:StartTimer("cooldown_annihilation", TUNING.musha.skills.annihilation.cooldown)
         inst:ListenForEvent("timerdone", AnnihilationOnTimerDone)
     end,
@@ -2141,7 +2189,6 @@ local musha_desolatedive_pst = State {
             end
 
             inst:DoTaskInTime(0, DoDive) -- Get lightning strike effect
-            inst.components.health:SetInvincible(false)
             inst:AddTag("scarytoprey")
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("musha_nointerrupt")

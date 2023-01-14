@@ -197,6 +197,7 @@ local function OnDetached(inst, target) -- Note: components.debuff.ondetachedfn(
     if inst.single then
         target.components.mana:DoDelta(-TUNING.musha.skills.manashield.manacost)
         target.components.mana.modifiers:RemoveModifier(target, "manashield")
+        inst:RemoveEventCallback("manadepleted", OnManaDepleted, target)
 
         target.components.timer:StartTimer("cooldown_manashield", TUNING.musha.skills.manashield.cooldown)
         target:ListenForEvent("timerdone", ShieldOnTimerDone)

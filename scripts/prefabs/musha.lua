@@ -1894,6 +1894,7 @@ local function OnModeChange(inst)
     if previousmode == 2 and currentmode ~= 2 then
         inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
+        inst.components.fatigue.multipliers:RemoveModifier(inst, "valkyriebuff")
 
         inst:RemoveTag("areaattack")
         inst:RemoveEventCallback("onattackother", ValkyrieOnAttackOther)
@@ -2000,6 +2001,8 @@ local function OnModeChange(inst)
             TUNING.musha.charactermode.valkyrie.damagetakenmultiplier, "valkyriebuff")
         inst.components.mana.modifiers:SetModifier(inst, -- Note: SourceModifierList:SetModifier(source, m, key)
             TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
+        inst.components.fatigue.multipliers:SetModifier(inst,
+            TUNING.musha.charactermode.valkyrie.fatiguemultiplier, "valkyriebuff")
 
         inst:AddTag("areaattack")
         inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)
