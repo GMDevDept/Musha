@@ -608,6 +608,16 @@ local musha_spell = State {
                 inst.sg.statemem.symbolsoverridden = true
             end
 
+            if book.reticule ~= nil then
+                inst.sg.statemem.reticule = SpawnPrefab(book.reticule.prefab)
+                inst.sg.statemem.reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
+                inst.sg.statemem.reticule.Transform:SetScale(book.reticule.scale, book.reticule.scale,
+                    book.reticule.scale)
+
+                inst.sg.statemem.reticule_ping = book.reticule.prefab_ping
+                inst.sg.statemem.reticulescale = book.reticule.scale
+            end
+
             inst.sg.statemem.castsound = book ~= nil and book.castsound ~= nil and book.castsound
                 or "dontstarve/common/book_spell"
         end
@@ -630,12 +640,22 @@ local musha_spell = State {
             if inst.bufferedspell and inst[inst.bufferedspell] then
                 inst[inst.bufferedspell](inst)
             end
+
             if inst.sg.statemem.success_fx then
                 CustomAttachFx(inst, inst.sg.statemem.success_fx)
             end
+
+            if inst.sg.statemem.reticule_ping then
+                local reticule = SpawnPrefab(inst.sg.statemem.reticule_ping)
+                local scale = inst.sg.statemem.reticulescale
+                reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
+                reticule.Transform:SetScale(scale, scale, scale)
+            end
+
             inst.SoundEmitter:PlaySound(inst.sg.statemem.castsound)
             inst.sg.statemem.book_fx = nil --Don't cancel anymore
 
+            CustomRemoveEntity(inst.sg.statemem.reticule)
             inst.bufferedspell = nil
             inst.bufferedbookfx = nil
 
@@ -672,6 +692,7 @@ local musha_spell = State {
             inst.SoundEmitter:SetVolume("book_layer_sound", .5)
         end
 
+        CustomRemoveEntity(inst.sg.statemem.reticule)
         inst.bufferedspell = nil
         inst.bufferedbookfx = nil
     end,
@@ -1542,6 +1563,11 @@ local musha_phoenixadvent = State {
         inst.AnimState:PushAnimation("lunge_pst", false)
         inst:ForceFacePoint(target.x, target.y, target.z)
 
+        local reticule = SpawnPrefab("reticuleaoeping_musha")
+        local scale = math.sqrt(TUNING.musha.skills.phoenixadvent.radius / 4)
+        reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
+        reticule.Transform:SetScale(scale, scale, scale)
+
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.phoenixadvent.damagetakenmultiplier, "phoenixadvent")
 
@@ -1700,6 +1726,7 @@ local musha_annihilation_pre = State {
         local target = data.target
         inst.components.locomotor:Stop()
         inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.AnimState:SetDeltaTimeMultiplier(3)
         inst.AnimState:PlayAnimation("atk_leap_pre")
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.annihilation.damagetakenmultiplier, "annihilation")
@@ -1717,6 +1744,7 @@ local musha_annihilation_pre = State {
 
     onexit = function(inst)
         inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "annihilation")
+        inst.AnimState:SetDeltaTimeMultiplier(1)
     end,
 }
 
@@ -1728,6 +1756,7 @@ local musha_annihilation_pre_client = State {
         local target = data.target
         inst.components.locomotor:Stop()
         inst:ForceFacePoint(target.x, target.y, target.z)
+        inst.AnimState:SetDeltaTimeMultiplier(3)
         inst.AnimState:PlayAnimation("atk_leap_pre")
 
         inst.sg:SetTimeout(2)
@@ -1735,6 +1764,10 @@ local musha_annihilation_pre_client = State {
 
     ontimeout = function(inst)
         inst.sg:GoToState("idle")
+    end,
+
+    onexit = function(inst)
+        inst.AnimState:SetDeltaTimeMultiplier(1)
     end,
 }
 
@@ -1764,6 +1797,12 @@ local musha_annihilation = State {
             inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (12 * FRAMES), 0, 0)
         end
+
+        local reticule = SpawnPrefab("reticuleaoeping_musha")
+        local scale = math.sqrt(TUNING.musha.skills.annihilation.radius / 4)
+        reticule.Transform:SetPosition(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y,
+            inst.sg.statemem.targetpos.z)
+        reticule.Transform:SetScale(scale, scale, scale)
     end,
 
     onupdate = function(inst)
@@ -2043,6 +2082,12 @@ local musha_desolatedive = State {
                 inst:ForceFacePoint(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y,
                     inst.sg.statemem.targetpos.z)
             end
+
+            local reticule = SpawnPrefab("reticuleaoesummonping_musha")
+            local scale = math.sqrt(TUNING.musha.skills.desolatedive.radius / 8)
+            reticule.Transform:SetPosition(inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.y,
+                inst.sg.statemem.targetpos.z)
+            reticule.Transform:SetScale(scale, scale, scale)
 
             for _, fx in pairs(fxlist) do
                 SpawnPrefab(fx).Transform:SetPosition(inst:GetPosition():Get())
@@ -2414,9 +2459,7 @@ end
 local function ValkyrieParryOnNewState(inst, data)
     if data.statename ~= "musha_valkyrieparry_idle" and data.statename ~= "musha_valkyrieparry_hit" then
         if inst.valkyrieparrycooldownpending then
-            if inst.sg.statemem.perfect then
-                inst.components.timer:StartTimer("cooldown_valkyrieparry", 0.1)
-            else
+            if not inst.sg.statemem.perfect then
                 inst.components.timer:StartTimer("cooldown_valkyrieparry", TUNING.musha.skills.valkyrieparry.cooldown)
             end
             inst:ListenForEvent("timerdone", ValkyrieParryOnTimerDone)
@@ -2566,11 +2609,11 @@ local function DoParryAttack(inst, target)
     if target ~= nil and target:IsValid() and target.components.combat then
         local fx_phantom = SpawnPrefab("musha_phantom")
         fx_phantom.Transform:SetPosition(inst.Transform:GetWorldPosition())
-        fx_phantom.AnimState:SetDeltaTimeMultiplier(0.7)
+        fx_phantom.AnimState:SetDeltaTimeMultiplier(0.6)
         fx_phantom.AnimState:PlayAnimation("lunge_pst", false)
+        fx_phantom.AnimState:SetMultColour(0.8, 0.3, 0.3, 0.7)
         fx_phantom.AnimState:OverrideSymbol("swap_object", "swap_spear_gungnir", "swap_spear_gungnir")
         fx_phantom:ForceFacePoint(target.Transform:GetWorldPosition())
-        fx_phantom.AnimState:SetMultColour(0.3, 0.3, 1, 0.7)
         fx_phantom.Physics:SetMotorVel(math.sqrt(target:GetDistanceSqToPoint(inst.Transform:GetWorldPosition())) /
             (3 * FRAMES), 0, 0)
 
@@ -2596,7 +2639,7 @@ local function DoParryAttack(inst, target)
             fx_phantom.Physics:SetMotorVel(0, 0, 0)
         end)
 
-        fx_phantom:DoTaskInTime(1, function()
+        fx_phantom:DoTaskInTime(1.2, function()
             fx_phantom:Remove()
         end)
     end
@@ -2644,6 +2687,7 @@ local musha_valkyrieparry_hit = State {
             inst:AddDebuff("manashield", "manashield",
                 { duration = TUNING.musha.skills.valkyrieparry.shieldduration })
             inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
+            inst.components.talker:Say(STRINGS.musha.skills.valkyrieparry.perfect)
             inst.sg:GoToState("musha_valkyriestab", { perfect = true })
         end),
     },
@@ -2779,7 +2823,7 @@ AddStategraphState("wilson", musha_valkyriestab)
 local function DoWhirl(inst, data)
     local must_tags = { "_combat" }
     local ignore_tags = { "player", "companion", "musha_companion", "wall" }
-    local radius = 2 * TUNING.musha.skills.valkyriewhirl.radius
+    local radius = TUNING.musha.skills.valkyriewhirl.radius
     local lightning = inst:HasTag("lightningstrikeready")
     local weapon = inst.components.combat:GetWeapon()
 
@@ -2976,12 +3020,16 @@ local function DoBlossom(inst, data)
 
     local target = data.target
     local counter = 0
+    local availablemana = inst.components.mana.current
+    local availablesanity = inst.components.sanity.current
 
     while counter < TUNING.musha.skills.phantomblossom.maxcount
-        and inst.components.mana.current >= TUNING.musha.skills.phantomblossom.manacost
-        and inst.components.sanity.current >= TUNING.musha.skills.phantomblossom.sanitycost do
+        and availablemana >= TUNING.musha.skills.phantomblossom.manacost
+        and availablesanity >= TUNING.musha.skills.phantomblossom.sanitycost do
 
         counter = counter + 1
+        availablemana = availablemana - TUNING.musha.skills.phantomblossom.manacost
+        availablesanity = availablesanity - TUNING.musha.skills.phantomblossom.sanitycost
 
         TheWorld:DoTaskInTime(counter * 0.4 * math.random(), function()
             if not target:IsValid() or target.components.health:IsDead() then return end
@@ -3018,6 +3066,11 @@ local musha_phantomblossom_pre = State {
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("channel_pre")
         inst.sg.statemem.animcounter = 0
+
+        local scale = math.sqrt(TUNING.musha.skills.phantomblossom.range / 12)
+        inst.sg.statemem.reticule = SpawnPrefab("reticuleaoe_1d2_12")
+        inst.sg.statemem.reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
+        inst.sg.statemem.reticule.Transform:SetScale(scale, scale, scale)
     end,
 
     events =
@@ -3083,6 +3136,7 @@ local musha_phantomblossom_pre = State {
     end,
 
     onexit = function(inst)
+        CustomRemoveEntity(inst.sg.statemem.reticule)
         CustomRemoveEntity(inst.fx_phantomblossom1)
         CustomRemoveEntity(inst.fx_phantomblossom2)
         inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
@@ -3136,6 +3190,11 @@ local musha_phantomblossom = State {
             inst.AnimState:PushAnimation("mindcontrol_loop")
             inst.AnimState:PushAnimation("mindcontrol_loop")
             inst.AnimState:PushAnimation("mindcontrol_pst", false)
+
+            local scale = math.sqrt(TUNING.musha.skills.phantomblossom.range / 12)
+            local reticule = SpawnPrefab("reticuleaoeping_1d2_12_musha")
+            reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
+            reticule.Transform:SetScale(scale, scale, scale)
 
             DoBlossom(inst, data)
             return

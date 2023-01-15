@@ -184,15 +184,16 @@ STRINGS.musha = {
         },
         valkyrieparry = {
             name = "十方无敌",
+            perfect = "就是现在!",
         },
         valkyriewhirl = {
             name = "横扫千军",
         },
         shadowparry = {
-            name = "",
+            name = "影瞬身",
         },
         voidphantom = {
-            name = "影幻身",
+            name = "影幻刃",
         },
         phantomslash = {
             name = "影乱舞",

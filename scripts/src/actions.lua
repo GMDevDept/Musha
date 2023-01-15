@@ -134,6 +134,12 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     fx = "fx_book_temperature",
                     fx_under_prefab = "fx_roots_under_book",
                     layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
+                },
+                reticule = {
+                    prefab = "reticuleaoe_1d2_12",
+                    prefab_ping = "reticuleaoeping_1d2_12_musha",
+                    scale = math.sqrt((TUNING.musha.skills.freezingspell.range +
+                        TUNING.musha.skills.freezingspell.rangegrowth * inst.components.leveler.lvl) / 12)
                 }
             }
             inst.castmanaspell:push()
@@ -160,6 +166,11 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     fx = "fx_book_rain",
                     fx_over_prefab = "fx_lightning_over_book",
                     layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+                },
+                reticule = {
+                    prefab = "reticuleaoe_1d2_12",
+                    prefab_ping = "reticuleaoeping_1d2_12_musha",
+                    scale = math.sqrt(TUNING.musha.skills.thunderspell.range / 12)
                 }
             }
             inst.castmanaspell:push()
@@ -189,6 +200,11 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                         fx = "waxwell_shadow_book_fx",
                         fx_under_prefab = "fx_tentacles_under_book",
                         layer_sound = { frame = 30, sound = "maxwell_rework/shadow_magic/cast" },
+                    },
+                    reticule = {
+                        prefab = "reticuleaoesummon",
+                        prefab_ping = "reticuleaoesummonping_musha",
+                        scale = math.sqrt(TUNING.musha.skills.shadowprison.range / 8)
                     }
                 }
                 inst.castmanaspell:push()

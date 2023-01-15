@@ -680,6 +680,11 @@ local function DoPrincessBlessing(inst)
             fx = "fx_book_moon",
             fx_under_prefab = "fx_plants_big_under_book",
             layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
+        },
+        reticule = {
+            prefab = "reticuleaoe_1d2_12",
+            prefab_ping = "reticuleaoeping_1d2_12_musha",
+            scale = math.sqrt(TUNING.musha.skills.princessblessing.range / 12)
         }
     }
     inst.castmanaspell:push()
@@ -1594,6 +1599,8 @@ local function ValkyrieKeyUp(inst, x, y, z)
                         inst.components.talker:Say(STRINGS.musha.no_target)
                     elseif not inst:IsNear(target, TUNING.musha.skills.voidphantom.range) then
                         inst.components.talker:Say(STRINGS.musha.out_of_range)
+                        local scale = math.sqrt(TUNING.musha.skills.voidphantom.range / 12)
+                        CustomAttachFx(inst, "reticuleaoeping_1d2_12_musha", nil, Vector3(scale, scale, scale))
                     elseif inst.components.mana.current < TUNING.musha.skills.voidphantom.manacost then
                         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                         CustomPlayFailedAnim(inst)
@@ -1886,7 +1893,7 @@ local function OnModeChange(inst)
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.eater:SetDiet({ FOODGROUP.OMNI })
         inst.components.eater.preferseatingtags = nil
-        inst.components.eater.stale_hunger = nil
+        inst.components.eater.stale_hunger = TUNING.musha.stalefoodhungerrate
         inst.components.eater:SetRefusesSpoiledFood(false)
         CustomCancelTask(inst.task_fullmodehealthregen)
     end
@@ -1976,7 +1983,7 @@ local function OnModeChange(inst)
 
         if math.random() < 1 / 3 then
             inst.components.eater:SetDiet({ FOODGROUP.OMNI }, { FOODTYPE.MEAT, FOODTYPE.GOODIES })
-        elseif math.random() < 2 / 3 then
+        elseif math.random() < 1 / 2 then
             inst.components.eater:SetDiet({ FOODGROUP.VEGETARIAN })
         else
             inst.components.eater:SetPrefersEatingTag("preparedfood")
@@ -2340,6 +2347,8 @@ local function master_postinit(inst)
     inst.components.health:SetMaxHealth(TUNING.musha.health)
     inst.components.hunger:SetMax(TUNING.musha.hunger)
     inst.components.sanity:SetMax(TUNING.musha.sanity)
+    inst.components.eater.stale_hunger = TUNING.musha.stalefoodhungerrate
+    inst.components.eater.spoiled_hunger = TUNING.musha.spoiledfoodhungerrate
 
     -- Combat
     inst.components.combat.damagemultiplier = TUNING.musha.damagemultiplier

@@ -7,6 +7,9 @@ TUNING.musha = {
     hunger = 200,
     sanity = 200,
 
+    stalefoodhungerrate = 0.5,
+    spoiledfoodhungerrate = 0.25,
+
     maxmana = 200,
     manaregenspeed = 1,
 
@@ -317,7 +320,7 @@ TUNING.musha = {
         phoenixadvent = {
             damagemultiplier = 2.5,
             damagetakenmultiplier = 0.25,
-            radius = 4.5,
+            radius = 4,
             staminaregen = 30,
         },
         annihilation = {
@@ -325,7 +328,7 @@ TUNING.musha = {
             staminacost = 20,
             damagemultiplier = 1,
             damagetakenmultiplier = 0.25,
-            radius = 3.5,
+            radius = 4,
             maxdist = 15,
             paralysisduration = 12,
             cooldown = 8,
@@ -375,7 +378,7 @@ TUNING.musha = {
             basedamagemultiplier = 0.5,
             extradamagemultiplier = 0.05, -- by target's max health
             maxdamagemultiplier = 2.5,
-            radius = 3.5,
+            radius = 5,
             usewindow = 1,
         },
         voidphantom = {
@@ -393,8 +396,8 @@ TUNING.musha = {
         },
         phantomblossom = {
             manacost = 10,
-            sanitycost = 5,
-            maxcount = 10,
+            sanitycost = 10,
+            maxcount = 20,
             range = 15,
             maxchargingtime = 10,
             cooldown = 30,
