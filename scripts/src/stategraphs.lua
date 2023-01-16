@@ -2807,6 +2807,8 @@ local musha_valkyriestab = State {
         TimeEvent(12 * FRAMES, function(inst)
             inst.sg.statemem.nophantom = true
             inst.sg.statemem.attacking = nil
+            inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
             inst.Physics:SetMotorVel(0, 0, 0)
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             inst.components.timer:StartTimer("prevalkyriewhirl", TUNING.musha.skills.valkyriewhirl.usewindow)
@@ -2932,6 +2934,8 @@ local musha_valkyriewhirl = State {
             DoWhirl(inst, { pushback = true })
         end),
         TimeEvent(10 * FRAMES, function(inst)
+            inst.sg:RemoveStateTag("busy")
+            inst.sg:RemoveStateTag("musha_nointerrupt")
             inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
     },

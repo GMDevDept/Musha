@@ -6,7 +6,7 @@ local assets =
 
 local prefabs =
 {
-    "sporecloud_overlay",
+    "sporecloud_overlay_musha",
 }
 
 local FADE_FRAMES = 5
@@ -81,7 +81,7 @@ local function SpawnOverlayFX(inst, i, set, isnew)
         end
     end
 
-    local fx = SpawnPrefab("sporecloud_overlay")
+    local fx = SpawnPrefab("sporecloud_overlay_musha")
     fx.entity:SetParent(inst.entity)
     fx.Transform:SetPosition(set[1] * .85, 0, set[3] * .85)
     fx.Transform:SetScale(set[4], set[4], set[4])
@@ -264,7 +264,12 @@ local must_tags = { "_combat" }
 local ignore_tags = { "player", "companion", "musha_companion", "wall" }
 local function AuraOnTick(inst)
     CustomDoAOE(inst, TUNING.musha.skills.launchelement.poisonspore.radius, must_tags, ignore_tags, nil, function(v)
-        v.components.combat:GetAttacked(inst.owner, TUNING.musha.skills.launchelement.poisonspore.damage)
+        if not (v.components.freezable and v.components.freezable:IsFrozen()) then
+            v.components.combat:GetAttacked(inst.owner, TUNING.musha.skills.launchelement.poisonspore.damage)
+        elseif v.components.health then
+            v.components.health:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.damage *
+                TUNING.musha.skills.launchelement.poisonspore.frozendamagemultiplier)
+        end
     end)
 end
 
@@ -341,4 +346,37 @@ local function fn()
     return inst
 end
 
-return Prefab("sporecloud_musha", fn, assets, prefabs)
+local function overlayfn()
+    local inst = CreateEntity()
+
+    inst.entity:AddTransform()
+    inst.entity:AddAnimState()
+    inst.entity:AddNetwork()
+
+    inst:AddTag("FX")
+    inst:AddTag("NOCLICK")
+
+    inst.Transform:SetTwoFaced()
+
+    inst.AnimState:SetBank("sporecloud")
+    inst.AnimState:SetBuild("sporecloud")
+    inst.AnimState:SetLightOverride(.2)
+    inst.AnimState:SetMultColour(1, .45, 1, .75)
+
+    inst.AnimState:PlayAnimation("sporecloud_overlay_pre")
+
+    inst.entity:SetPristine()
+
+    if not TheWorld.ismastersim then
+        return inst
+    end
+
+    inst:ListenForEvent("animover", OnOverlayAnimOver)
+
+    inst.persists = false
+
+    return inst
+end
+
+return Prefab("sporecloud_musha", fn, assets, prefabs),
+    Prefab("sporecloud_overlay_musha", overlayfn, assets)

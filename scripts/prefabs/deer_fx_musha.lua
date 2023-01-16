@@ -368,6 +368,7 @@ local function ChargedFireOnExplode(inst)
 
     local function Split()
         local range = TUNING.musha.skills.launchelement.rollingmagma.charged.range
+        local mindist = TUNING.musha.skills.launchelement.rollingmagma.charged.mindistinterval
         local map = TheWorld.Map
         local offset = FindValidPositionByFan(
             math.random() * 2 * PI,
@@ -376,8 +377,8 @@ local function ChargedFireOnExplode(inst)
             function(offset)
                 local x1 = x + offset.x
                 local z1 = z + offset.z
-                return not map:IsPointNearHole(Vector3(x1, 0, z1), .4)
-                    and #TheSim:FindEntities(x1, 0, z1, 2, nil, nil, { "dummyplaceholder", "deer_fire_circle" }) == 0
+                return not map:IsPointNearHole(Vector3(x1, 0, z1), .4) and
+                    #TheSim:FindEntities(x1, 0, z1, mindist, nil, nil, { "dummyplaceholder", "deer_fire_circle" }) == 0
             end
         )
 

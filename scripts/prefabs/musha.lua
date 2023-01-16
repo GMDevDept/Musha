@@ -934,8 +934,17 @@ end
 local function PoisonSpore(inst, data)
     if inst:HasDebuff("elementloaded") then
         local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        local charged = inst.components.debuffable:GetDebuff("elementloaded").ischarged
+
         inst.components.debuffable:RemoveDebuff("elementloaded")
+
+        local cooldownoverride = nil
         local projectile = SpawnPrefab("sporebomb_musha")
+        if charged then
+            projectile.charged:push()
+            projectile.bounce = TUNING.musha.skills.launchelement.poisonspore.charged.bouncetime
+            cooldownoverride = TUNING.musha.skills.launchelement.poisonspore.charged.cooldown
+        end
         projectile.owner = inst
         projectile.Transform:SetPosition(x, y, z)
         projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
@@ -950,7 +959,8 @@ local function PoisonSpore(inst, data)
             end
         end
 
-        inst.components.timer:StartTimer("cooldown_poisonspore", TUNING.musha.skills.launchelement.poisonspore.cooldown)
+        inst.components.timer:StartTimer("cooldown_poisonspore",
+            cooldownoverride or TUNING.musha.skills.launchelement.poisonspore.cooldown)
         inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
 
         return true
@@ -978,6 +988,11 @@ local function PoisonSpore(inst, data)
 
         return true
     end
+end
+
+local function ChargedPoisonSpore(inst)
+    local debuff = inst.components.debuffable:GetDebuff("elementloaded")
+    debuff.charged:push() -- No need to set bounce time here because entity will be removed and respawned
 end
 
 local function ElementTakeTurns(inst, data)
@@ -1057,6 +1072,8 @@ local function OnElementCharged(inst, data)
                 ChargedRollingMagma(inst)
             elseif inst.elementmode == 2 then
                 ChargedWhiteFrost(inst)
+            elseif inst.elementmode == 3 then
+                ChargedPoisonSpore(inst)
             end
         end
         inst:RemoveEventCallback("timerdone", OnElementCharged)
