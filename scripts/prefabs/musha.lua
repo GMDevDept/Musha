@@ -682,7 +682,7 @@ local function DoPrincessBlessing(inst)
             layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
         },
         reticule = {
-            prefab = "reticuleaoe_1d2_12",
+            prefab = "reticuleaoe_1d2_12_musha",
             prefab_ping = "reticuleaoeping_1d2_12_musha",
             scale = math.sqrt(TUNING.musha.skills.princessblessing.range / 12)
         }
@@ -1075,7 +1075,12 @@ local function LightningStrike(inst, data)
         TUNING.musha.skills.lightningstrike.damagegrowth * math.floor(inst.components.leveler.lvl / 5) * 5
 
     target.components.combat:GetAttacked(inst, damage, inst.components.combat:GetWeapon(), "electric")
+
+    local fx = SpawnPrefab("firering_fx")
+    fx.Transform:SetScale(.6, .6, .6)
+    fx.Transform:SetPosition(target:GetPosition():Get())
     CustomAttachFx(target, { "lightning_musha", "shock_fx" })
+
     inst:LightningDischarge()
 end
 
@@ -1477,14 +1482,9 @@ local function ValkyrieKeyLongPressed(inst, data)
 end
 
 local function ValkyrieKeyDown(inst, x, y, z)
-    local attacking = inst.sg:HasStateTag("musha_setsugetsuka") or inst.sg:HasStateTag("musha_phoenixadvent")
-        or inst.sg:HasStateTag("musha_annihilation") or inst.sg:HasStateTag("musha_desolatedive")
-        or inst.sg:HasStateTag("musha_magpiestep") or inst.sg:HasStateTag("musha_valkyrieparrying")
-        or inst.sg:HasStateTag("musha_valkyriestab") or inst.sg:HasStateTag("musha_valkyriewhirl")
-
     -- Can recharge when using skills
     if inst.components.health:IsDead() or inst:HasTag("playerghost")
-        or (inst.sg:HasStateTag("musha_nointerrupt") and not attacking) then
+        or (inst.sg:HasStateTag("musha_nointerrupt") and not inst.sg:HasStateTag("musha_attacking")) then
         inst.novalkyriekeyonlongpress = nil
         return
     end
@@ -1508,7 +1508,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
                 end
             end
 
-            if attacking then
+            if inst.sg:HasStateTag("musha_attacking") then
                 inst.novalkyriekeyonlongpress = true
             end
         end
@@ -1794,7 +1794,7 @@ local function ValkyrieOnAttackOther(inst, data)
         inst.components.combat:DoAreaAttack(target, range, weapon, nil, nil, excludetags) -- Note: DoAreaAttack(target, range, weapon, validfn, stimuli, excludetags)
 
         local fx = SpawnPrefab("groundpoundring_fx")
-        local scale = 0.4 + 0.066 * range
+        local scale = math.sqrt(range / 12)
         fx.Transform:SetScale(scale, scale, scale)
         fx.Transform:SetPosition(target:GetPosition():Get())
     end

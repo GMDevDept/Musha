@@ -1364,7 +1364,7 @@ local musha_setsugetsuka_pre_client = State {
 
 local musha_setsugetsuka = State {
     name = "musha_setsugetsuka",
-    tags = { "musha_setsugetsuka", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_setsugetsuka", "busy", "nopredict", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1540,6 +1540,11 @@ local function DoAdvent(inst)
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
 
+    local fx = SpawnPrefab("firering_fx")
+    local scale = math.sqrt(radius / 8)
+    fx.Transform:SetScale(scale, scale, scale)
+    fx.Transform:SetPosition(inst:GetPosition():Get())
+
     if lightning then
         inst:LightningDischarge()
     end
@@ -1553,7 +1558,7 @@ end
 
 local musha_phoenixadvent = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1619,7 +1624,7 @@ local musha_phoenixadvent = State {
 
 local musha_phoenixadvent_client = State {
     name = "musha_phoenixadvent",
-    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_phoenixadvent", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1699,8 +1704,8 @@ local function DoAnnihilation(inst)
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
 
-    local fx = SpawnPrefab("groundpoundring_fx")
-    local scale = 0.4 + 0.066 * radius
+    local fx = SpawnPrefab("firering_fx")
+    local scale = math.sqrt(radius / 8)
     fx.Transform:SetScale(scale, scale, scale)
     fx.Transform:SetPosition(inst:GetPosition():Get())
 
@@ -1773,7 +1778,7 @@ local musha_annihilation_pre_client = State {
 
 local musha_annihilation = State {
     name = "musha_annihilation",
-    tags = { "musha_annihilation", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_annihilation", "busy", "nopredict", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -1936,8 +1941,12 @@ local function DoDive(inst)
 
     CustomDoAOE(inst, radius, must_tags, ignore_tags, nil, fn)
 
-    local fx = SpawnPrefab("groundpoundring_fx")
-    fx.Transform:SetPosition(inst:GetPosition():Get())
+    local fx1 = SpawnPrefab("groundpoundring_fx")
+    fx1.Transform:SetPosition(inst:GetPosition():Get())
+
+    local fx2 = SpawnPrefab("groundpound_fx")
+    fx2.Transform:SetScale(1.5, 1.5, 1.5)
+    fx2.Transform:SetPosition(inst:GetPosition():Get())
 
     local sinkhole = SpawnPrefab("antlion_sinkhole_musha")
     sinkhole.fx_scale = 1.8
@@ -2052,7 +2061,7 @@ local musha_desolatedive_pre_client = State {
 
 local musha_desolatedive = State {
     name = "musha_desolatedive",
-    tags = { "musha_desolatedive", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive", "busy", "nopredict", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         if inst.AnimState:IsCurrentAnimation("superjump_lag") then
@@ -2171,7 +2180,7 @@ local musha_desolatedive = State {
 
 local musha_desolatedive_pst = State {
     name = "musha_desolatedive_pst",
-    tags = { "musha_desolatedive_pst", "busy", "nopredict", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_desolatedive_pst", "busy", "nopredict", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         if data ~= nil then
@@ -2299,7 +2308,7 @@ AddStategraphEvent("wilson_client", EventHandler("startdesolatedive_pre",
 
 local musha_magpiestep = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -2411,7 +2420,7 @@ local musha_magpiestep = State {
 
 local musha_magpiestep_client = State {
     name = "musha_magpiestep",
-    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_magpiestep", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -2471,7 +2480,7 @@ end
 
 local musha_valkyrieparry_pre = State {
     name = "musha_valkyrieparry_pre",
-    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying" },
+    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying", "nointerrupt" },
 
     onenter = function(inst)
         inst.components.locomotor:Stop()
@@ -2495,7 +2504,7 @@ local musha_valkyrieparry_pre = State {
 
 local musha_valkyrieparry_idle = State {
     name = "musha_valkyrieparry_idle",
-    tags = { "musha_valkyrieparry_idle", "musha_valkyrieparry_pre", "nomorph", "musha_valkyrieparrying" },
+    tags = { "musha_valkyrieparry_idle", "musha_valkyrieparrying", "nointerrupt" },
 
     onenter = function(inst, data)
         inst.components.locomotor:Stop()
@@ -2557,7 +2566,7 @@ local musha_valkyrieparry_idle = State {
 
 local musha_valkyrieparry_pre_client = State {
     name = "musha_valkyrieparry_pre",
-    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying" },
+    tags = { "musha_valkyrieparry_pre", "musha_valkyrieparrying", "nointerrupt" },
 
     onenter = function(inst, data)
         local target = data.target
@@ -2647,7 +2656,7 @@ end
 
 local musha_valkyrieparry_hit = State {
     name = "musha_valkyrieparry_hit",
-    tags = { "musha_valkyrieparry_hit", "nomorph", "busy", "nopredict", "nointerrupt", "musha_valkyrieparrying" },
+    tags = { "musha_valkyrieparry_hit", "musha_valkyrieparrying", "busy", "nopredict", "nointerrupt" },
 
     onenter = function(inst, data)
         inst.valkyrieparrycooldownpending = true
@@ -2727,7 +2736,7 @@ end)
 
 local musha_valkyriestab = State {
     name = "musha_valkyriestab",
-    tags = { "musha_valkyriestab", "busy", "nopredict", "nomorph", "nointerrupt" },
+    tags = { "musha_valkyriestab", "busy", "nopredict", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         inst.valkyrieparrycooldownpending = true
@@ -2876,7 +2885,7 @@ end
 
 local musha_valkyriewhirl = State {
     name = "musha_valkyriewhirl",
-    tags = { "musha_valkyriewhirl", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_valkyriewhirl", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         inst.components.locomotor:Stop()
@@ -2946,7 +2955,7 @@ local musha_valkyriewhirl = State {
 
 local musha_valkyriewhirl_client = State {
     name = "musha_valkyriewhirl",
-    tags = { "musha_valkyriewhirl", "busy", "nomorph", "nointerrupt", "musha_nointerrupt" },
+    tags = { "musha_valkyriewhirl", "busy", "nointerrupt", "musha_nointerrupt", "musha_attacking" },
 
     onenter = function(inst, data)
         inst.components.locomotor:Stop()
@@ -3068,7 +3077,7 @@ local musha_phantomblossom_pre = State {
         inst.sg.statemem.animcounter = 0
 
         local scale = math.sqrt(TUNING.musha.skills.phantomblossom.range / 12)
-        inst.sg.statemem.reticule = SpawnPrefab("reticuleaoe_1d2_12")
+        inst.sg.statemem.reticule = SpawnPrefab("reticuleaoe_1d2_12_musha")
         inst.sg.statemem.reticule.Transform:SetPosition(inst.Transform:GetWorldPosition())
         inst.sg.statemem.reticule.Transform:SetScale(scale, scale, scale)
     end,
@@ -3246,7 +3255,7 @@ AddStategraphEvent("wilson_client", EventHandler("startphantomblossom_pre",
 
 local musha_portal_jumpout = State {
     name = "musha_portal_jumpout",
-    tags = { "busy", "nopredict", "nomorph", "noattack", "nointerrupt", "musha_nointerrupt" },
+    tags = { "busy", "nopredict", "noattack", "nointerrupt", "musha_nointerrupt" },
 
     onenter = function(inst, data)
         ToggleOffPhysics(inst)

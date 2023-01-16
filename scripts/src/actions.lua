@@ -136,7 +136,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     layer_sound = { frame = 25, sound = "wickerbottom_rework/book_spells/silviculture" },
                 },
                 reticule = {
-                    prefab = "reticuleaoe_1d2_12",
+                    prefab = "reticuleaoe_1d2_12_musha",
                     prefab_ping = "reticuleaoeping_1d2_12_musha",
                     scale = math.sqrt((TUNING.musha.skills.freezingspell.range +
                         TUNING.musha.skills.freezingspell.rangegrowth * inst.components.leveler.lvl) / 12)
@@ -168,7 +168,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                     layer_sound = { frame = 30, sound = "wickerbottom_rework/book_spells/upgraded_horticulture" },
                 },
                 reticule = {
-                    prefab = "reticuleaoe_1d2_12",
+                    prefab = "reticuleaoe_1d2_12_musha",
                     prefab_ping = "reticuleaoeping_1d2_12_musha",
                     scale = math.sqrt(TUNING.musha.skills.thunderspell.range / 12)
                 }
@@ -202,7 +202,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                         layer_sound = { frame = 30, sound = "maxwell_rework/shadow_magic/cast" },
                     },
                     reticule = {
-                        prefab = "reticuleaoesummon",
+                        prefab = "reticuleaoesummon_musha",
                         prefab_ping = "reticuleaoesummonping_musha",
                         scale = math.sqrt(TUNING.musha.skills.shadowprison.range / 8)
                     }
@@ -304,7 +304,8 @@ local function CastSpell(inst, doer, actions, right) -- Both inst and doer are c
     if doer:HasTag("musha") and right then
         if inst == doer then
             table.insert(actions, GLOBAL.ACTIONS.MANASPELL)
-        elseif inst:HasTag("musha_voidphantom") and doer.mode:value() == 3 then
+        elseif doer.mode:value() == 3 and inst:HasTag("musha_voidphantom") and
+            not inst.sg:HasStateTag("busy") then
             table.insert(actions, GLOBAL.ACTIONS.PHANTOMSPELL)
         end
     end
