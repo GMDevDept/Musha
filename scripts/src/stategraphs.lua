@@ -31,6 +31,28 @@ local function ApplyPhantom(inst, anim)
     end)
 end
 
+local function ShouldDash(inst)
+    if TheWorld.ismastersim
+        and (inst.components.rider:IsRiding()
+            or inst.components.inventory:IsHeavyLifting()
+            or (inst:GetStormLevel() >= TUNING.SANDSTORM_FULL_LEVEL
+                and not inst.components.playervision:HasGoggleVision())
+            or inst:HasTag("groggy")
+            or inst:IsCarefulWalking()) then
+        return false
+    elseif not TheWorld.ismastersim
+        and (inst.replica.rider ~= nil and inst.replica.rider:IsRiding()
+            or inst.replica.inventory:IsHeavyLifting()
+            or (inst:GetStormLevel() >= TUNING.SANDSTORM_FULL_LEVEL
+                and not inst.components.playervision:HasGoggleVision())
+            or inst:HasTag("groggy")
+            or inst:IsCarefulWalking()) then
+        return false
+    elseif inst.components.locomotor:GetRunSpeed() >= 2 * TUNING.WILSON_RUN_SPEED then
+        return true
+    end
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- No interrupt states exclusively for Musha
@@ -84,6 +106,128 @@ AddStategraphPostInit("wilson", function(self)
             inst.components.timer:StartTimer("premagpiestep", 2 * TUNING.musha.skills.magpiestep.usewindow)
         end
         _onenter(inst)
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Redefine blocked event handler for valkyrieparry and shadowparry
+
+AddStategraphPostInit("wilson", function(self)
+    local _fn = self.events["blocked"].fn
+    self.events["blocked"].fn = function(inst, data)
+        if not inst.components.health:IsDead() then
+            if inst.sg:HasStateTag("musha_valkyrieparrying") and not inst.valkyriestabstarted then
+                if inst.components.stamina.current < TUNING.musha.skills.valkyrieparry.staminacostonhit then
+                    inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                    return self.events["attacked"].fn(inst, data)
+                else
+                    inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyrieparry.staminacostonhit)
+                    inst.sg:GoToState("musha_valkyrieparry_hit", data)
+                end
+            elseif inst.sg:HasStateTag("musha_shadowparry") then
+
+            else
+                return _fn(inst, data)
+            end
+        else
+            return _fn(inst, data)
+        end
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
+-- Add alternative dash anim to run state
+
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["run"].onenter
+    self.states["run"].onenter = function(inst)
+        if inst:HasTag("musha") and ShouldDash(inst) then
+            inst.components.locomotor:RunForward()
+
+            local anim = "gale_speedrun_withitem_loop"
+            if not inst.AnimState:IsCurrentAnimation(anim) then
+                inst.AnimState:PlayAnimation(anim, true)
+            end
+
+            inst.sg.statemem.musha_dash = true
+            inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
+        else
+            _onenter(inst)
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson", function(self)
+    table.insert(self.states["run"].timeline,
+        TimeEvent(1 * FRAMES, function(inst)
+            print("musha_dash", inst.sg.statemem.musha_dash, inst.sg.mem.footsteps)
+            if inst.sg.statemem.musha_dash then
+                if inst.sg.mem.footsteps > 3 then
+                    PlayFootstep(inst, .6, true)
+                else
+                    inst.sg.mem.footsteps = inst.sg.mem.footsteps + 1
+                    PlayFootstep(inst, 1, true)
+                end
+            end
+        end))
+end)
+
+AddStategraphPostInit("wilson_client", function(self)
+    local _onenter = self.states["run"].onenter
+    self.states["run"].onenter = function(inst)
+        if inst:HasTag("musha") and ShouldDash(inst) then
+            inst.components.locomotor:RunForward()
+
+            local anim = "gale_speedrun_withitem_loop"
+            if not inst.AnimState:IsCurrentAnimation(anim) then
+                inst.AnimState:PlayAnimation(anim, true)
+            end
+
+            inst.sg.statemem.musha_dash = true
+            inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
+        else
+            _onenter(inst)
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson_client", function(self)
+    table.insert(self.states["run"].timeline,
+        TimeEvent(1 * FRAMES, function(inst)
+            if inst.sg.statemem.musha_dash then
+                if inst.sg.mem.footsteps > 3 then
+                    PlayFootstep(inst, .6, true)
+                else
+                    inst.sg.mem.footsteps = inst.sg.mem.footsteps + 1
+                    PlayFootstep(inst, 1, true)
+                end
+            end
+        end))
+end)
+
+AddStategraphPostInit("wilson", function(self)
+    local _onenter = self.states["run_stop"].onenter
+    self.states["run_stop"].onenter = function(inst)
+        if inst:HasTag("musha") and ShouldDash(inst) then
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("gale_speedrun_withitem_pst")
+        else
+            _onenter(inst)
+        end
+    end
+end)
+
+AddStategraphPostInit("wilson_client", function(self)
+    local _onenter = self.states["run_stop"].onenter
+    self.states["run_stop"].onenter = function(inst)
+        if inst:HasTag("musha") and ShouldDash(inst) then
+            inst.components.locomotor:Stop()
+            inst.AnimState:PlayAnimation("gale_speedrun_withitem_pst")
+        else
+            _onenter(inst)
+        end
     end
 end)
 
@@ -2514,7 +2658,7 @@ local musha_valkyrieparry_idle = State {
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.valkyrieparry.damagetakenmultiplier, "valkyrieparry")
 
-        inst.fx_valkyrieparryshield = CustomAttachFx(inst, "abigailforcefield", 0,
+        inst.fx_valkyrieparryshield = CustomAttachFx(inst, "abigailforcefield", { duration = 0 },
             Vector3(1.4, 1.4, 1.4), Vector3(0, -2.5, 0))
         inst.fx_valkyrieparryshield.AnimState:SetMultColour(1, 1, 1, 0.6)
         inst.fx_valkyrieparryshield.AnimState:SetSortOrder(2)
@@ -2714,25 +2858,6 @@ local musha_valkyrieparry_hit = State {
 }
 
 AddStategraphState("wilson", musha_valkyrieparry_hit)
-
--- Redefine attacked event handlers
-AddStategraphPostInit("wilson", function(self)
-    local _fn = self.events["blocked"].fn
-    self.events["blocked"].fn = function(inst, data)
-        if not inst.components.health:IsDead() and not inst.sg:HasStateTag("drowning")
-            and inst.sg:HasStateTag("musha_valkyrieparrying") and not inst.valkyriestabstarted then
-            if inst.components.stamina.current < TUNING.musha.skills.valkyrieparry.staminacostonhit then
-                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
-                return self.events["attacked"].fn(inst, data)
-            else
-                inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyrieparry.staminacostonhit)
-                inst.sg:GoToState("musha_valkyrieparry_hit", data)
-            end
-        else
-            return _fn(inst, data)
-        end
-    end
-end)
 
 local musha_valkyriestab = State {
     name = "musha_valkyriestab",
@@ -3015,6 +3140,63 @@ AddStategraphEvent("wilson_client", EventHandler("startvalkyriewhirl",
 
 -- Shadow parry
 
+local function ShadowParryOnTimerDone(inst, data)
+    if data.name == "cooldown_shadowparry" then
+        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+            .. STRINGS.musha.skills.shadowparry.name
+            .. STRINGS.musha.skills.cooldownfinished.part2)
+        inst:RemoveEventCallback("timerdone", ShadowParryOnTimerDone)
+    end
+end
+
+local musha_shadowparry = State {
+    name = "musha_shadowparry",
+    tags = { "musha_shadowparry", "nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("emote_hands")
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_shadowparry_pst")
+            end
+        end),
+        EventHandler("endshadowparry", function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+            inst.AnimState:PlayAnimation("mindcontrol_pst")
+            inst.sg:GoToState("idle", true)
+        end),
+    },
+}
+
+local musha_shadowparry_client = State {
+    name = "musha_shadowparry",
+    tags = { "musha_shadowparry", "nointerrupt" },
+
+    onenter = function(inst)
+        inst.components.locomotor:Stop()
+        inst.AnimState:PlayAnimation("emote_hands")
+    end,
+
+    events =
+    {
+        EventHandler("animover", function(inst)
+            if inst.AnimState:AnimDone() then
+                inst.sg:GoToState("musha_shadowparry_pst")
+            end
+        end),
+        EventHandler("endshadowparry", function(inst)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+            inst.AnimState:PlayAnimation("mindcontrol_pst")
+            inst.sg:GoToState("idle", true)
+        end),
+    },
+}
+
 ---------------------------------------------------------------------------------------------------------
 
 -- Phantom blossom
@@ -3272,7 +3454,7 @@ local musha_portal_jumpout = State {
         else
             dest = inst:GetPosition()
         end
-        CustomAttachFx(inst, "sanity_lower")
+        CustomAttachFx(inst, "sanity_raise")
         CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.8, 1.8, 1.8))
         inst.DynamicShadow:Enable(false)
         inst.sg:SetTimeout(14 * FRAMES)

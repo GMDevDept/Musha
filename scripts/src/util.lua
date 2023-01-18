@@ -35,11 +35,7 @@ end
 
 -- Freeze
 local function StartFreezeCooldown(inst)
-    inst:AddDebuff("postfreezeslowdown", "debuff_slowdown") -- Add slowdown debuff upon unfreeze
-    local debuff = inst.components.debuffable:GetDebuff("postfreezeslowdown") -- Nil if target doesn't have locomotor component, eg. tentacle
-    if debuff then
-        debuff:SetDuration(TUNING.musha.freezecooldowntime)
-    end
+    inst:AddDebuff("postfreezeslowdown", "debuff_slowdown", { duration = TUNING.musha.freezecooldowntime }) -- Add slowdown debuff upon unfreeze
     inst:DoTaskInTime(TUNING.musha.freezecooldowntime, function()
         inst:RemoveTag("freeze_cooldown")
         inst:RemoveEventCallback("unfreeze", StartFreezeCooldown)
@@ -54,7 +50,7 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Attach fx to inst
-local function SpawnFx(target, fx_name, duration, scale, offset)
+local function SpawnFx(target, fx_name, data, scale, offset)
     local a, b, c
     if scale then
         a, b, c = scale.x, scale.y, scale.z
@@ -70,7 +66,7 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     end
 
     local fx = SpawnPrefab(fx_name)
-    local dur = duration or 3
+    local dur = data and data.duration or 3
 
     fx.entity:SetParent(target.entity)
     fx.Transform:SetScale(a, b, c)
@@ -93,16 +89,16 @@ local function SpawnFx(target, fx_name, duration, scale, offset)
     return fx
 end
 
-GLOBAL.CustomAttachFx = function(target, fx_list, duration, scale, offset) -- Set duration = 0 to make it permanent, scale/offset: Vector3
+GLOBAL.CustomAttachFx = function(target, fx_list, data, scale, offset) -- Set data.duration = 0 to make it permanent, scale/offset: Vector3
     if target:HasTag("nofx") then
         return
     end
 
     if type(fx_list) == "string" then
-        return SpawnFx(target, fx_list, duration, scale, offset)
+        return SpawnFx(target, fx_list, data, scale, offset)
     elseif type(fx_list) == "table" then
         for _, fx_name in pairs(fx_list) do
-            SpawnFx(target, fx_name, duration, scale, offset)
+            SpawnFx(target, fx_name, data, scale, offset)
         end
     end
 end

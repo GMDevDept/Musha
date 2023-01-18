@@ -1121,7 +1121,7 @@ local function LightningRecharge(inst)
     end
     CustomAttachFx(inst, "electricchargedfx")
     inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
-        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", 0)
+        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", { duration = 0 })
     end, 0)
 end
 
@@ -2145,7 +2145,7 @@ local function OnFatigueLevelChange(inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
-        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_fullmode", 0, nil, Vector3(0, -0.1, 0))
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_fullmode", { duration = 0 }, nil, Vector3(0, -0.1, 0))
     end
 
     if fatiguelevel == 1 then

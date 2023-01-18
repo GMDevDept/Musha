@@ -277,7 +277,7 @@ AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENER
                 inst.Physics:Teleport(targetpos:Get())
                 inst.SoundEmitter:PlaySound("dontstarve/characters/wortox/soul/hop_out")
                 inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt")
-                CustomAttachFx(inst, "sanity_lower", nil, Vector3(2, 2, 2))
+                CustomAttachFx(inst, "sanity_raise", nil, Vector3(2, 2, 2))
                 CustomAttachFx(inst, "statue_transition_2", nil, Vector3(3, 3, 3))
             end
 
