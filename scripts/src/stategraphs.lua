@@ -48,7 +48,7 @@ local function ShouldDash(inst)
             or inst:HasTag("groggy")
             or inst:IsCarefulWalking()) then
         return false
-    elseif inst.components.locomotor:GetRunSpeed() >= 2 * TUNING.WILSON_RUN_SPEED then
+    elseif inst.components.locomotor:GetRunSpeed() > 2 * TUNING.WILSON_RUN_SPEED then
         return true
     end
 end
@@ -152,26 +152,31 @@ AddStategraphPostInit("wilson", function(self)
             end
 
             inst.sg.statemem.musha_dash = true
+            inst.sg.statemem.task_playfootstep = inst:DoPeriodicTask(4 * FRAMES,
+                function() PlayFootstep(inst, .8, true) end)
+
             inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
         else
             _onenter(inst)
         end
     end
-end)
 
-AddStategraphPostInit("wilson", function(self)
-    table.insert(self.states["run"].timeline,
-        TimeEvent(1 * FRAMES, function(inst)
-            print("musha_dash", inst.sg.statemem.musha_dash, inst.sg.mem.footsteps)
-            if inst.sg.statemem.musha_dash then
-                if inst.sg.mem.footsteps > 3 then
-                    PlayFootstep(inst, .6, true)
-                else
-                    inst.sg.mem.footsteps = inst.sg.mem.footsteps + 1
-                    PlayFootstep(inst, 1, true)
-                end
-            end
-        end))
+    local _onexit = self.states["run"].onexit
+    self.states["run"].onexit = function(inst)
+        if inst.sg.statemem.musha_dash then
+            inst.sg.statemem.task_playfootstep:Cancel()
+        end
+
+        if _onexit then
+            _onexit(inst)
+        end
+    end
+
+    local _events = self.states["run"].events
+    _events["updatedashanim"] = EventHandler("updatedashanim", function(inst)
+        inst.sg:GoToState("run") -- Re-enter run state to refresh dash anim
+    end)
+    self.states["run"].events = _events
 end)
 
 AddStategraphPostInit("wilson_client", function(self)
@@ -186,25 +191,31 @@ AddStategraphPostInit("wilson_client", function(self)
             end
 
             inst.sg.statemem.musha_dash = true
+            inst.sg.statemem.task_playfootstep = inst:DoPeriodicTask(4 * FRAMES,
+                function() PlayFootstep(inst, .8, true) end)
+
             inst.sg:SetTimeout(inst.AnimState:GetCurrentAnimationLength())
         else
             _onenter(inst)
         end
     end
-end)
 
-AddStategraphPostInit("wilson_client", function(self)
-    table.insert(self.states["run"].timeline,
-        TimeEvent(1 * FRAMES, function(inst)
-            if inst.sg.statemem.musha_dash then
-                if inst.sg.mem.footsteps > 3 then
-                    PlayFootstep(inst, .6, true)
-                else
-                    inst.sg.mem.footsteps = inst.sg.mem.footsteps + 1
-                    PlayFootstep(inst, 1, true)
-                end
-            end
-        end))
+    local _onexit = self.states["run"].onexit
+    self.states["run"].onexit = function(inst)
+        if inst.sg.statemem.musha_dash then
+            inst.sg.statemem.task_playfootstep:Cancel()
+        end
+
+        if _onexit then
+            _onexit(inst)
+        end
+    end
+
+    local _events = self.states["run"].events
+    _events["updatedashanim"] = EventHandler("updatedashanim", function(inst)
+        inst.sg:GoToState("run") -- Re-enter run state to refresh dash anim
+    end)
+    self.states["run"].events = _events
 end)
 
 AddStategraphPostInit("wilson", function(self)

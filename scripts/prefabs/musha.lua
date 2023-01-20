@@ -1238,6 +1238,7 @@ local function CancelSneakSpeedBoost(inst)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
     inst:RemoveTag("sneakspeedbooston")
+    inst.updatedashanim:push()
 end
 
 local function SneakSpeedBoost(inst)
@@ -1248,6 +1249,7 @@ local function SneakSpeedBoost(inst)
         inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
         inst.components.stamina.modifiers:SetModifier(inst, -TUNING.musha.skills.sneakspeedboost.staminacost,
             "sneakspeedboost")
+        inst.updatedashanim:push()
     end
 end
 
@@ -1280,8 +1282,10 @@ local function BackStab(inst, data)
             function()
                 if not inst:HasTag("sneakspeedbooston") then
                     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
+                    inst.updatedashanim:push()
                 end
             end)
+        inst.updatedashanim:push()
     end
 end
 
@@ -2307,6 +2311,7 @@ local function common_postinit(inst)
     inst._fatiguelevel = 0 -- Store previous fatigue level
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
+    inst.updatedashanim = net_event(inst.GUID, "updatedashanim") -- Handler set in SG
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
     inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG
