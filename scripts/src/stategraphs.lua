@@ -173,7 +173,7 @@ AddStategraphPostInit("wilson", function(self)
     end
 
     local _events = self.states["run"].events
-    _events["updatedashanim"] = EventHandler("updatedashanim", function(inst)
+    _events["updaterunninganim"] = EventHandler("updaterunninganim", function(inst)
         inst.sg:GoToState("run") -- Re-enter run state to refresh dash anim
     end)
     self.states["run"].events = _events
@@ -212,7 +212,7 @@ AddStategraphPostInit("wilson_client", function(self)
     end
 
     local _events = self.states["run"].events
-    _events["updatedashanim"] = EventHandler("updatedashanim", function(inst)
+    _events["updaterunninganim"] = EventHandler("updaterunninganim", function(inst)
         inst.sg:GoToState("run") -- Re-enter run state to refresh dash anim
     end)
     self.states["run"].events = _events
@@ -270,6 +270,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["knockout"].onenter
     self.states["knockout"].onenter = function(inst)
         if inst:HasTag("musha") then
+            inst:DecideNormalOrFull()
             inst.sg:AddStateTag("musha_nointerrupt")
             inst.components.talker:Say(STRINGS.musha.sleep.poor[math.random(#STRINGS.musha.sleep.poor)])
             SleepDeclaration(inst, "poor")
@@ -292,6 +293,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["bedroll"].onenter
     self.states["bedroll"].onenter = function(inst)
         if inst:HasTag("musha") then
+            inst:DecideNormalOrFull()
             inst.sg:AddStateTag("musha_nointerrupt")
             inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
             SleepDeclaration(inst, "good")
@@ -332,6 +334,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["tent"].onenter
     self.states["tent"].onenter = function(inst)
         if inst:HasTag("musha") then
+            inst:DecideNormalOrFull()
             inst.sg:AddStateTag("musha_nointerrupt")
             inst.components.talker:Say(STRINGS.musha.sleep.good[math.random(#STRINGS.musha.sleep.good)])
             SleepDeclaration(inst, "perfect")
@@ -351,6 +354,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["wakeup"].onenter
     self.states["wakeup"].onenter = function(inst)
         if inst:HasTag("musha") then
+            inst:DecideNormalOrFull()
             inst.sg:AddStateTag("musha_nointerrupt")
         end
         _onenter(inst)
@@ -2628,8 +2632,8 @@ local function ValkyrieParryOnNewState(inst, data)
             end
             inst:ListenForEvent("timerdone", ValkyrieParryOnTimerDone)
         end
-        inst:RemoveEventCallback("newstate", ValkyrieParryOnNewState)
         inst.valkyrieparrycooldownpending = nil
+        inst:RemoveEventCallback("newstate", ValkyrieParryOnNewState)
     end
 end
 

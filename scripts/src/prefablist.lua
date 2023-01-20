@@ -14,7 +14,7 @@ PrefabFiles = {
 
     -- FXs
     "musha_phantom",
-    "fx_fullmode",
+    "fx_fatiguelevel",
     "manashield",
     "lightning_musha",
     "sporebomb_musha",

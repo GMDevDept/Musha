@@ -1237,19 +1237,18 @@ local function CancelSneakSpeedBoost(inst)
     inst:RemoveEventCallback("startstaminadepleted", CancelSneakSpeedBoost)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
-    inst:RemoveTag("sneakspeedbooston")
-    inst.updatedashanim:push()
+    inst.updaterunninganim:push()
 end
 
 local function SneakSpeedBoost(inst)
     if inst.components.stamina.current > 0 then
-        inst:AddTag("sneakspeedbooston")
-        ResetSneakSpeedMultiplier(inst)
         inst:ListenForEvent("staminadelta", ResetSneakSpeedMultiplier)
         inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
         inst.components.stamina.modifiers:SetModifier(inst, -TUNING.musha.skills.sneakspeedboost.staminacost,
             "sneakspeedboost")
-        inst.updatedashanim:push()
+        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
+        ResetSneakSpeedMultiplier(inst)
+        inst.updaterunninganim:push()
     end
 end
 
@@ -1260,8 +1259,8 @@ local function BackStab(inst, data)
     local extradamage = TUNING.musha.skills.sneak.backstabbasedamage + 50 * math.floor(inst.components.leveler.lvl / 5)
     if not (target.components and target.components.combat) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
-    elseif target.sg
-        and (target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving") or target.sg:HasStateTag("frozen")) then
+    elseif target.sg and (target.sg:HasStateTag("attack") or target.sg:HasStateTag("moving")
+        or target.sg:HasStateTag("frozen") or target.sg:HasStateTag("thawing")) then
         inst.components.talker:Say(STRINGS.musha.skills.sneak.backstab_normal)
         CustomAttachFx(target, "statue_transition")
         CustomAttachFx(inst, "nightsword_curve_fx", nil, Vector3(2, 2, 2))
@@ -1275,17 +1274,15 @@ local function BackStab(inst, data)
 
         target.components.combat:GetAttacked(inst, 2 * extradamage, inst.components.combat:GetWeapon()) -- Note: Combat:GetAttacked(attacker, damage, weapon, stimuli)
 
-        CustomCancelTask(inst.task_removesneakspeedboost)
-        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "sneakspeedboost",
+        CustomCancelTask(inst.task_removebackstabspeedboost)
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "backstabspeedboost",
             (TUNING.musha.skills.sneakspeedboost.max)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-        inst.task_removesneakspeedboost = inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime,
+        inst.updaterunninganim:push()
+        inst.task_removebackstabspeedboost = inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime,
             function()
-                if not inst:HasTag("sneakspeedbooston") then
-                    inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
-                    inst.updatedashanim:push()
-                end
+                inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
+                inst.updaterunninganim:push()
             end)
-        inst.updatedashanim:push()
     end
 end
 
@@ -1298,16 +1295,12 @@ local function EnterSneak(inst, data)
             end
         end)
 
-        inst:ListenForEvent("onattackother", BackStab)
-
-        if inst:HasTag("sneakspeedbooston") then
-            CancelSneakSpeedBoost(inst)
-        end
-
         inst.components.talker:Say(STRINGS.musha.skills.sneak.success)
         inst.components.colourtweener:StartTween({ 0.1, 0.1, 0.1, 1 }, 0)
         inst.Physics:SetCollisionMask(COLLISION.WORLD)
         CustomAttachFx(inst, { "statue_transition", "shadow_shield" .. math.random(1, 6) })
+        CancelSneakSpeedBoost(inst)
+        inst:ListenForEvent("onattackother", BackStab)
 
         inst:RemoveEventCallback("timerdone", EnterSneak)
     end
@@ -1908,7 +1901,6 @@ local function OnModeChange(inst)
 
     -- Remove attributes obtained from previous mode
     if previousmode == 1 and currentmode ~= 1 then
-        inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fullmodebuff")
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
@@ -1991,8 +1983,6 @@ local function OnModeChange(inst)
     end
 
     if currentmode == 1 then
-        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fullmodebuff",
-            TUNING.musha.fullmodespeedboost) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
         inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.fullmodesanityregen, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.fullmodehungerdrain, "fullmodebuff")
         inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.fullmodestaminaregen, "fullmodebuff")
@@ -2102,9 +2092,35 @@ end
 
 -- Fatigue level related
 
-local function SetCarefulWalkingAlwaysOn(inst, data)
-    if data and not data.careful then
-        inst.player_classified.iscarefulwalking:set(true)
+local function SetFatigueGrogginess(inst, data)
+    -- No worry if character is dead since fatigue level is reset to 1 by OnBecameGhost
+    local fatiguelevel = inst.fatiguelevel:value()
+
+    if not inst.task_removefatiguegrogginess then
+        local probability = Remap(inst.components.fatigue:GetPercent(),
+            TUNING.musha.fatiguelevel["level" .. fatiguelevel - 1].upper,
+            TUNING.musha.fatiguelevel["level" .. fatiguelevel].upper,
+            TUNING.musha.fatiguelevel["level" .. fatiguelevel].groggyprobmin,
+            TUNING.musha.fatiguelevel["level" .. fatiguelevel].groggyprobmax)
+        if math.random() < probability then
+            inst:AddTag("groggy")
+            inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguegrogginess",
+                TUNING.musha.fatiguelevel["level" .. fatiguelevel].groggyspeedmultiplier)
+
+            local duration = TUNING.musha.fatiguelevel["level" .. fatiguelevel].groggytimebase
+                + math.random() * TUNING.musha.fatiguelevel["level" .. fatiguelevel].groggytimemultiplier
+            inst.task_removefatiguegrogginess = inst:DoTaskInTime(duration, function()
+                inst:RemoveTag("groggy")
+                inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguegrogginess")
+                inst.task_removefatiguegrogginess = nil
+            end)
+        end
+    end
+
+    if fatiguelevel == 4 and not inst.sg:HasStateTag("musha_nointerrupt") then
+        if math.random() < TUNING.musha.fatiguelevel["level" .. fatiguelevel].knockoutprob then
+            inst.sg:GoToState("knockout")
+        end
     end
 end
 
@@ -2115,13 +2131,13 @@ local function DecideFatigueLevel(inst)
 
     local pct = inst.components.fatigue:GetPercent()
 
-    if pct < 0.1 then
+    if pct < TUNING.musha.fatiguelevel.level0.upper then
         inst.fatiguelevel:set(0)
-    elseif pct < 0.4 then
+    elseif pct < TUNING.musha.fatiguelevel.level1.upper then
         inst.fatiguelevel:set(1)
-    elseif pct < 0.6 then
+    elseif pct < TUNING.musha.fatiguelevel.level2.upper then
         inst.fatiguelevel:set(2)
-    elseif pct < 0.8 then
+    elseif pct < TUNING.musha.fatiguelevel.level3.upper then
         inst.fatiguelevel:set(3)
     else
         inst.fatiguelevel:set(4)
@@ -2131,6 +2147,8 @@ end
 local function OnFatigueLevelChange(inst)
     local _fatiguelevel = inst._fatiguelevel
     local fatiguelevel = inst.fatiguelevel:value()
+    local workmultiplier = TUNING.musha.fatiguelevel["level" .. fatiguelevel].workmultiplier
+    local speedmultiplier = TUNING.musha.fatiguelevel["level" .. fatiguelevel].speedmultiplier
 
     CustomRemoveEntity(inst.fx_fatiguelevel)
     inst.components.workmultiplier:RemoveMultiplier(ACTIONS.CHOP, inst)
@@ -2138,54 +2156,60 @@ local function OnFatigueLevelChange(inst)
     inst.components.workmultiplier:RemoveMultiplier(ACTIONS.HAMMER, inst)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguelevel")
 
+    if _fatiguelevel == 3 and fatiguelevel ~= 3 then
+        if fatiguelevel ~= 4 then
+            inst:RemoveTag("groggy")
+            CustomCancelTask(inst.task_removefatiguegrogginess)
+            inst.task_removefatiguegrogginess = nil
+            inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguegrogginess")
+        end
+        inst:RemoveEventCallback("newstate", SetFatigueGrogginess)
+    end
+
     if _fatiguelevel == 4 and fatiguelevel ~= 4 then
-        inst:RemoveEventCallback("carefulwalking", SetCarefulWalkingAlwaysOn)
-        inst.player_classified.iscarefulwalking:set(false)
+        if fatiguelevel ~= 3 then
+            inst:RemoveTag("groggy")
+            CustomCancelTask(inst.task_removefatiguegrogginess)
+            inst.task_removefatiguegrogginess = nil
+            inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "fatiguegrogginess")
+        end
+        inst:RemoveEventCallback("newstate", SetFatigueGrogginess)
     end
 
     if fatiguelevel == 0 then
-        local workmultiplier = TUNING.musha.fatiguelevel.level0.workmultiplier
-
         inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
-        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_fullmode", { duration = 0 }, nil, Vector3(0, -0.1, 0))
-    end
-
-    if fatiguelevel == 1 then
+        inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_pawprint_white", { duration = 0 }, nil, Vector3(0, -0.1, 0))
     end
 
     if fatiguelevel == 2 then
-        local workmultiplier = TUNING.musha.fatiguelevel.level2.workmultiplier
-        local speedmultiplier = TUNING.musha.fatiguelevel.level2.speedmultiplier
-
         inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_pawprint_yellow", { duration = 0 }, nil, Vector3(0, -0.1, 0))
     end
 
     if fatiguelevel == 3 then
-        local workmultiplier = TUNING.musha.fatiguelevel.level3.workmultiplier
-        local speedmultiplier = TUNING.musha.fatiguelevel.level3.speedmultiplier
-
         inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_pawprint_orange", { duration = 0 }, nil, Vector3(0, -0.1, 0))
+
+        inst:ListenForEvent("newstate", SetFatigueGrogginess)
     end
 
     if fatiguelevel == 4 then
-        local workmultiplier = TUNING.musha.fatiguelevel.level4.workmultiplier
-        local speedmultiplier = TUNING.musha.fatiguelevel.level4.speedmultiplier
-
         inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE, workmultiplier, inst)
         inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, workmultiplier, inst)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "fatiguelevel", speedmultiplier)
+        inst.fx_fatiguelevel = CustomAttachFx(inst, "fx_pawprint_red", { duration = 0 }, nil, Vector3(0, -0.1, 0))
 
-        inst.player_classified.iscarefulwalking:set(true)
-        inst:ListenForEvent("carefulwalking", SetCarefulWalkingAlwaysOn)
+        inst:ListenForEvent("newstate", SetFatigueGrogginess)
     end
 
     inst._fatiguelevel = fatiguelevel -- Update previous fatiguelevel
@@ -2311,7 +2335,7 @@ local function common_postinit(inst)
     inst._fatiguelevel = 0 -- Store previous fatigue level
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
     inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
-    inst.updatedashanim = net_event(inst.GUID, "updatedashanim") -- Handler set in SG
+    inst.updaterunninganim = net_event(inst.GUID, "updaterunninganim") -- Handler set in SG
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
     inst.playfullelfmelody = net_event(inst.GUID, "playfullelfmelody") -- Handler set in SG

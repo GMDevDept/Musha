@@ -173,6 +173,18 @@ STRINGS.musha = {
         setsugetsuka = {
             name = "雪月花",
         },
+        setsugetsukaredux = {
+            name = "里太刀·雪月花",
+        },
+        boost_flowery = {
+            name = "花月轮舞",
+        },
+        boost_luna = {
+            name = "月雪极狩",
+        },
+        boost_blizzard = {
+            name = "雪霰拂花",
+        },
         annihilation = {
             name = "歼灭锤",
         },

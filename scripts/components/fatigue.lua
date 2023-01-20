@@ -104,9 +104,9 @@ function Fatigue:Recalc(dt)
     local stamina = inst.components.stamina:GetPercent()
 
     local m = inst.sg:HasStateTag("sleeping") and
-        (inst.sg:HasStateTag("tent") and -1.5
-            or inst.sg:HasStateTag("bedroll") and -1
-            or inst.sg:HasStateTag("knockout") and -0.5
+        (inst.sg:HasStateTag("tent") and TUNING.musha.sleep.fatiguerate.perfect
+            or inst.sg:HasStateTag("bedroll") and TUNING.musha.sleep.fatiguerate.good
+            or inst.sg:HasStateTag("knockout") and TUNING.musha.sleep.fatiguerate.poor
             or -1)
         or stamina == 0 and TUNING.musha.fatiguerate5
         or stamina < 0.2 and TUNING.musha.fatiguerate4

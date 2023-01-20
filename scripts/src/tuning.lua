@@ -23,24 +23,40 @@ TUNING.musha = {
     fatiguerate3 = 0.1,
     fatiguerate4 = 0.2,
     fatiguerate5 = 0.5,
-
     fatiguelevel = {
         level0 = {
+            upper = 0.1,
             workmultiplier = 1.5,
+            speedmultiplier = 1.15,
         },
         level1 = {
+            upper = 0.4,
         },
         level2 = {
+            upper = 0.65,
             workmultiplier = 0.75,
             speedmultiplier = 0.9,
         },
         level3 = {
+            upper = 0.85,
             workmultiplier = 0.5,
-            speedmultiplier = 0.75,
+            speedmultiplier = 0.8,
+            groggyprobmin = 0.025,
+            groggyprobmax = 0.05,
+            groggytimebase = 2,
+            groggytimemultiplier = 5,
+            groggyspeedmultiplier = 0.5,
         },
         level4 = {
+            upper = 1,
             workmultiplier = 0.1,
-            speedmultiplier = 0.4,
+            speedmultiplier = 0.75,
+            groggyprobmin = 0.05,
+            groggyprobmax = 0.2,
+            groggytimebase = 5,
+            groggytimemultiplier = 10,
+            groggyspeedmultiplier = 1 / 3,
+            knockoutprob = 0.025,
         },
     },
 
@@ -49,6 +65,14 @@ TUNING.musha = {
     damageonminstamina = 0.5,
     areahitdamagepercent = 0.25,
     areaattackrange = 3,
+
+    sleep = {
+        fatiguerate = {
+            poor = -0.5,
+            good = -1.5,
+            perfect = -2
+        }
+    },
 
     charactermode = {
         valkyrie = {
@@ -77,7 +101,6 @@ TUNING.musha = {
         },
     },
 
-    fullmodespeedboost = 1.15,
     fullmodehealthregen = 0.1,
     fullmodesanityregen = 0.1,
     fullmodestaminaregen = 1,
@@ -391,6 +414,13 @@ TUNING.musha = {
             maxdamagemultiplier = 2.5,
             radius = 5,
             usewindow = 1,
+        },
+        shadowparry = {
+            sanitycost = 25,
+            staminacostrate = 2.5,
+            maxdist = 30,
+            perfecttimewindow = 9, -- Frames
+            cooldown = 10,
         },
         voidphantom = {
             manacost = 10,
