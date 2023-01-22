@@ -1485,8 +1485,11 @@ local function ValkyrieKeyLongPressed(inst, data)
             elseif inst.components.sanity.current < TUNING.musha.skills.phantomblossom.sanitycost then
                 inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                 CustomPlayFailedAnim(inst)
+            elseif inst.components.stamina.current < TUNING.musha.skills.phantomblossom.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
             else
-                -- mana and sanity cost handled in the stategraph
+                -- Costs handled in the stategraph
                 inst.startphantomblossom_pre:push()
             end
         end
@@ -1621,9 +1624,13 @@ local function ValkyrieKeyUp(inst, x, y, z)
                     elseif inst.components.sanity.current < TUNING.musha.skills.voidphantom.sanitycost then
                         inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                         CustomPlayFailedAnim(inst)
+                    elseif inst.components.stamina.current < TUNING.musha.skills.voidphantom.staminacost then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                        CustomPlayFailedAnim(inst)
                     else
                         inst.components.mana:DoDelta(-TUNING.musha.skills.voidphantom.manacost)
                         inst.components.sanity:DoDelta(-TUNING.musha.skills.voidphantom.sanitycost)
+                        inst.components.stamina:DoDelta(-TUNING.musha.skills.voidphantom.staminacost)
                         StartPhantomAttack(inst, { target = target })
                     end
                 end
@@ -1661,6 +1668,7 @@ local function ShadowKeyLongPressed(inst, data)
                 inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                 CustomPlayFailedAnim(inst)
             else
+                inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowmode.sanitycost)
                 inst.activateberserk:push()
             end
         end
@@ -1903,7 +1911,9 @@ local function OnModeChange(inst)
     if previousmode == 1 and currentmode ~= 1 then
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
+        inst.components.fatigue.multipliers:RemoveModifier(inst, "fullmodebuff")
         inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
+        inst.components.mana.modifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.eater:SetDiet({ FOODGROUP.OMNI })
         inst.components.eater.preferseatingtags = nil
         inst.components.eater.stale_hunger = TUNING.musha.stalefoodhungerrate
@@ -1983,12 +1993,17 @@ local function OnModeChange(inst)
     end
 
     if currentmode == 1 then
-        inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.fullmodesanityregen, "fullmodebuff")
-        inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.fullmodehungerdrain, "fullmodebuff")
-        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.fullmodestaminaregen, "fullmodebuff")
+        inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.charactermode.full.hungerdrain,
+            "fullmodebuff")
+        inst.components.fatigue.multipliers:SetModifier(inst, TUNING.musha.charactermode.full.fatiguemultiplier,
+            "fullmodebuff")
+        inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.charactermode.full.sanityregen,
+            "fullmodebuff")
+        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.charactermode.full.staminaregen, "fullmodebuff")
+        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.charactermode.full.manaregen, "fullmodebuff")
         inst.task_fullmodehealthregen = inst:DoPeriodicTask(1, function()
             if not inst.components.health:IsDead() then
-                inst.components.health:DoDelta(TUNING.musha.fullmodehealthregen, true, "regen")
+                inst.components.health:DoDelta(TUNING.musha.charactermode.full.healthregen, true, "regen")
             end
         end, nil, inst.components.health)
 
@@ -2017,10 +2032,10 @@ local function OnModeChange(inst)
 
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.charactermode.valkyrie.damagetakenmultiplier, "valkyriebuff")
-        inst.components.mana.modifiers:SetModifier(inst, -- Note: SourceModifierList:SetModifier(source, m, key)
-            TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
         inst.components.fatigue.multipliers:SetModifier(inst,
             TUNING.musha.charactermode.valkyrie.fatiguemultiplier, "valkyriebuff")
+        inst.components.mana.modifiers:SetModifier(inst,
+            TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
 
         inst:AddTag("areaattack")
         inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)

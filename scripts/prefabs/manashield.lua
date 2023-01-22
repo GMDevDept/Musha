@@ -72,7 +72,7 @@ local function TargetOnAttacked(inst, data) -- inst = buff target
 
     if shield.durability and shield.durability > 0 and data
         and not shield.components.timer:TimerExists("shieldbrokendelay") then -- data = nil when pushed by OnManaDepleted
-        local delta = TUNING.musha.skills.manashield.durabilitydamage
+        local delta = TUNING.musha.skills.manashield.durabilitybasedamage
         if data.damage and data.damage > 0 then
             delta = delta + data.damage * TUNING.musha.skills.manashield.durabilitydamagemultiplier
         end

@@ -7,11 +7,11 @@ TUNING.musha = {
     hunger = 200,
     sanity = 200,
 
-    stalefoodhungerrate = 0.5,
-    spoiledfoodhungerrate = 0.25,
+    stalefoodhungerrate = 1 / 3,
+    spoiledfoodhungerrate = 1 / 6,
 
     maxmana = 200,
-    manaregenspeed = 1,
+    manaregenspeed = 0.5,
 
     maxstamina = 200,
     staminarate = 0,
@@ -75,6 +75,14 @@ TUNING.musha = {
     },
 
     charactermode = {
+        full = {
+            healthregen = 0.1,
+            sanityregen = 0.1,
+            staminaregen = 1,
+            manaregen = 0.5,
+            hungerdrain = 1.5,
+            fatiguemultiplier = 1.5,
+        },
         valkyrie = {
             damagetakenmultiplier = 0.8,
             bonusdamagetomonster = 0.5,
@@ -100,11 +108,6 @@ TUNING.musha = {
             bonusdamagetoshadow = 0.5,
         },
     },
-
-    fullmodehealthregen = 0.1,
-    fullmodesanityregen = 0.1,
-    fullmodestaminaregen = 1,
-    fullmodehungerdrain = 1.3,
 
     debuffslowdownmult = 0.25,
     debuffslowdownduration = 5,
@@ -175,8 +178,8 @@ TUNING.musha = {
         },
         elfmelody = {
             max = 100,
-            regen_small = 0.5,
-            regen_large = 0.75,
+            regen_small = 1,
+            regen_large = 1.5,
             minrequired = 20,
             full = {
                 manarecover = 50,
@@ -227,21 +230,21 @@ TUNING.musha = {
             cooldown = 12,
         },
         manashield = {
-            manacost = 10,
+            manacost = 5,
             manaongoingcost = 1,
             damageabsorbrate = 0.5, -- Only affect health:DoDelta, combat:GetAttacked will always be cancelled
             lighttime = 4,
             brokendelay = 3,
             durabilitybase = 600,
             durabilitygrowth = 30,
-            durabilitydamage = 10,
+            durabilitybasedamage = 10,
             durabilitydamagemultiplier = 5,
             healthtodurabilitymultiplier = 2,
             cooldown = 30,
         },
         princessblessing = {
-            manacost = 25,
-            maxmanacost = 50,
+            manacost = 15,
+            maxmanacost = 45,
             duration = 15,
             cooldown = 15,
             range = 18,
@@ -269,7 +272,7 @@ TUNING.musha = {
             maxdelay = 10,
             rollingmagma = {
                 manacost = 5,
-                damage = 45,
+                damage = 35,
                 damageperhit = 1 / 3,
                 radius = 4,
                 forceignitecounter = 3,
@@ -277,7 +280,7 @@ TUNING.musha = {
                 cooldown = 1,
                 duration = 3,
                 charged = {
-                    extramanacost = 10,
+                    extramanacost = 20,
                     range = 10,
                     mindistinterval = 2,
                     chargetime = 2,
@@ -314,7 +317,7 @@ TUNING.musha = {
             },
             poisonspore = {
                 manacost = 10,
-                sanitycost = 20,
+                sanitycost = 10,
                 radius = 3.5,
                 damage = 30,
                 frozendamagemultiplier = 0.5,
@@ -324,7 +327,7 @@ TUNING.musha = {
                 cooldown = 10,
                 charged = {
                     extramanacost = 20,
-                    extrasanitycost = 30,
+                    extrasanitycost = 20,
                     chargetime = 2,
                     bouncetime = 4,
                     maxbouncedist = 10,
@@ -394,6 +397,7 @@ TUNING.musha = {
         },
         valkyrieparry = {
             staminacostonhit = 5,
+            staminaongoingcost = -2,
             damagetakenmultiplier = 0,
             cooldown = 10,
             perfecttimewindow = 6, -- Frames
@@ -423,21 +427,24 @@ TUNING.musha = {
             cooldown = 10,
         },
         voidphantom = {
-            manacost = 10,
+            manacost = 5,
             sanitycost = 10,
+            staminacost = 10,
+            basedamage = 10,
             damagemultiplier = 0.5,
             range = 10,
             duration = 40,
             cooldown = 3,
         },
         phantomslash = {
-            staminacost = 20,
+            staminacost = 25,
             damagemultiplier = 0.5,
             usewindow = 1,
         },
         phantomblossom = {
-            manacost = 10,
+            manacost = 5,
             sanitycost = 10,
+            staminacost = 10,
             maxcount = 20,
             range = 15,
             maxchargingtime = 10,

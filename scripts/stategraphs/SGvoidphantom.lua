@@ -122,8 +122,9 @@ local states =
                 if inst:OwnerValid() then
                     local owner = inst.owner
                     local weapon = owner.components.combat:GetWeapon()
-                    local damage = owner.components.combat:CalcDamage(target, weapon,
-                        TUNING.musha.skills.voidphantom.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
+                    local damage = TUNING.musha.skills.voidphantom.basedamage +
+                        owner.components.combat:CalcDamage(target, weapon,
+                            TUNING.musha.skills.voidphantom.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
                     target.components.combat:GetAttacked(owner, damage)
                     owner:PushEvent("onattackother", { target = target })
                     if weapon and weapon.components.stackable then

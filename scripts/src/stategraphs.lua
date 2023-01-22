@@ -2626,10 +2626,8 @@ end
 
 local function ValkyrieParryOnNewState(inst, data)
     if data.statename ~= "musha_valkyrieparry_idle" and data.statename ~= "musha_valkyrieparry_hit" then
-        if inst.valkyrieparrycooldownpending then
-            if not inst.sg.statemem.perfect then
-                inst.components.timer:StartTimer("cooldown_valkyrieparry", TUNING.musha.skills.valkyrieparry.cooldown)
-            end
+        if inst.valkyrieparrycooldownpending and not inst.sg.statemem.perfect then
+            inst.components.timer:StartTimer("cooldown_valkyrieparry", TUNING.musha.skills.valkyrieparry.cooldown)
             inst:ListenForEvent("timerdone", ValkyrieParryOnTimerDone)
         end
         inst.valkyrieparrycooldownpending = nil
@@ -3232,20 +3230,24 @@ local function DoBlossom(inst, data)
     local counter = 0
     local availablemana = inst.components.mana.current
     local availablesanity = inst.components.sanity.current
+    local availablestamina = inst.components.stamina.current
 
     while counter < TUNING.musha.skills.phantomblossom.maxcount
         and availablemana >= TUNING.musha.skills.phantomblossom.manacost
-        and availablesanity >= TUNING.musha.skills.phantomblossom.sanitycost do
+        and availablesanity >= TUNING.musha.skills.phantomblossom.sanitycost
+        and availablestamina >= TUNING.musha.skills.phantomblossom.staminacost do
 
         counter = counter + 1
         availablemana = availablemana - TUNING.musha.skills.phantomblossom.manacost
         availablesanity = availablesanity - TUNING.musha.skills.phantomblossom.sanitycost
+        availablestamina = availablestamina - TUNING.musha.skills.phantomblossom.staminacost
 
         TheWorld:DoTaskInTime(counter * 0.4 * math.random(), function()
             if not target:IsValid() or target.components.health:IsDead() then return end
 
             inst.components.mana:DoDelta(-TUNING.musha.skills.phantomblossom.manacost)
             inst.components.sanity:DoDelta(-TUNING.musha.skills.phantomblossom.sanitycost)
+            inst.components.stamina:DoDelta(-TUNING.musha.skills.phantomblossom.staminacost)
 
             local x, y, z = target.Transform:GetWorldPosition()
             local offset = FindValidPositionByFan(
