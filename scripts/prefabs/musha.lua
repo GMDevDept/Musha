@@ -33,6 +33,26 @@ local elementlist = {
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Get mouse cursor position from client side and send to server
+
+-- Mod RPC
+local function GetCursorPosition(inst, x, y, z)
+    inst.bufferedcursorpos = Vector3(x, y, z)
+    inst:PushEvent("cursorpositionupdated")
+end
+
+-- Net event handler on client side
+local function SendCursorPosition()
+    if TheInput ~= nil then
+        local CursorPosition = TheInput:GetWorldEntityUnderMouse() and
+            TheInput:GetWorldEntityUnderMouse():GetPosition() or TheInput:GetWorldPosition()
+
+        SendModRPCToServer(MOD_RPC.musha.getcursorposition, CursorPosition.x, CursorPosition.y, CursorPosition.z)
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Push event when debuff is added or removed
 -- ? Maybe Klei will add this event officially in the future
 
@@ -737,11 +757,29 @@ local function ShieldKeyLongPressed(inst, data)
                 inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
                 CustomPlayFailedAnim(inst)
             else
+                -- Stamina cost handled in stamina component and sg
                 inst.startvalkyrieparry:push()
             end
         elseif inst.mode:value() == 3 then
             if not inst.skills.shadowparry then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            elseif inst.components.timer:TimerExists("cooldown_shadowparry") then
+                inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
+                    .. STRINGS.musha.skills.shadowparry.name
+                    .. STRINGS.musha.skills.incooldown.part2
+                    .. STRINGS.musha.skills.incooldown.part3
+                    .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_shadowparry"))
+                    .. STRINGS.musha.skills.incooldown.part4)
+            elseif inst.components.sanity.current < TUNING.musha.skills.shadowparry.sanitycost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
+                CustomPlayFailedAnim(inst)
+            elseif inst.components.stamina.current < TUNING.musha.skills.shadowparry.staminacost then
+                inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+                CustomPlayFailedAnim(inst)
+            else
+                -- Stamina cost handled in sg
+                inst.components.sanity:DoDelta(-TUNING.musha.skills.shadowparry.sanitycost)
+                inst.startshadowparry:push()
             end
         end
 
@@ -796,6 +834,9 @@ local function ShieldKeyUp(inst, x, y, z)
             inst.startvalkyriestab:push()
         end
     elseif inst.mode:value() == 3 then
+        if inst.sg:HasStateTag("musha_shadowparry") then
+            inst.endshadowparry:push()
+        end
     end
 
     inst.components.timer:StopTimer("shieldkeyonlongpress")
@@ -1167,23 +1208,31 @@ local function ClearPhantomSlashTarget(inst, data)
 end
 
 local function StartPhantomAttack(inst, data)
-    if not (data.target and data.target:IsValid()) then return end
-
     local x, y, z = inst.Transform:GetWorldPosition()
-    local offset = FindValidPositionByFan(
-        math.random() * 2 * PI,
-        math.random() * 5,
-        8,
-        function(offset)
-            local x1 = x + offset.x
-            local z1 = z + offset.z
-            return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
-                and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
-        end
-    )
     local voidphantom = SpawnPrefab("musha_voidphantom")
     voidphantom.owner = inst
-    voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+
+    if data and data.shadowparry then
+        voidphantom.Transform:SetPosition(x, 0, z)
+    else
+        local offset = FindValidPositionByFan(
+            math.random() * 2 * PI,
+            math.random() * 5,
+            8,
+            function(offset)
+                local x1 = x + offset.x
+                local z1 = z + offset.z
+                return TheWorld.Map:IsPassableAtPoint(x1, 0, z1)
+                    and not TheWorld.Map:IsPointNearHole(Vector3(x1, 0, z1), .4)
+            end
+        )
+        voidphantom.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+    end
+
+    if not (data and data.target and data.target:IsValid()) then
+        return
+    end
+
     voidphantom.sg:GoToState("lunge_pre", data.target)
 
     local x1, y1, z1 = data.target.Transform:GetWorldPosition()
@@ -1198,12 +1247,16 @@ local function StartPhantomAttack(inst, data)
         end
     end
 
-    inst.bufferedphantomslashtarget = data.target
-    inst.components.timer:StartTimer("phantomslashready", TUNING.musha.skills.phantomslash.usewindow)
-    inst:ListenForEvent("timerdone", ClearPhantomSlashTarget)
+    if data and data.addphantomslashusewindow then
+        inst.bufferedphantomslashtarget = data.target
+        inst.components.timer:StartTimer("phantomslashready", TUNING.musha.skills.phantomslash.usewindow)
+        inst:ListenForEvent("timerdone", ClearPhantomSlashTarget)
+    end
 
-    inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
-    inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
+    if data and data.standardcast then
+        inst.components.timer:StartTimer("cooldown_voidphantom", TUNING.musha.skills.voidphantom.cooldown)
+        inst:ListenForEvent("timerdone", VoidPhantomOnTimerDone)
+    end
 end
 
 local function StartPhantomSlash(inst, data)
@@ -1234,7 +1287,7 @@ end
 
 local function CancelSneakSpeedBoost(inst)
     inst:RemoveEventCallback("staminadelta", ResetSneakSpeedMultiplier)
-    inst:RemoveEventCallback("startstaminadepleted", CancelSneakSpeedBoost)
+    inst:RemoveEventCallback("staminadepleted", CancelSneakSpeedBoost)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
     inst.updaterunninganim:push()
@@ -1243,7 +1296,7 @@ end
 local function SneakSpeedBoost(inst)
     if inst.components.stamina.current > 0 then
         inst:ListenForEvent("staminadelta", ResetSneakSpeedMultiplier)
-        inst:ListenForEvent("startstaminadepleted", CancelSneakSpeedBoost)
+        inst:ListenForEvent("staminadepleted", CancelSneakSpeedBoost)
         inst.components.stamina.modifiers:SetModifier(inst, -TUNING.musha.skills.sneakspeedboost.staminacost,
             "sneakspeedboost")
         inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
@@ -1289,7 +1342,7 @@ end
 local function EnterSneak(inst, data)
     if data.name == "entersneak" then
         inst:AddTag("notarget")
-        CustomDoAOE(inst, 25, { "_combat" }, nil, nil, function(v)
+        CustomDoAOE(inst, 40, { "_combat" }, nil, nil, function(v)
             if v.components.combat and v.components.combat.target == inst then
                 v.components.combat.target = nil
             end
@@ -1550,12 +1603,12 @@ local function ValkyrieKeyUp(inst, x, y, z)
     inst.bufferedcursorpos = Vector3(x, y, z)
 
     if inst.mode:value() == 0 or inst.mode:value() == 1 then
-        if inst.sg:HasStateTag("musha_desolatedive_pre") then
-            inst.startdesolatedive:push()
-        elseif inst.components.timer:TimerExists("valkyriekeyonlongpress") then
+        if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
         elseif inst:HasDebuff("elementloaded") then -- Charged element
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+        elseif inst.sg:HasStateTag("musha_desolatedive_pre") then
+            inst.startdesolatedive:push()
         end
     elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress")
@@ -1609,7 +1662,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
                     local must_tags = { "_combat" }
                     local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead",
                         "playerghost", "player", "companion", "musha_companion" }
-                    local target = TheSim:FindEntities(x, y, z, 2, must_tags, ignore_tags)[1] or
+                    local target = TheSim:FindEntities(x, y, z, 4, must_tags, ignore_tags)[1] or
                         inst.components.combat.target
 
                     if not (target and target:IsValid()) then
@@ -1631,7 +1684,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
                         inst.components.mana:DoDelta(-TUNING.musha.skills.voidphantom.manacost)
                         inst.components.sanity:DoDelta(-TUNING.musha.skills.voidphantom.sanitycost)
                         inst.components.stamina:DoDelta(-TUNING.musha.skills.voidphantom.staminacost)
-                        StartPhantomAttack(inst, { target = target })
+                        inst:StartPhantomAttack({ target = target, standardcast = true, addphantomslashusewindow = true })
                     end
                 end
             end
@@ -2349,7 +2402,8 @@ local function common_postinit(inst)
     inst._mode = 0 -- Store previous mode
     inst._fatiguelevel = 0 -- Store previous fatigue level
     inst.mode = net_tinybyte(inst.GUID, "musha.mode", "modechange") -- 0: normal, 1: full, 2: valkyrie, 3: berserk
-    inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange")
+    inst.fatiguelevel = net_tinybyte(inst.GUID, "musha.fatiguelevel", "fatiguelevelchange") -- 0-4
+    inst.sendcursorposition = net_event(inst.GUID, "sendcursorposition") -- Send cursor position to server
     inst.updaterunninganim = net_event(inst.GUID, "updaterunninganim") -- Handler set in SG
     inst.activateberserk = net_event(inst.GUID, "activateberserk") -- Handler set in SG
     inst.castmanaspell = net_event(inst.GUID, "castmanaspell") -- Handler set in SG
@@ -2365,11 +2419,14 @@ local function common_postinit(inst)
     inst.startvalkyrieparry = net_event(inst.GUID, "startvalkyrieparry") -- Handler set in SG
     inst.startvalkyriestab = net_event(inst.GUID, "startvalkyriestab") -- Handler set in SG
     inst.startvalkyriewhirl = net_event(inst.GUID, "startvalkyriewhirl") -- Handler set in SG
+    inst.startshadowparry = net_event(inst.GUID, "startshadowparry") -- Handler set in SG
+    inst.endshadowparry = net_event(inst.GUID, "endshadowparry") -- Handler set in SG
     inst.startphantomblossom_pre = net_event(inst.GUID, "startphantomblossom_pre") -- Handler set in SG
     inst.startphantomblossom = net_event(inst.GUID, "startphantomblossom") -- Handler set in SG
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
+    inst:ListenForEvent("sendcursorposition", SendCursorPosition)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2459,6 +2516,7 @@ local function master_postinit(inst)
     inst.StopMelodyBuff = StopMelodyBuff
     inst.SniffTreasure = SniffTreasure
     inst.LaunchElement = LaunchElement
+    inst.StartPhantomAttack = StartPhantomAttack
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
@@ -2482,6 +2540,7 @@ AddModRPCHandler("musha", "shieldkeydown", ShieldKeyDown)
 AddModRPCHandler("musha", "shieldkeyup", ShieldKeyUp)
 AddModRPCHandler("musha", "togglesleep", ToggleSleep)
 AddModRPCHandler("musha", "playelfmelody", PlayElfMelody)
+AddModRPCHandler("musha", "getcursorposition", GetCursorPosition)
 AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)
 AddModRPCHandler("musha", "doshadowmushaorder", DoShadowMushaOrder)
 

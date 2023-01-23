@@ -271,14 +271,15 @@ AddAction("PHANTOMSPELL", STRINGS.musha.skills.phantomspells.actionstrings.GENER
             local doerpos = inst:GetPosition()
             local targetpos = act.target:GetPosition()
 
-            if not inst.components.rider:IsRiding() then
-                inst.sg:GoToState("musha_portal_jumpout", { dest = targetpos })
-            else
+            if inst.components.rider:IsRiding() then
                 inst.Physics:Teleport(targetpos:Get())
                 inst.SoundEmitter:PlaySound("dontstarve/characters/wortox/soul/hop_out")
                 inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt")
                 CustomAttachFx(inst, "sanity_raise", nil, Vector3(2, 2, 2))
                 CustomAttachFx(inst, "statue_transition_2", nil, Vector3(3, 3, 3))
+                inst.sg:GoToState("idle", true)
+            else
+                inst.sg:GoToState("musha_portal_jumpout", { dest = Vector3(targetpos:Get()) })
             end
 
             act.target.Physics:Teleport(doerpos:Get())
@@ -305,7 +306,7 @@ local function CastSpell(inst, doer, actions, right) -- Both inst and doer are c
         if inst == doer then
             table.insert(actions, GLOBAL.ACTIONS.MANASPELL)
         elseif doer.mode:value() == 3 and inst:HasTag("musha_voidphantom") and
-            not inst.sg:HasStateTag("busy") then
+            inst:HasTag("targetable") then
             table.insert(actions, GLOBAL.ACTIONS.PHANTOMSPELL)
         end
     end

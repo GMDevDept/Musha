@@ -421,10 +421,14 @@ TUNING.musha = {
         },
         shadowparry = {
             sanitycost = 25,
-            staminacostrate = 2.5,
-            maxdist = 30,
-            perfecttimewindow = 9, -- Frames
+            staminacost = 25,
+            damagetakenmultiplier = 0,
+            traplifetime = 15,
+            perfecttimewindow = 6, -- Frames
             cooldown = 10,
+            sneakinglag = 1,
+            sanitypenaltydelta = 10,
+            staminaregen = 25,
         },
         voidphantom = {
             manacost = 5,
@@ -437,7 +441,7 @@ TUNING.musha = {
             cooldown = 3,
         },
         phantomslash = {
-            staminacost = 25,
+            staminacost = 20,
             damagemultiplier = 0.5,
             usewindow = 1,
         },

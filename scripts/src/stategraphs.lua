@@ -125,8 +125,18 @@ AddStategraphPostInit("wilson", function(self)
                     inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyrieparry.staminacostonhit)
                     inst.sg:GoToState("musha_valkyrieparry_hit", data)
                 end
-            elseif inst.sg:HasStateTag("musha_shadowparry") then
+            elseif inst.sg:HasStateTag("musha_shadowparry") and not inst.sg.statemem.shadowparryended then
+                inst.sg.statemem.shadowparryended = true
 
+                if inst.sg.statemem.perfect then
+                    inst.sg.statemem.perfectparry = true
+                end
+
+                if data and data.attacker then
+                    inst.sg.statemem.attacker = data.attacker
+                end
+
+                inst.sendcursorposition:push()
             else
                 return _fn(inst, data)
             end
@@ -2712,6 +2722,12 @@ local musha_valkyrieparry_idle = State {
                 inst.sg:GoToState("idle", true)
             end
         end),
+        EventHandler("staminadepleted", function(inst)
+            inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+            inst.AnimState:PlayAnimation("parry_pst")
+            inst.sg:GoToState("idle", true)
+        end),
     },
 
     onexit = function(inst)
@@ -2855,6 +2871,12 @@ local musha_valkyrieparry_hit = State {
             inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
             inst.components.talker:Say(STRINGS.musha.skills.valkyrieparry.perfect)
             inst.sg:GoToState("musha_valkyriestab", { perfect = true })
+        end),
+        EventHandler("staminadepleted", function(inst)
+            inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
+            inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+            inst.AnimState:PlayAnimation("parry_pst")
+            inst.sg:GoToState("idle", true)
         end),
     },
 
@@ -3169,13 +3191,43 @@ local musha_shadowparry = State {
     onenter = function(inst)
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("emote_hands")
+
+        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+        inst.components.colourtweener:StartTween({ 0.7, 0.7, 0.7, 0.5 }, 0)
+        inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
+        inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
+
+        inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
+            TUNING.musha.skills.shadowparry.damagetakenmultiplier, "shadowparry")
+
+        inst.sg.statemem.perfect = true
     end,
+
+    timeline = {
+        TimeEvent(TUNING.musha.skills.shadowparry.perfecttimewindow * FRAMES, function(inst)
+            inst.sg.statemem.perfect = nil
+        end),
+        TimeEvent(20 * FRAMES, function(inst)
+            inst.components.colourtweener:StartTween({ 0.5, 0.5, 0.5, 0.7 }, 0)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
+            inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
+        end),
+        TimeEvent(40 * FRAMES, function(inst)
+            inst.components.colourtweener:StartTween({ 0.3, 0.3, 0.3, 1 }, 0)
+            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
+            inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
+        end),
+    },
 
     events =
     {
         EventHandler("animover", function(inst)
             if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("musha_shadowparry_pst")
+                inst.AnimState:PlayAnimation("emote_hands")
+                if not inst.sg.statemem.shadowparryended then
+                    inst.sg.statemem.shadowparryended = true
+                    inst.sendcursorposition:push()
+                end
             end
         end),
         EventHandler("endshadowparry", function(inst)
@@ -3183,7 +3235,61 @@ local musha_shadowparry = State {
             inst.AnimState:PlayAnimation("mindcontrol_pst")
             inst.sg:GoToState("idle", true)
         end),
+        EventHandler("cursorpositionupdated", function(inst)
+            inst.components.stamina:DoDelta(-TUNING.musha.skills.shadowparry.staminacost)
+
+            if inst.sg.statemem.perfectparry then
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
+                inst.components.stamina:DoDelta(TUNING.musha.skills.shadowparry.staminaregen)
+                inst.components.sanity:AddSanityPenalty("shadowmodebuff",
+                    math.max(0, inst.components.sanity.sanity_penalties["shadowmodebuff"] -
+                        TUNING.musha.skills.shadowparry.sanitypenaltydelta / inst.components.sanity.max))
+
+                inst:StartSneaking()
+                inst.components.timer:SetTimeLeft("entersneak", TUNING.musha.skills.shadowparry.sneakinglag)
+
+                if inst.sg.statemem.attacker and inst.sg.statemem.attacker:IsValid() then
+                    local target = inst.sg.statemem.attacker
+                    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
+                    spellprefab.caster = inst
+                    spellprefab.item = inst.components.combat:GetWeapon()
+                    spellprefab.Transform:SetPosition(target.Transform:GetWorldPosition())
+                end
+            elseif inst.sg.statemem.attacker and inst.sg.statemem.attacker:IsValid() then
+                local target = inst.sg.statemem.attacker
+                local spellprefab = SpawnPrefab("shadow_trap")
+                spellprefab.Transform:SetPosition(target.Transform:GetWorldPosition())
+                spellprefab.components.timer:SetTimeLeft("lifetime", TUNING.musha.skills.shadowparry.traplifetime)
+                if TheWorld.Map:GetPlatformAtPoint(target:GetPosition().x, target:GetPosition().z) ~= nil then
+                    spellprefab:RemoveTag("ignorewalkableplatforms")
+                end
+            end
+
+            inst:StartPhantomAttack({ shadowparry = true, target = inst.sg.statemem.attacker })
+
+            -- State and position change always put at the end
+            if inst.components.rider:IsRiding() then
+                inst.Physics:Teleport(inst.bufferedcursorpos.x, 0, inst.bufferedcursorpos.z)
+                inst.SoundEmitter:PlaySound("dontstarve/characters/wortox/soul/hop_out")
+                inst.SoundEmitter:PlaySound("dontstarve/movement/bodyfall_dirt")
+                CustomAttachFx(inst, "sanity_raise", nil, Vector3(2, 2, 2))
+                CustomAttachFx(inst, "statue_transition_2", nil, Vector3(3, 3, 3))
+                inst.sg:GoToState("idle", true)
+            else
+                inst.sg:GoToState("musha_portal_jumpout", { dest = inst.bufferedcursorpos })
+            end
+        end),
     },
+
+    onexit = function(inst)
+        inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "shadowparry")
+
+        if not inst.sg.statemem.perfectparry then
+            inst.components.colourtweener:StartTween({ 1, 1, 1, 1 }, 0)
+            inst.components.timer:StartTimer("cooldown_shadowparry", TUNING.musha.skills.shadowparry.cooldown)
+            inst:ListenForEvent("timerdone", ShadowParryOnTimerDone)
+        end
+    end,
 }
 
 local musha_shadowparry_client = State {
@@ -3199,7 +3305,7 @@ local musha_shadowparry_client = State {
     {
         EventHandler("animover", function(inst)
             if inst.AnimState:AnimDone() then
-                inst.sg:GoToState("musha_shadowparry_pst")
+                inst.AnimState:PlayAnimation("emote_hands")
             end
         end),
         EventHandler("endshadowparry", function(inst)
@@ -3209,6 +3315,21 @@ local musha_shadowparry_client = State {
         end),
     },
 }
+
+AddStategraphState("wilson", musha_shadowparry)
+AddStategraphState("wilson_client", musha_shadowparry_client)
+
+AddStategraphEvent("wilson", EventHandler("startshadowparry",
+    function(inst)
+        inst.sg:GoToState("musha_shadowparry")
+    end)
+)
+
+AddStategraphEvent("wilson_client", EventHandler("startshadowparry",
+    function(inst)
+        inst.sg:GoToState("musha_shadowparry")
+    end)
+)
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -3467,9 +3588,7 @@ local musha_portal_jumpout = State {
         inst:ResetMinimapOffset()
         local dest = data and data.dest or nil
         if dest ~= nil then
-            inst.Physics:Teleport(dest:Get())
-        else
-            dest = inst:GetPosition()
+            inst.Physics:Teleport(dest.x, 0, dest.z)
         end
         CustomAttachFx(inst, "sanity_raise")
         CustomAttachFx(inst, "statue_transition_2", nil, Vector3(1.8, 1.8, 1.8))

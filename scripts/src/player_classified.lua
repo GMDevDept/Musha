@@ -84,7 +84,7 @@ local function PrefabPostInitFn(inst)
             inst._parent:PushEvent("staminadelta", data)
             if oldpercent > 0 then
                 if percent <= 0 then
-                    inst._parent:PushEvent("startstaminadepleted")
+                    inst._parent:PushEvent("staminadepleted")
                 end
             elseif percent > 0 then
                 inst._parent:PushEvent("stopstaminadepleted")

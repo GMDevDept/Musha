@@ -71,7 +71,7 @@ function Stamina:SetPercent(p, overtime)
 
     if old > 0 then
         if self.current <= 0 then
-            self.inst:PushEvent("startstaminadepleted")
+            self.inst:PushEvent("staminadepleted")
             ProfileStatsSet("started_staminadepleted", true)
         end
     elseif self.current > 0 then
@@ -146,7 +146,7 @@ function Stamina:DoDelta(delta, overtime, follow_invincible)
 
     if old > 0 then
         if self.current <= 0 then
-            self.inst:PushEvent("startstaminadepleted")
+            self.inst:PushEvent("staminadepleted")
             ProfileStatsSet("started_staminadepleted", true)
         end
     elseif self.current > 0 then

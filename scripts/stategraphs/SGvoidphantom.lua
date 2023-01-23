@@ -30,6 +30,11 @@ local states =
             inst.Physics:Stop()
             inst.AnimState:PlayAnimation("ready_stance_pre")
             inst.AnimState:PushAnimation("ready_stance_loop", true)
+            inst:AddTag("targetable")
+        end,
+
+        onexit = function(inst)
+            inst:RemoveTag("targetable")
         end,
     },
 
