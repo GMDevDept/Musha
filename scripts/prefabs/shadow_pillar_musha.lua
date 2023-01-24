@@ -60,7 +60,7 @@ end
 local function StartFX(inst)
     local angle = math.random() * PI2
     local offsets = {}
-    for i = 1, math.floor(TUNING.musha.skills.shadowprison.range / 1.6) do
+    for i = 1, inst.fxcirclecount do
         local radius = (i - 1) * 1.6
         local count = i > 1 and i * i - 1 or 1
         local delta = PI2 / count
@@ -125,12 +125,11 @@ local function DoPillarsTarget(target, caster, item, newpillars, map, x0, z0)
         theta = theta + delta
     end
 
-    if not (target.sg ~= nil and target.sg:HasStateTag("noattack") or caster:HasTag("notarget")) then
+    if not ((target.sg ~= nil and target.sg:HasStateTag("noattack")) or (caster and caster:HasTag("notarget"))) then
         target:PushEvent("attacked", { attacker = caster, damage = 0, weapon = item })
     end
 end
 
-local AOE_RADIUS = TUNING.musha.skills.shadowprison.range
 local SPELL_MUST_TAGS = { "locomotor" }
 local SPELL_NO_TAGS_PVP = { "INLIMBO", "notarget", "flight", "invisible", "notraptrigger", "projectile" }
 local SPELL_NO_TAGS = deepcopy(SPELL_NO_TAGS_PVP)
@@ -141,7 +140,7 @@ local function DoPillars(inst, targets, newpillars)
     local castercombat = caster ~= nil and caster.components.combat or nil
     local item = inst.item ~= nil and inst.item:IsValid() and inst.item or nil
     local x, y, z = inst.Transform:GetWorldPosition()
-    local ents = TheSim:FindEntities(x, 0, z, AOE_RADIUS, SPELL_MUST_TAGS,
+    local ents = TheSim:FindEntities(x, 0, z, inst.range, SPELL_MUST_TAGS,
         TheNet:GetPVPEnabled() and SPELL_NO_TAGS_PVP or SPELL_NO_TAGS)
     for i, v in ipairs(ents) do
         if v ~= caster and not targets[v] and v.entity:IsVisible() and
@@ -161,36 +160,43 @@ local function StopTask(inst, task)
     inst.SoundEmitter:KillSound("loop")
 end
 
-local function spell_fn()
-    local inst = CreateEntity()
+local function MakeSpell(name, data)
+    local function spell_fn()
+        local inst = CreateEntity()
 
-    inst.entity:AddTransform()
-    inst.entity:AddSoundEmitter()
-    inst.entity:AddNetwork()
+        inst.entity:AddTransform()
+        inst.entity:AddSoundEmitter()
+        inst.entity:AddNetwork()
 
-    inst:AddTag("CLASSIFIED")
+        inst:AddTag("CLASSIFIED")
 
-    inst.entity:SetPristine()
+        inst.entity:SetPristine()
 
-    if not TheWorld.ismastersim then
+        if not TheWorld.ismastersim then
+            return inst
+        end
+
+        -- Caster and item should be set when spawned, item can be nil (only decides weapon)
+        -- inst.caster = nil
+        -- inst.item = inst.caster.components.combat:GetWeapon()
+        inst.range = data.range
+        inst.fxcirclecount = data.fxcirclecount
+
+        inst.SoundEmitter:PlaySound("maxwell_rework/shadow_magic/shadow_goop_ground", "loop")
+        StartFX(inst)
+        local task = inst:DoPeriodicTask(.25, DoPillars, 0, {}, {})
+        inst:DoTaskInTime(1.25, StopTask, task)
+        inst:DoTaskInTime(1.5, inst.Remove)
+
+        inst.persists = false
+
         return inst
     end
 
-    inst.SoundEmitter:PlaySound("maxwell_rework/shadow_magic/shadow_goop_ground", "loop")
-    StartFX(inst)
-    local task = inst:DoPeriodicTask(.25, DoPillars, 0, {}, {})
-    inst:DoTaskInTime(1.25, StopTask, task)
-    inst:DoTaskInTime(1.5, inst.Remove)
-
-    -- Caster and item should be set when spawned, item can be nil (only decides weapon)
-    -- inst.caster = nil
-    -- inst.item = inst.caster.components.combat:GetWeapon()
-
-    inst.persists = false
-
-    return inst
+    return Prefab(name, spell_fn, nil, prefabs_spell)
 end
 
 --------------------------------------------------------------------------
 
-return Prefab("shadow_pillar_spell_musha", spell_fn, nil, prefabs_spell)
+return MakeSpell("shadow_pillar_spell_4_musha", { range = 4, fxcirclecount = 3 }),
+    MakeSpell("shadow_pillar_spell_9_musha", { range = 9, fxcirclecount = 5 })

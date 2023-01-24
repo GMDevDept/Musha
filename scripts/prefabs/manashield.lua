@@ -117,7 +117,8 @@ end
 
 local function OnAttached(inst, target, followsymbol, followoffset, data) -- Note: components.debuff.onattachedfn(self.inst, target, followsymbol, followoffset, data)
     inst.entity:SetParent(target.entity)
-    local radius = target:GetPhysicsRadius(0.5) -- Player: 0.5, beefalo also 0.5 (!?)
+    local radius = target:HasTag("player") and target.components.rider:IsRiding() and 10 / 9
+        or target:GetPhysicsRadius(0.5) -- Player: 0.5, beefalo also 0.5 (!?)
     inst.Transform:SetScale(1.8 * radius, 1.8 * radius, 1.8 * radius)
     inst.Transform:SetPosition(0, -0.2, 0)
 

@@ -294,7 +294,7 @@ local function ShadowPrisonOnTimerDone(inst, data)
 end
 
 local function ShadowPrison(inst)
-    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
+    local spellprefab = SpawnPrefab("shadow_pillar_spell_9_musha")
     spellprefab.caster = inst
     spellprefab.item = inst.components.combat:GetWeapon()
     spellprefab.Transform:SetPosition(inst.Transform:GetWorldPosition())

@@ -226,7 +226,7 @@ TUNING.musha = {
         shadowprison = {
             manacost = 15,
             sanitycost = 15,
-            range = 8,
+            range = 9, -- Reference only, check shadow_pillar_musha prefab
             cooldown = 12,
         },
         manashield = {
@@ -424,11 +424,12 @@ TUNING.musha = {
             staminacost = 25,
             damagetakenmultiplier = 0,
             traplifetime = 15,
-            perfecttimewindow = 6, -- Frames
+            perfecttimewindow = 9, -- Frames
             cooldown = 10,
             sneakinglag = 1,
             sanitypenaltydelta = 10,
             staminaregen = 25,
+            shadowprisonrange = 4, -- Reference only, check shadow_pillar_musha prefab
         },
         voidphantom = {
             manacost = 5,

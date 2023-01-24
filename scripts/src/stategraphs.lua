@@ -3192,7 +3192,8 @@ local musha_shadowparry = State {
         inst.components.locomotor:Stop()
         inst.AnimState:PlayAnimation("emote_hands")
 
-        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6))
+        local scale = inst.components.rider:IsRiding() and 2 or 1
+        CustomAttachFx(inst, "shadow_shield" .. math.random(1, 6), nil, Vector3(scale, scale, scale))
         inst.components.colourtweener:StartTween({ 0.7, 0.7, 0.7, 0.5 }, 0)
         inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
         inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
@@ -3231,8 +3232,12 @@ local musha_shadowparry = State {
             end
         end),
         EventHandler("endshadowparry", function(inst)
+            if inst.components.rider:IsRiding() then
+                inst.AnimState:PlayAnimation("hit")
+            else
+                inst.AnimState:PlayAnimation("mindcontrol_pst")
+            end
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
-            inst.AnimState:PlayAnimation("mindcontrol_pst")
             inst.sg:GoToState("idle", true)
         end),
         EventHandler("cursorpositionupdated", function(inst)
@@ -3245,12 +3250,14 @@ local musha_shadowparry = State {
                     math.max(0, inst.components.sanity.sanity_penalties["shadowmodebuff"] -
                         TUNING.musha.skills.shadowparry.sanitypenaltydelta / inst.components.sanity.max))
 
-                inst:StartSneaking()
-                inst.components.timer:SetTimeLeft("entersneak", TUNING.musha.skills.shadowparry.sneakinglag)
+                if not inst:HasTag("sneaking") then
+                    inst:StartSneaking()
+                    inst.components.timer:SetTimeLeft("entersneak", TUNING.musha.skills.shadowparry.sneakinglag)
+                end
 
                 if inst.sg.statemem.attacker and inst.sg.statemem.attacker:IsValid() then
                     local target = inst.sg.statemem.attacker
-                    local spellprefab = SpawnPrefab("shadow_pillar_spell_musha")
+                    local spellprefab = SpawnPrefab("shadow_pillar_spell_4_musha")
                     spellprefab.caster = inst
                     spellprefab.item = inst.components.combat:GetWeapon()
                     spellprefab.Transform:SetPosition(target.Transform:GetWorldPosition())
@@ -3309,8 +3316,12 @@ local musha_shadowparry_client = State {
             end
         end),
         EventHandler("endshadowparry", function(inst)
+            if inst.replica.rider:IsRiding() then
+                inst.AnimState:PlayAnimation("hit")
+            else
+                inst.AnimState:PlayAnimation("mindcontrol_pst")
+            end
             inst.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
-            inst.AnimState:PlayAnimation("mindcontrol_pst")
             inst.sg:GoToState("idle", true)
         end),
     },
