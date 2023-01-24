@@ -489,28 +489,33 @@ end
 -- Trailing fx (stalker blooming)
 local function AddStalkerTrailFx(inst)
     local BLOOM_CHOICES = {
-        ["stalker_bulb"] = .5,
-        ["stalker_bulb_double"] = .5,
-        ["stalker_berry"] = 1,
-        ["stalker_fern"] = 8,
+        ["stalker_bulb"] = 2,
+        ["stalker_bulb_double"] = 2,
+        ["stalker_berry"] = 3,
+        ["stalker_fern"] = 7,
     }
     local x, y, z = inst.Transform:GetWorldPosition()
     local map = TheWorld.Map
     local offset = FindValidPositionByFan(
         math.random() * 2 * PI,
-        math.random() * 3,
+        math.random() * 4,
         8,
         function(offset)
             local x1 = x + offset.x
             local z1 = z + offset.z
             return map:IsPassableAtPoint(x1, 0, z1)
                 and map:IsDeployPointClear(Vector3(x1, 0, z1), nil, 1)
-                and #TheSim:FindEntities(x1, 0, z1, 2.5, { "stalkerbloom" }) < 4
+                and #TheSim:FindEntities(x1, 0, z1, 2.5, { "stalkerbloom" }) < 1
         end
     )
 
     if offset ~= nil then
-        SpawnPrefab(weighted_random_choice(BLOOM_CHOICES)).Transform:SetPosition(x + offset.x, 0, z + offset.z)
+        local plant = SpawnPrefab(weighted_random_choice(BLOOM_CHOICES))
+        plant.Transform:SetPosition(x + offset.x, 0, z + offset.z)
+        if math.random() < .9 then
+            plant:AddTag("NOCLICK")
+            plant.AnimState:SetMultColour(1, 1, 1, .3)
+        end
     end
 end
 
@@ -545,7 +550,7 @@ local function StartMelodyBuff(inst, data)
         inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.skills.elfmelody.full.staminaregen, "elfmelody")
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "elfmelody",
             TUNING.musha.skills.elfmelody.full.speedboost)
-        inst.stalkertrailtask = inst:DoPeriodicTask(3 * FRAMES, AddStalkerTrailFx, 2 * FRAMES)
+        inst.stalkertrailtask = inst:DoPeriodicTask(0.5, AddStalkerTrailFx)
         inst.components.timer:StartTimer("stopelfmelody_full", TUNING.musha.skills.elfmelody.full.duration)
     elseif data.mode == "partial" then
         inst.components.mana:DoDelta(TUNING.musha.skills.elfmelody.partial.manarecover)
@@ -1883,6 +1888,7 @@ local function ValkyrieOnKilled(inst, data)
         local baseamt = victim.components.health and victim.components.health.maxhealth or 100
         inst.components.health:DoDelta(TUNING.musha.charactermode.valkyrie.healthregenonkill * baseamt, nil, nil, true) -- Note: DoDelta(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
         inst.components.sanity:DoDelta(TUNING.musha.charactermode.valkyrie.sanityregenonkill * baseamt)
+        inst.components.mana:DoDelta(TUNING.musha.charactermode.valkyrie.manaregenonkill * baseamt)
     end
 end
 

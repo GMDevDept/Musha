@@ -107,7 +107,7 @@ function Fatigue:Recalc(dt)
         (inst.sg:HasStateTag("tent") and TUNING.musha.sleep.fatiguerate.perfect
             or inst.sg:HasStateTag("bedroll") and TUNING.musha.sleep.fatiguerate.good
             or inst.sg:HasStateTag("knockout") and TUNING.musha.sleep.fatiguerate.poor
-            or -1)
+            or -1) * (TheWorld.state.isday and TUNING.musha.sleep.fatiguerate.daytimemultiplier or 1)
         or stamina == 0 and TUNING.musha.fatiguerate5
         or stamina < 0.2 and TUNING.musha.fatiguerate4
         or stamina < 0.4 and TUNING.musha.fatiguerate3

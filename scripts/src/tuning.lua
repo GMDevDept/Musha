@@ -70,7 +70,8 @@ TUNING.musha = {
         fatiguerate = {
             poor = -0.5,
             good = -1.5,
-            perfect = -2
+            perfect = -2,
+            daytimemultiplier = 0.5,
         }
     },
 
@@ -89,13 +90,14 @@ TUNING.musha = {
             fatiguemultiplier = 2,
             manaregenbyelectric = 10,
             manaongoingmodifier = 0,
-            healthregenonkill = 0.01,
+            healthregenonkill = 0.02,
             sanityregenonkill = 0.01,
+            manaregenonkill = 0.025,
             drowningdamage = {
                 HEALTH_PENALTY = 0,
                 HUNGER = 0,
                 SANITY = 0,
-                WETNESS = 50,
+                WETNESS = 100,
             },
         },
         shadow = {

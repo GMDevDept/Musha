@@ -56,17 +56,18 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- No interrupt states exclusively for Musha
-
--- Frozen
-AddStategraphPostInit("wilson", function(self)
-    local _onenter = self.states["frozen"].onenter
-    self.states["frozen"].onenter = function(inst)
-        if inst:HasTag("musha") then
-            inst.sg:AddStateTag("musha_nointerrupt")
+local simple_nointerrupt_states = { "frozen", "sink", "sink_fast" }
+for _, state in ipairs(simple_nointerrupt_states) do
+    AddStategraphPostInit("wilson", function(self)
+        local _onenter = self.states[state].onenter
+        self.states[state].onenter = function(inst, ...)
+            if inst:HasTag("musha") then
+                inst.sg:AddStateTag("musha_nointerrupt")
+            end
+            _onenter(inst, ...)
         end
-        _onenter(inst)
-    end
-end)
+    end)
+end
 
 -- Thaw (frozen -> thaw) can be interrupted under valkyrie mode
 AddStategraphPostInit("wilson", function(self)
@@ -380,7 +381,10 @@ AddStategraphPostInit("wilson", function(self)
     local _onexit = self.states["wakeup"].onexit
     self.states["wakeup"].onexit = function(inst)
         if inst:HasTag("musha") then
-            if inst.components.melody:IsFull() then
+            if inst.components.treasurehunter:IsReady() then
+                inst.components.talker:Say(STRINGS.musha.skills.treasuresniffing.full)
+                UserCommands.RunTextUserCommand("dance", inst, false)
+            elseif inst.components.melody:IsFull() then
                 inst.components.talker:Say(STRINGS.musha.skills.elfmelody.full)
                 UserCommands.RunTextUserCommand("dance", inst, false)
             else
