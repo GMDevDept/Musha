@@ -66,16 +66,16 @@ end
 
 --[[local function CreateBase()
         local inst = CreateEntity()
-    
+
         inst:AddTag("FX")
         inst:AddTag("NOCLICK")]]
 --[[Non-networked entity]]
 --[[inst.entity:SetCanSleep(false)
         inst.persists = false
-    
+
         inst.entity:AddTransform()
         inst.entity:AddAnimState()
-    
+
         inst.AnimState:SetBank("reticuleaoebase")
         inst.AnimState:SetBuild("reticuleaoebase")
         inst.AnimState:PlayAnimation("idle")
@@ -84,26 +84,26 @@ end
         inst.AnimState:SetSortOrder(3)
         inst.AnimState:SetScale(SCALE, SCALE)
         inst.AnimState:SetMultColour(1, 1, 0, 1)
-    
+
         inst.Transform:SetRotation(90)
-    
+
         return inst
     end
-    
+
     local function OnHideReticule(inst)
         if inst.base ~= nil and inst.base:IsValid() then
             inst.base:Hide()
         end
         inst._Hide(inst)
     end
-    
+
     local function OnShowReticule(inst)
         if inst.base ~= nil and inst.base:IsValid() then
             inst.base:Show()
         end
         inst._Show(inst)
     end
-    
+
     local function OnRemoveReticule(inst)
         if inst.base ~= nil and inst.base:IsValid() then
             inst.base:Remove()
@@ -135,7 +135,7 @@ local function MakeReticule(name, anim)
         --[[if ThePlayer ~= nil and not TheInput:ControllerAttached() then
                 inst.base = CreateBase()
                 inst.base.entity:SetParent(ThePlayer.entity)
-    
+
                 inst._Hide = inst.Hide
                 inst._Show = inst.Show
                 inst.Hide = OnHideReticule
@@ -230,9 +230,10 @@ local function MakeTarget(name, anim, colour)
     return Prefab(name, fn, assets)
 end
 
-return MakeReticule("reticuleaoesummon_musha", "idle_summon"), -- Radius 8
-    MakeReticule("reticuleaoe_1d2_12_musha", "idle_1d2_12"), -- Radius 12
-    MakePing("reticuleaoeping_musha", "idle", 1.003), -- Radius 4
+return MakeReticule("reticuleaoesummon_musha", "idle_summon"),     -- Radius 8
+    MakeReticule("reticuleaoe_1d2_12_musha", "idle_1d2_12"),       -- Radius 12
+    MakeReticule("reticuleaoe_thin_musha", "idle_target_6"),       -- Radius 6
+    MakePing("reticuleaoeping_musha", "idle", 1.003),              -- Radius 4
     MakePing("reticuleaoesummonping_musha", "idle_summon", 1.002), -- Radius 8
     MakePing("reticuleaoeping_1d2_12_musha", "idle_1d2_12", 1.002) -- Radius 12
 

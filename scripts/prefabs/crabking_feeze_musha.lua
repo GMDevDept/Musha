@@ -10,7 +10,7 @@ local function spawnicespike(inst)
     inst:CustomDoPeriodicTask(1, 1 / TUNING.musha.skills.launchelement.whitefrost.charged.range,
         function()
             for i = 1, counter do
-                local offset = FindValidPositionByFan(-- Note: FindValidPositionByFan(angle, radius, attempts, testfn)
+                local offset = FindValidPositionByFan( -- Note: FindValidPositionByFan(angle, radius, attempts, testfn)
                     math.random() * 2 * PI,
                     counter,
                     TUNING.musha.skills.launchelement.whitefrost.charged.range,
@@ -29,6 +29,12 @@ local function spawnicespike(inst)
             end
             counter = counter + 1
         end)
+
+    local scale = math.sqrt(TUNING.musha.skills.launchelement.whitefrost.charged.range / 6)
+    inst.reticule = SpawnPrefab("reticuleaoe_thin_musha")
+    inst.reticule.Transform:SetPosition(x, y, z)
+    inst.reticule.AnimState:OverrideMultColour(.3, .3, 1, 1)
+    inst.reticule.Transform:SetScale(scale, scale, scale)
 end
 
 local NO_DAMAGE_TAGS = { "player", "companion", "musha_companion", "wall" }
@@ -175,6 +181,7 @@ local function endfreeze(inst)
     for i, v in pairs(ents) do
         onfreeze(inst, v)
     end
+    CustomRemoveEntity(inst.reticule)
     SpawnPrefab("crabking_ring_fx").Transform:SetPosition(pos.x, pos.y, pos.z)
     inst.SoundEmitter:PlaySound("dontstarve/common/break_iceblock")
     inst:DoTaskInTime(1, function() inst:Remove() end)
@@ -219,8 +226,8 @@ local function freezefn()
 
     inst:DoTaskInTime(TUNING.musha.skills.launchelement.whitefrost.charged.casttime +
         TUNING.musha.skills.launchelement.whitefrost.charged.tickperiod, function()
-        endfreeze(inst)
-    end)
+            endfreeze(inst)
+        end)
 
     return inst
 end

@@ -12,6 +12,7 @@ local timerlist = {
     "cooldown_rollingmagma",
     "cooldown_whitefrost",
     "cooldown_poisonspore",
+    "cooldown_bloomingfield",
     "cooldown_elfmelody",
     "cooldown_setsugetsuka",
     "cooldown_annihilation",

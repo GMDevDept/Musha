@@ -169,6 +169,10 @@ STRINGS.musha = {
                 name = "孢子炸弹",
                 ready = "[孢子炸弹] 准备就绪!",
             },
+            bloomingfield = {
+                name = "绽放之蕊",
+                ready = "[绽放之蕊] 准备就绪!",
+            },
         },
         setsugetsuka = {
             name = "雪月花",

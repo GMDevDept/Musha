@@ -141,7 +141,7 @@ TUNING.musha = {
     exp_to_level = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
     _exp_to_level = { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 175, 200,
-        250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 }, -- len = 30
+        250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 },
 
     leveltounlockskill = { -- Maintain src/timers.lua after adding new skill with cooldown timer
         freezingspell     = 0,
@@ -157,6 +157,7 @@ TUNING.musha = {
         rollingmagma      = 0,
         whitefrost        = 0,
         poisonspore       = 0,
+        bloomingfield     = 0,
         setsugetsuka      = 0,
         setsugetsukaredux = 0,
         phoenixadvent     = 0,
@@ -335,6 +336,27 @@ TUNING.musha = {
                     maxbouncedist = 10,
                     minbouncedist = 3.5,
                     cooldown = 20,
+                },
+            },
+            bloomingfield = {
+                manacost = 25,
+                radius = 8, -- same as SPIDER_HEALING_RADIUS
+                playerhealthregen = 25,
+                nonplayerhealthregen = 50,
+                cooldown = 5,
+                charged = {
+                    extramanacost = 75,
+                    chargetime = 2,
+                    radius = 20,
+                    duration = 60,
+                    tickperiod = 3,
+                    playerhealthregen = 5,
+                    nonplayerhealthregen = 30,
+                    staminaregen = 15,
+                    speedmultiplier = 1.5,
+                    enemysleepprob = 0.1,
+                    sleeptime = 20,
+                    cooldown = 60,
                 },
             },
         },

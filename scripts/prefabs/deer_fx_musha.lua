@@ -1,5 +1,6 @@
 local ICE_COLOUR = { 60 / 255, 120 / 255, 255 / 255 }
 local FIRE_COLOUR = { 220 / 255, 100 / 255, 0 / 255 }
+local BLOSSOM_COLOUR = { .4, .8, .2, 1 }
 
 local function OnUpdateFade(inst)
     local k
@@ -146,7 +147,8 @@ local function OnUpdateIceCircle(inst, x, z)
             local nodamage = v:HasTag("player") or v:HasTag("companion") or v:HasTag("musha_companion")
 
             if v.components.locomotor ~= nil then
-                v.components.locomotor:PushTempGroundSpeedMultiplier(TUNING.musha.skills.launchelement.whitefrost.speedmultiplier)
+                v.components.locomotor:PushTempGroundSpeedMultiplier(TUNING.musha.skills.launchelement.whitefrost
+                    .speedmultiplier)
             end
 
             if v.components.burnable ~= nil and v.components.fueled == nil then
@@ -166,8 +168,10 @@ local function OnUpdateIceCircle(inst, x, z)
                                 v.components.combat:GetAttacked(inst.owner,
                                     TUNING.musha.skills.launchelement.whitefrost.damageperhit)
                             end
-                            v.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.coldnessperhit
-                                , 1) -- Must be called after GetAttacked
+                            -- Must be called after GetAttacked
+                            v.components.freezable:AddColdness(
+                                TUNING.musha.skills.launchelement.whitefrost.coldnessperhit
+                                , 1)
                         elseif v.components.health ~= nil and not nodamage then -- For targets in freeze cooldown, only do delta to health to prevent freezing and attacked stun
                             v.components.health:DoDelta(-TUNING.musha.skills.launchelement.whitefrost.damageperhit)
                         end
@@ -417,6 +421,22 @@ local function ChargedIceOnExplode(inst)
     postprefab.SoundEmitter:PlaySound("dontstarve/common/break_iceblock")
 end
 
+local function ChargedBlossomOnExplode(inst)
+    local x, y, z
+    local parent = inst.entity:GetParent()
+    if parent ~= nil then
+        x, y, z = parent.Transform:GetWorldPosition()
+    else
+        x, y, z = inst.Transform:GetWorldPosition()
+    end
+
+    local postprefab = SpawnPrefab("bloomingfield")
+    postprefab.owner = inst.owner
+    postprefab.Transform:SetPosition(x, 0, z)
+    postprefab.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
+    postprefab.SoundEmitter:PlaySound("dontstarve/creatures/chester/pop")
+end
+
 local function OnAttached(inst, target)
     inst.entity:SetParent(target.entity)
     inst.Transform:SetPosition(0, target.components.rider and target.components.rider:IsRiding() and 6 or 4, 0)
@@ -502,7 +522,7 @@ end
 --------------------------------------------------------------------------
 
 local function MakeFX(name, data)
-    local buildname = string.sub(name, 1, -7)
+    local buildname = name == "deer_blossom_charge_musha" and "deer_ice_charge" or string.sub(name, 1, -7)
     local assets =
     {
         Asset("ANIM", "anim/" .. buildname .. ".zip"),
@@ -533,6 +553,10 @@ local function MakeFX(name, data)
         inst.AnimState:PlayAnimation(data.oneshotanim or "pre")
         inst.AnimState:SetLightOverride(1)
         inst.AnimState:SetFinalOffset(1)
+
+        if data.animcolour then
+            inst.AnimState:SetMultColour(unpack(data.animcolour))
+        end
 
         if data.bloom then
             inst.AnimState:SetBloomEffectHandle("shaders/anim.ksh")
@@ -630,15 +654,15 @@ local function MakeFX(name, data)
 end
 
 return MakeFX("deer_ice_circle_musha", {
-    light = ICE_COLOUR,
-    onground = true,
-    soundloop = "dontstarve/creatures/together/deer/fx/ice_circle_LP",
-    fxprefabs = { "deer_ice_fx", "deer_ice_flakes" },
-    burstprefab = "deer_ice_burst",
-    common_postinit = deer_ice_circle_common_postinit,
-    master_postinit = deer_ice_circle_master_postinit,
-    onkillfx = deer_ice_circle_onkillfx,
-}),
+        light = ICE_COLOUR,
+        onground = true,
+        soundloop = "dontstarve/creatures/together/deer/fx/ice_circle_LP",
+        fxprefabs = { "deer_ice_fx", "deer_ice_flakes" },
+        burstprefab = "deer_ice_burst",
+        common_postinit = deer_ice_circle_common_postinit,
+        master_postinit = deer_ice_circle_master_postinit,
+        onkillfx = deer_ice_circle_onkillfx,
+    }),
     MakeFX("deer_ice_fx_musha", {
         looping = true,
         soundloop = "dontstarve/creatures/together/deer/fx/steam_LP",
@@ -678,4 +702,16 @@ return MakeFX("deer_ice_circle_musha", {
         horizontalspeed = 25,
         gravity = -35,
         onexplodefn = ChargedFireOnExplode,
+    }),
+    MakeFX("deer_blossom_charge_musha", {
+        animcolour = BLOSSOM_COLOUR,
+        bloom = true,
+        looping = true,
+        soundloop = "dontstarve/creatures/together/deer/fx/charge_LP",
+        common_postinit = deer_charge_common_postinit,
+        master_postinit = deer_charge_master_postinit,
+        onkillfx = deer_charge_onkillfx,
+        horizontalspeed = 25,
+        gravity = -35,
+        onexplodefn = ChargedBlossomOnExplode,
     })

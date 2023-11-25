@@ -24,6 +24,7 @@ PrefabFiles = {
     "crabking_feeze_musha",
     "antlion_sinkhole_musha",
     "shadow_pillar_musha",
+    "bloomingfield",
     "reticuleaoe_musha",
     "dummyplaceholder",
 

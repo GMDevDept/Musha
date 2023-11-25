@@ -29,6 +29,7 @@ local elementlist = {
     rollingmagma = 1,
     whitefrost = 2,
     poisonspore = 3,
+    bloomingfield = 4,
 }
 
 ---------------------------------------------------------------------------------------------------------
@@ -1041,6 +1042,68 @@ local function ChargedPoisonSpore(inst)
     debuff.charged:push() -- No need to set bounce time here because entity will be removed and respawned
 end
 
+-- Bloom
+local function BloomingField(inst, data)
+    if inst:HasDebuff("elementloaded") then
+        local x, y, z = inst.components.debuffable:GetDebuff("elementloaded").Transform:GetWorldPosition()
+        local prefab = inst.components.debuffable:GetDebuff("elementloaded").prefab
+
+        inst.components.debuffable:RemoveDebuff("elementloaded")
+
+        local cooldownoverride = nil
+        local projectile = SpawnPrefab(prefab)
+
+        if prefab == "deer_blossom_charge_musha" then
+            projectile.nosound = true
+            cooldownoverride = TUNING.musha.skills.launchelement.bloomingfield.charged.cooldown
+        end
+        projectile.owner = inst
+        projectile.Transform:SetPosition(x, y, z)
+        projectile.components.complexprojectile:Launch(data.CursorPosition, inst)
+        inst.SoundEmitter:PlaySound("dontstarve/cave/tentapiller_hole_throw_item")
+
+        local function BloomingFieldOnTimerDone(inst, data)
+            if data.name == "cooldown_bloomingfield" then
+                inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                    .. STRINGS.musha.skills.launchelement.bloomingfield.name
+                    .. STRINGS.musha.skills.cooldownfinished.part2)
+                inst:RemoveEventCallback("timerdone", BloomingFieldOnTimerDone)
+            end
+        end
+
+        inst.components.timer:StartTimer("cooldown_bloomingfield",
+            cooldownoverride or TUNING.musha.skills.launchelement.bloomingfield.cooldown)
+        inst:ListenForEvent("timerdone", BloomingFieldOnTimerDone)
+
+        return true
+    elseif not inst.skills.bloomingfield then
+        return false, STRINGS.musha.lack_of_exp
+    elseif inst.components.timer:TimerExists("cooldown_bloomingfield") then
+        local reason = STRINGS.musha.skills.incooldown.part1
+            .. STRINGS.musha.skills.launchelement.bloomingfield.name
+            .. STRINGS.musha.skills.incooldown.part2
+            .. STRINGS.musha.skills.incooldown.part3
+            .. math.ceil(inst.components.timer:GetTimeLeft("cooldown_bloomingfield"))
+            .. STRINGS.musha.skills.incooldown.part4
+        return false, reason
+    elseif inst.components.mana.current < TUNING.musha.skills.launchelement.bloomingfield.manacost then
+        return false, STRINGS.musha.lack_of_mana
+    else
+        inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.bloomingfield.manacost)
+        inst:AddDebuff("elementloaded", "blossom_projectile_musha")
+        inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
+        inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
+        inst.components.talker:Say(STRINGS.musha.skills.launchelement.bloomingfield.ready)
+
+        return true
+    end
+end
+
+local function ChargedBloomingField(inst)
+    inst.components.debuffable:RemoveDebuff("elementloaded")
+    inst:AddDebuff("elementloaded", "deer_blossom_charge_musha")
+end
+
 local function ElementTakeTurns(inst, data)
     local availables = {}
     local max = 0
@@ -1090,6 +1153,8 @@ local function LaunchElement(inst, data, norecur)
         success, reason1 = WhiteFrost(inst, data)
     elseif inst.elementmode == 3 then
         success, reason1 = PoisonSpore(inst, data)
+    elseif inst.elementmode == 4 then
+        success, reason1 = BloomingField(inst, data)
     end
 
     if norecur then return success end
@@ -1120,6 +1185,8 @@ local function OnElementCharged(inst, data)
                 ChargedWhiteFrost(inst)
             elseif inst.elementmode == 3 then
                 ChargedPoisonSpore(inst)
+            elseif inst.elementmode == 4 then
+                ChargedBloomingField(inst)
             end
         end
         inst:RemoveEventCallback("timerdone", OnElementCharged)
@@ -2306,6 +2373,7 @@ local function OnLevelUp(inst, data)
     inst.skills.rollingmagma      = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
     inst.skills.whitefrost        = data.lvl >= TUNING.musha.leveltounlockskill.whitefrost and true or nil
     inst.skills.poisonspore       = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
+    inst.skills.bloomingfield     = data.lvl >= TUNING.musha.leveltounlockskill.bloomingfield and true or nil
     inst.skills.setsugetsuka      = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
     inst.skills.setsugetsukaredux = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
     inst.skills.phoenixadvent     = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
@@ -2507,7 +2575,7 @@ local function master_postinit(inst)
     inst.skills = {}
     inst.companionhotkeysenabled = true
     inst.shadowmushafollowonly = false
-    inst.elementmode = 1 -- 1: magma, 2: frost, 3: poison
+    inst.elementmode = 1 -- 1: magma, 2: frost, 3: poison, 4: bloom
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel

@@ -98,7 +98,39 @@ local function FrostOnExplode(inst)
     ShakeAllCameras(CAMERASHAKE.FULL, .2, .02, .4, inst, 40)
 end
 
+local function SpawnHealFx(x, y, z, fx_prefab, scale)
+    local fx = SpawnPrefab(fx_prefab)
+    fx.Transform:SetNoFaced()
+    fx.Transform:SetPosition(x, y, z)
+
+    scale = scale or 1
+    fx.Transform:SetScale(scale, scale, scale)
+end
+
 local function HealingOnExplode(inst)
+    local x, y, z
+    local parent = inst.entity:GetParent()
+    if parent ~= nil then
+        x, y, z = parent.Transform:GetWorldPosition()
+    else
+        x, y, z = inst.Transform:GetWorldPosition()
+    end
+
+    local must_tags = { "_health" }
+    local must_one_of_tags = { "companion", "musha_companion", "player" }
+    local range = TUNING.musha.skills.launchelement.bloomingfield.radius
+
+    CustomDoAOE(inst, range, must_tags, nil, must_one_of_tags, function(v)
+        local heal_amount = v:HasTag("player") and TUNING.musha.skills.launchelement.bloomingfield.playerhealthregen or
+            TUNING.musha.skills.launchelement.bloomingfield.nonplayerhealthregen
+
+        v.components.health:DoDelta(heal_amount, false, inst.owner)
+        CustomAttachFx(v, "spider_heal_target_fx")
+    end)
+
+    local scale = 1.35
+    SpawnHealFx(x, y, z, "spider_heal_ground_fx", scale)
+    SpawnHealFx(x, y, z, "spider_heal_fx", scale)
 end
 
 --------------------------------------------------------------------------
@@ -277,6 +309,6 @@ end
 return MakeProjectile("fireball_projectile_musha", "fireball_fx", "fireball_2_fx", 15, 1, nil, nil, "fireball_hit_fx",
     FireballOnExplode, 20, -30),
     MakeProjectile("blossom_projectile_musha", "lavaarena_heal_projectile", "lavaarena_heal_projectile", 15, 0,
-        { 0, .2, .1, 0 }, nil, "blossom_hit_fx", HealingOnExplode, 15, -35),
+        { 0, .2, .1, 0 }, nil, "blossom_hit_fx", HealingOnExplode, 20, -30),
     MakeProjectile("frostball_projectile_musha", "gooball_fx", "gooball_fx", 20, 1, nil, { .9, .9, .9, 1 },
         "gooball_hit_fx", FrostOnExplode, 18, -40)

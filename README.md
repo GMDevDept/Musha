@@ -1,5 +1,5 @@
 
-# [DST] Musha (Neko.Ver)
+# [DST] Musha (Neko Ver.)
 
 ## 1. 角色
 
