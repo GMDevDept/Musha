@@ -1,7 +1,9 @@
 -- Inherit attributes from GLOBAL
-GLOBAL.setmetatable(env, { __index = function(t, k)
-    return GLOBAL.rawget(GLOBAL, k)
-end })
+GLOBAL.setmetatable(env, {
+    __index = function(t, k)
+        return GLOBAL.rawget(GLOBAL, k)
+    end
+})
 
 -- Custom strings (i18n)
 local modlanguage = GetModConfigData("modlanguage")
@@ -34,17 +36,17 @@ modimport("scripts/src/assetlist.lua") -- Asset list
 modimport("scripts/src/recipes.lua") -- Recipe list
 modimport("scripts/src/skinbuild.lua") -- Redefine skin register functions
 modimport("scripts/src/entityscript.lua") -- AddClassPostConstruct
-modimport("scripts/src/combat.lua") -- Redefine components/combat for manashieldonattacked event
 modimport("scripts/src/actions.lua") -- Redefine certain character actions (attack, eat, etc.)
 modimport("scripts/src/hotkeys.lua") -- Add key handlers
-modimport("scripts/src/stategraphs.lua") -- Add action modules and anims (smite,etc.)
-modimport("scripts/src/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, fatigue, stamina, etc.)
-modimport("scripts/src/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
-modimport("scripts/src/fueled.lua") -- Redefine components/fueled for musha's equipments
-modimport("scripts/src/fuels.lua") -- Add fueltype for musha's equipments
-modimport("scripts/src/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
-modimport("scripts/src/nightmarefuel.lua") -- Add edible component to remove sanity penalty under shadow mode
-modimport("scripts/src/shadowheart.lua") -- Add edible component to remove sanity penalty under shadow mode
+modimport("scripts/src/components/combat.lua") -- Redefine components/combat for manashieldonattacked event
+modimport("scripts/src/components/fueled.lua") -- Redefine components/fueled for musha's equipments
+modimport("scripts/src/prefabs/fuels.lua") -- Add fueltype for musha's equipments
+modimport("scripts/src/prefabs/nightmarefuel.lua") -- Add edible component to remove sanity penalty under shadow mode
+modimport("scripts/src/prefabs/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, fatigue, stamina, etc.)
+modimport("scripts/src/prefabs/shadowheart.lua") -- Add edible component to remove sanity penalty under shadow mode
+modimport("scripts/src/prefabs/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
+modimport("scripts/src/stategraphs/SGwilson.lua") -- Add action modules and anims (smite,etc.)
+modimport("scripts/src/widgets/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
 
 -- The skins shown in the cycle view window on the character select screen.
 -- A good place to see what you can put in here is in skinutils.lua, in the function GetSkinModes
