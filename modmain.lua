@@ -45,6 +45,7 @@ modimport("scripts/src/prefabs/nightmarefuel.lua") -- Add edible component to re
 modimport("scripts/src/prefabs/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, fatigue, stamina, etc.)
 modimport("scripts/src/prefabs/shadowheart.lua") -- Add edible component to remove sanity penalty under shadow mode
 modimport("scripts/src/prefabs/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
+modimport("scripts/src/screens/playerinfopopupscreen.lua") -- AddClassPostConstruct: add skill tree
 modimport("scripts/src/stategraphs/SGwilson.lua") -- Add action modules and anims (smite,etc.)
 modimport("scripts/src/widgets/statusdisplays.lua") -- AddClassPostConstruct: settings for mana/fatigue/stamina badges display
 

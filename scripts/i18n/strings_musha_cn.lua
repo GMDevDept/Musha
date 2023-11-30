@@ -225,6 +225,18 @@ STRINGS.musha = {
         },
     },
 
+    skilltrees = {
+        princess = {
+            name = "公主",
+        },
+        valkyrie = {
+            name = "女武神",
+        },
+        shadow = {
+            name = "暗影",
+        },
+    },
+
     equipments = {
         enchant_skill = "附魔技能",
         enchant_material_added = "附魔素材已添加",
