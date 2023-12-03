@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 local function SetReplicaMaxLevel(self, maxlevel)
     self.inst.replica.leveler:SetMaxLevel(maxlevel)
 end

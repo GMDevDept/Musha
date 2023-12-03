@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 local function OnTaskTick(inst, self, period)
     self:Recalc(period)
 end

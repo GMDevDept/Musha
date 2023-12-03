@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 -- Source: https://steamcommunity.com/sharedfiles/filedetails/?id=2601796546
 
 -- -- Register musha to official character list to enable skin panel

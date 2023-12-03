@@ -2195,7 +2195,7 @@ local function OnModeChange(inst)
             "shadowmodebuff")
         inst.components.sanity.neg_aura_absorb = TUNING.musha.charactermode.shadow.negsanityauraabsorb -- Check sanity component, could be deprecated in the future
         inst.components.sanity:AddSanityPenalty("shadowmodebuff",
-            1 - inst.components.sanity.current / inst.components.sanity.max) -- Note: AddSanityPenalty(key, modifier:pct)
+            1 - math.clamp((inst.components.sanity.current + TUNING.musha.skills.shadowmode.sanitycost) / inst.components.sanity.max, 0, 1)) -- Note: AddSanityPenalty(key, modifier:pct)
         inst.task_updatesanitypenalty = inst:DoPeriodicTask(TUNING.musha.charactermode.shadow.sanitypenaltyrecaltime,
             function()
                 inst.components.sanity:AddSanityPenalty("shadowmodebuff",

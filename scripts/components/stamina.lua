@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 local function onmax(self, max)
     self.inst.replica.stamina:SetMax(max)
 end

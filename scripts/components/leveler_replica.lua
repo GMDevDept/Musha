@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 local Leveler = Class(function(self, inst)
     self.inst = inst
 
