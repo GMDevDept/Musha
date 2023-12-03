@@ -106,11 +106,11 @@ local function ontick(inst)
             if v.components.locomotor ~= nil then
                 CustomCancelTask(v.task_removebloomingfieldspeed)
 
-                v.components.locomotor:SetExternalSpeedMultiplier(v, "bloomingfield",
+                v.components.locomotor:SetExternalSpeedMultiplier(inst, "bloomingfield",
                     TUNING.musha.skills.launchelement.bloomingfield.charged.speedmultiplier)
 
                 v.task_removebloomingfieldspeed = v:DoTaskInTime(interval, function()
-                    v.components.locomotor:RemoveExternalSpeedMultiplier(v, "bloomingfield")
+                    v.components.locomotor:RemoveExternalSpeedMultiplier(inst, "bloomingfield")
                     v.task_removebloomingfieldspeed = nil
                 end)
             end
