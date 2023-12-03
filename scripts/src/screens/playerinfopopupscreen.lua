@@ -52,7 +52,7 @@ local function MakeMushaSkillTree(self, tree_name, from_sidebar)
 		self.skilltree = nil
 	end
 
-	self.skilltree = self.root:AddChild(MushaSkillTreeWidget(tree_name, self.data))
+	self.skilltree = self.root:AddChild(MushaSkillTreeWidget(tree_name, self.data, nil, {owner = self.owner}))
 
 	if self.root.tabs then
 		if not from_sidebar then
@@ -163,14 +163,15 @@ local function MakeMushaTabs(self)
 	self.root.tabs.skillTreePopup = maketabbutton(self.root.tabs, { 165, 220 },
 		string.upper(STRINGS.SKILLTREE.SKILLTREE),
 		function()
-			MakeMushaSkillTree(self, "wormwood")
+			MakeMushaSkillTree(self, "general")
 			SelectSideButton(self)
 		end, "skills",
 		{ -2, -5 })
 end
 
 local function ClassPostConstructFn(self)
-	if self.currentcharacter == "musha" then
+	-- Only show skill tree on self-inspection
+	if self.currentcharacter == "musha" and not self.show_net_profile then
 		MakeMushaTabs(self)
 		MakeSideBar(self)
 
@@ -179,7 +180,7 @@ local function ClassPostConstructFn(self)
 		self.bg_scratches:Kill()
 		self:MakeBG()
 
-		MakeMushaSkillTree(self, "wilson")
+		MakeMushaSkillTree(self, "general")
 	end
 end
 
