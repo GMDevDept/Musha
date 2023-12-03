@@ -42,7 +42,6 @@ modimport("scripts/src/components/combat.lua") -- Redefine components/combat for
 modimport("scripts/src/components/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/prefabs/fuels.lua") -- Add fueltype for musha's equipments
 modimport("scripts/src/prefabs/nightmarefuel.lua") -- Add edible component to remove sanity penalty under shadow mode
-modimport("scripts/src/prefabs/player_classified.lua") -- Redefine prefabs/player_classified for replicable components (mana, leveler, fatigue, stamina, etc.)
 modimport("scripts/src/prefabs/shadowheart.lua") -- Add edible component to remove sanity penalty under shadow mode
 modimport("scripts/src/prefabs/waxwelljournal.lua") -- Add prototyper component to build shadowmusha
 modimport("scripts/src/screens/playerinfopopupscreen.lua") -- AddClassPostConstruct: add skill tree

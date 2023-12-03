@@ -2436,6 +2436,42 @@ local function OnLoad(inst)
     OnLevelUp(inst, inst.components.leveler)
 end
 
+local function OnNewSpawn(inst)
+    OnLevelUp(inst, inst.components.leveler)
+end
+
+local function OnDespawn(inst)
+    return
+end
+
+---------------------------------------------------------------------------------------------------------
+
+-- Musha classified
+local function AttachMushaClassified(inst, classified)
+    inst.musha_classified = classified
+    inst.ondetachmushaclassified = function() inst:DetachMushaClassified() end
+    inst:ListenForEvent("onremove", inst.ondetachmushaclassified, classified)
+end
+
+local function DetachMushaClassified(inst)
+    inst.musha_classified = nil
+    inst.ondetachmushaclassified = nil
+end
+
+local function OnRemoveEntity(inst)
+    if inst.musha_classified ~= nil then
+        if TheWorld.ismastersim then
+            inst.musha_classified:Remove()
+            inst.musha_classified = nil
+        else
+            inst.musha_classified._parent = nil
+            inst:RemoveEventCallback("onremove", inst.ondetachmushaclassified, inst.musha_classified)
+            inst:DetachMushaClassified()
+        end
+    end
+    return inst:_OnRemoveEntity()
+end
+
 ---------------------------------------------------------------------------------------------------------
 
 -- This initializes for both the server and client. Tags, animes and minimap icons can be added here.
@@ -2497,6 +2533,10 @@ local function common_postinit(inst)
     inst.endshadowparry = net_event(inst.GUID, "endshadowparry") -- Handler set in SG
     inst.startphantomblossom_pre = net_event(inst.GUID, "startphantomblossom_pre") -- Handler set in SG
     inst.startphantomblossom = net_event(inst.GUID, "startphantomblossom") -- Handler set in SG
+    inst._OnRemoveEntity = inst.OnRemoveEntity
+    inst.OnRemoveEntity = OnRemoveEntity
+    inst.AttachMushaClassified = AttachMushaClassified
+    inst.DetachMushaClassified = DetachMushaClassified
 
     -- Event handlers
     inst:ListenForEvent("modechange", OnModeChange)
@@ -2507,6 +2547,10 @@ end
 
 -- This initializes for the server only. Components are added here.
 local function master_postinit(inst)
+    -- Additional classified data
+    inst.musha_classified = SpawnPrefab("musha_classified")
+    inst.musha_classified.entity:SetParent(inst.entity)
+
     -- Leveler
     inst:AddComponent("leveler")
     inst.components.leveler:SetMaxExperience(TUNING.musha.maxexperience)
@@ -2567,7 +2611,8 @@ local function master_postinit(inst)
     inst.OnPreLoad = OnPreload -- FIRST, the entity runs its PreLoad method.
     inst.OnLoad = OnLoad -- SECOND, the entity runs the OnLoad function of its components. THIRD, the entity runs its own OnLoad method.
     inst.OnSave = OnSave
-    inst.OnNewSpawn = OnLoad
+    inst.OnNewSpawn = OnNewSpawn
+    inst.OnDespawn = OnDespawn
 
     -- Character specific attributes
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()

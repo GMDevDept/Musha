@@ -1,6 +1,7 @@
 PrefabFiles = {
     -- Character
     "musha",
+    "musha_classified",
     "musha_skins",
     "musha_voidphantom",
 

@@ -2,9 +2,9 @@ local Fatigue = Class(function(self, inst)
     self.inst = inst
 
     if TheWorld.ismastersim then
-        self.classified = inst.player_classified
-    elseif self.classified == nil and inst.player_classified ~= nil then
-        self:AttachClassified(inst.player_classified)
+        self.classified = inst.musha_classified
+    elseif self.classified == nil and inst.musha_classified ~= nil then
+        self:AttachClassified(inst.musha_classified)
     end
 end)
 
