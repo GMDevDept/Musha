@@ -5,7 +5,7 @@ local SKILLTREE_METAINFO = {}
 local function PrintFixMe(error_message)
     print(string.format("\n\nFIXME: %s\n\n", error_message))
 end
-local function CreateSkillTreeFor(characterprefab, skills)
+local function CreateSkillTreeFor(category, skills)
     local RPC_LOOKUP = {}
     local rpc_id = 0
     for skill_name, skill in orderedPairs(skills) do
@@ -18,13 +18,13 @@ local function CreateSkillTreeFor(characterprefab, skills)
                 -- NOTES(JBK): If this goes beyond 32 it will not be shown to other players in the inspection panel.
                 -- It will not be networked during initial skill selection.
                 PrintFixMe(string.format("Skill Tree for %s has TOO MANY skills! This will break networking.",
-                    characterprefab))
+                    category))
             end
         end
         if skill.connects then -- NOTES(JBK): These skills unlock as an 'or' gate.
             if skill.connects[1] == nil then
                 PrintFixMe(string.format(
-                "Skill Tree for %s [skill %s] has NO connections! Remove this or add a connection.", characterprefab,
+                "Skill Tree for %s [skill %s] has NO connections! Remove this or add a connection.", category,
                     skill_name))
             end
             for _, next_skill_name in ipairs(skill.connects) do
@@ -32,7 +32,7 @@ local function CreateSkillTreeFor(characterprefab, skills)
                 if next_skill == nil then
                     PrintFixMe(string.format(
                     "Skill Tree for %s [skill %s] has a bad 'connects' to unknown skill %s! Remove this or add a good connection.",
-                        characterprefab, skill_name, next_skill_name))
+                        category, skill_name, next_skill_name))
                 end
                 local must_have_one_of = next_skill and next_skill.must_have_one_of or {}
                 next_skill.must_have_one_of = must_have_one_of
@@ -40,7 +40,7 @@ local function CreateSkillTreeFor(characterprefab, skills)
                 if next_skill and next_skill.root then
                     PrintFixMe(string.format(
                     "Skill Tree for %s [skill %s] has a bad 'root'! Remove 'root' because %s 'connects' to it.",
-                        characterprefab, next_skill_name, skill_name))
+                        category, next_skill_name, skill_name))
                 end
             end
         end
@@ -48,12 +48,12 @@ local function CreateSkillTreeFor(characterprefab, skills)
             if skill.locks[1] == nil then
                 PrintFixMe(string.format(
                 "Skill Tree for %s [skill %s] has NO locks! Remove 'locks' table or add lock requirements.",
-                    characterprefab, skill_name))
+                    category, skill_name))
             end
             for _, lock_name in ipairs(skill.locks) do
                 local lock = skills[lock_name]
                 if lock == nil then
-                    PrintFixMe(string.format("Skill Tree for %s [skill %s] has a bad 'locks' name %s!", characterprefab,
+                    PrintFixMe(string.format("Skill Tree for %s [skill %s] has a bad 'locks' name %s!", category,
                         skill_name, lock_name))
                 end
                 local must_have_all_of = skill.must_have_all_of or {}
@@ -62,7 +62,7 @@ local function CreateSkillTreeFor(characterprefab, skills)
                 if skill.root then
                     PrintFixMe(string.format(
                     "Skill Tree for %s [skill %s] has a bad 'root'! Remove 'root' because %s 'locks' to it.",
-                        characterprefab, skill_name, lock_name))
+                        category, skill_name, lock_name))
                 end
             end
         end
@@ -72,14 +72,14 @@ local function CreateSkillTreeFor(characterprefab, skills)
             -- NOTES(JBK): Floating skills are not going to be able to be properly validated because they are out of the tree ordering.
             PrintFixMe(string.format(
             "Skill Tree for %s [skill %s] is FLOATING! Connect the skill as either a 'root' or a connection from 'connects'.",
-                characterprefab, skill_name))
+                category, skill_name))
         end
     end
-    SKILLTREE_METAINFO[characterprefab] = { -- Must be first for metatable setting.
+    SKILLTREE_METAINFO[category] = { -- Must be first for metatable setting.
         RPC_LOOKUP = RPC_LOOKUP,
         TOTAL_SKILLS_COUNT = rpc_id,
     }
-    SKILLTREE_DEFS[characterprefab] = skills
+    SKILLTREE_DEFS[category] = skills
 end
 
 local function CountTags(prefab, targettag, activatedskills) -- NOTES(JBK): This function is ran on both server and client do not use TheSkillTree inside here.

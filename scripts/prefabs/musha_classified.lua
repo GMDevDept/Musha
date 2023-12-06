@@ -1,5 +1,9 @@
+local skilltreedefs = require "prefabs/skilltree_defs_musha"
+
+-------------------------------------------------------------------------------------------------------
+
 local function SetValue(inst, name, value)
-    assert(value >= 0 and value <= 65535, "Player "..tostring(name).." out of range: "..tostring(value))
+    assert(value >= 0 and value <= 65535, "Player " .. tostring(name) .. " out of range: " .. tostring(value))
     inst[name]:set(math.ceil(value))
 end
 
@@ -8,6 +12,8 @@ local function SetDirty(netvar, val)
     netvar:set_local(val)
     netvar:set(val)
 end
+
+--------------------------------------------------------------------------
 
 local function OnManaDelta(parent, data)
     if data.newpercent > data.oldpercent then
@@ -49,16 +55,7 @@ local function OnManaDirty(inst)
     end
 end
 
-local function OnLevelerDelta(parent, data)
-    -- Reserved for possible future use (e.g. exp badge and level up animation)
-end
-
-local function OnLevelerDirty(inst)
-    if inst._parent ~= nil then
-        local data = nil -- Reserved for possible future use
-        inst._parent:PushEvent("levelerdelta", data)
-    end
-end
+--------------------------------------------------------------------------
 
 local function OnStaminaDelta(parent, data)
     if data.newpercent > data.oldpercent then
@@ -100,6 +97,8 @@ local function OnStaminaDirty(inst)
     end
 end
 
+--------------------------------------------------------------------------
+
 local function OnFatigueDelta(parent, data)
     if data.newpercent > data.oldpercent then
         --Force dirty, we just want to trigger an event on the client
@@ -140,6 +139,20 @@ local function OnFatigueDirty(inst)
     end
 end
 
+--------------------------------------------------------------------------
+
+local function OnLevelerDelta(parent, data)
+    -- Reserved for possible future use (e.g. exp badge and level up animation)
+end
+
+local function OnLevelerDirty(inst)
+    if inst._parent ~= nil then
+        local data = nil -- Reserved for possible future use
+        inst._parent:PushEvent("levelerdelta", data)
+    end
+end
+
+--------------------------------------------------------------------------
 
 local function OnEntityReplicated(inst)
     inst._parent = inst.entity:GetParent()
@@ -158,6 +171,9 @@ local function OnEntityReplicated(inst)
         end
         if inst._parent.replica.fatigue ~= nil then
             inst._parent.replica.fatigue:AttachClassified(inst)
+        end
+        if inst._parent.replica.mushaskilltree ~= nil then
+            inst._parent.replica.mushaskilltree:AttachClassified(inst)
         end
     end
 end
@@ -247,6 +263,9 @@ local function fn()
     inst.isstaminadown = net_bool(inst.GUID, "stamina.dodeltaovertime(down)", "staminadirty")
     inst.currentstamina:set(100)
     inst.maxstamina:set(100)
+
+    -- Net variables for skilltree
+    inst.activatedskills = net_str(inst.GUID, "skilltree.activatedskills", "skilltreedirty")
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)

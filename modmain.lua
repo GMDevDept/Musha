@@ -27,6 +27,7 @@ AddReplicableComponent("mana")
 AddReplicableComponent("leveler")
 AddReplicableComponent("stamina")
 AddReplicableComponent("fatigue")
+AddReplicableComponent("mushaskilltree")
 
 -- Run scripts
 modimport("scripts/src/tuning.lua") -- Settings, values and parameters
