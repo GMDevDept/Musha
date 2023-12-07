@@ -36,7 +36,7 @@ local elementlist = {
 
 -- Get mouse cursor position from client side and send to server
 
--- Mod RPC
+-- Mod RPC Handler on server side
 local function GetCursorPosition(inst, x, y, z)
     inst.bufferedcursorpos = Vector3(x, y, z)
     inst:PushEvent("cursorpositionupdated")
@@ -54,15 +54,10 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Push event when debuff is added or removed
--- ? Maybe Klei will add this event officially in the future
+-- Mod RPC Handler for skill tree widget activate event
 
-local function OnDebuffAdded(inst, name, debuff, data)
-    inst:PushEvent("debuffadded", { name = name, debuff = debuff, data = data })
-end
-
-local function OnDebuffRemoved(inst, name, debuff)
-    inst:PushEvent("debuffremoved", { name = name, debuff = debuff })
+local function ActivateSkill(inst, data)
+    inst.components.mushaskilltree:ActivateSkill(data.skillname)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2591,10 +2586,6 @@ local function master_postinit(inst)
     inst.components.combat.areahitdamagepercent = TUNING.musha.areahitdamagepercent
     inst.components.combat.bonusdamagefn = BonusDamageFn
 
-    -- Debuffable
-    inst.components.debuffable.ondebuffadded = OnDebuffAdded
-    inst.components.debuffable.ondebuffremoved = OnDebuffRemoved
-
     -- Petleash
     inst._onpetlost = function(pet) inst.components.sanity:RemoveSanityPenalty(pet) end
     inst._OnSpawnPet = inst.components.petleash.onspawnfn
@@ -2650,6 +2641,8 @@ local function master_postinit(inst)
     inst:ListenForEvent("ms_playerreroll", OnRerollForPetLeash)
 end
 
+---------------------------------------------------------------------------------------------------------
+
 -- Set up remote procedure calls for client side
 AddModRPCHandler("musha", "valkyriekeydown", ValkyrieKeyDown)
 AddModRPCHandler("musha", "valkyriekeyup", ValkyrieKeyUp)
@@ -2662,6 +2655,7 @@ AddModRPCHandler("musha", "playelfmelody", PlayElfMelody)
 AddModRPCHandler("musha", "getcursorposition", GetCursorPosition)
 AddModRPCHandler("musha", "switchkeybindings", SwitchKeyBindings)
 AddModRPCHandler("musha", "doshadowmushaorder", DoShadowMushaOrder)
+AddModRPCHandler("musha", "activateskill", ActivateSkill)
 
 ---------------------------------------------------------------------------------------------------------
 

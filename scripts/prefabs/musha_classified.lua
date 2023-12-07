@@ -1,10 +1,12 @@
-local skilltreedefs = require "prefabs/skilltree_defs_musha"
-
--------------------------------------------------------------------------------------------------------
-
 local function SetValue(inst, name, value)
-    assert(value >= 0 and value <= 65535, "Player " .. tostring(name) .. " out of range: " .. tostring(value))
-    inst[name]:set(math.ceil(value))
+    if type(value) == "number" then
+        assert(value >= 0 and value <= 65535, "Player " .. tostring(name) .. " out of range: " .. tostring(value))
+        inst[name]:set(math.ceil(value))
+    elseif type(value) == "string" then
+        inst[name]:set(value)
+    else
+        print("Variable " .. tostring(name) .. " type invalid: " .. type(value))
+    end
 end
 
 local function SetDirty(netvar, val)
@@ -13,10 +15,12 @@ local function SetDirty(netvar, val)
     netvar:set(val)
 end
 
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 local function OnManaDelta(parent, data)
-    if data.newpercent > data.oldpercent then
+    if data.overtime then
+        return
+    elseif data.newpercent > data.oldpercent then
         --Force dirty, we just want to trigger an event on the client
         SetDirty(parent.musha_classified.ismanapulseup, true)
     elseif data.newpercent < data.oldpercent then
@@ -55,10 +59,12 @@ local function OnManaDirty(inst)
     end
 end
 
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 local function OnStaminaDelta(parent, data)
-    if data.newpercent > data.oldpercent then
+    if data.overtime then
+        return
+    elseif data.newpercent > data.oldpercent then
         --Force dirty, we just want to trigger an event on the client
         SetDirty(parent.musha_classified.isstaminaup, true)
     elseif data.newpercent < data.oldpercent then
@@ -97,10 +103,12 @@ local function OnStaminaDirty(inst)
     end
 end
 
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 local function OnFatigueDelta(parent, data)
-    if data.newpercent > data.oldpercent then
+    if data.overtime then
+        return
+    elseif data.newpercent > data.oldpercent then
         --Force dirty, we just want to trigger an event on the client
         SetDirty(parent.musha_classified.isfatigueup, true)
     elseif data.newpercent < data.oldpercent then
@@ -139,20 +147,7 @@ local function OnFatigueDirty(inst)
     end
 end
 
---------------------------------------------------------------------------
-
-local function OnLevelerDelta(parent, data)
-    -- Reserved for possible future use (e.g. exp badge and level up animation)
-end
-
-local function OnLevelerDirty(inst)
-    if inst._parent ~= nil then
-        local data = nil -- Reserved for possible future use
-        inst._parent:PushEvent("levelerdelta", data)
-    end
-end
-
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 local function OnEntityReplicated(inst)
     inst._parent = inst.entity:GetParent()
@@ -178,7 +173,7 @@ local function OnEntityReplicated(inst)
     end
 end
 
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 function OnInitialDirtyStates(inst)
     if not TheWorld.ismastersim then
@@ -194,7 +189,6 @@ local function RegisterNetListeners(inst)
     if TheWorld.ismastersim then
         inst._parent = inst.entity:GetParent()
         inst:ListenForEvent("manadelta", OnManaDelta, inst._parent)
-        inst:ListenForEvent("levelerdelta", OnLevelerDelta, inst._parent)
         inst:ListenForEvent("staminadelta", OnStaminaDelta, inst._parent)
         inst:ListenForEvent("fatiguedelta", OnFatigueDelta, inst._parent)
     else
@@ -205,7 +199,6 @@ local function RegisterNetListeners(inst)
         inst.isfatigueup:set_local(false)
         inst.isfatiguedown:set_local(false)
         inst:ListenForEvent("manadirty", OnManaDirty)
-        inst:ListenForEvent("levelerdirty", OnLevelerDirty)
         inst:ListenForEvent("staminadirty", OnStaminaDirty)
         inst:ListenForEvent("fatiguedirty", OnFatigueDirty)
 
@@ -213,7 +206,7 @@ local function RegisterNetListeners(inst)
     end
 end
 
---------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 
 local function fn()
     local inst = CreateEntity()
@@ -265,7 +258,9 @@ local function fn()
     inst.maxstamina:set(100)
 
     -- Net variables for skilltree
-    inst.activatedskills = net_str(inst.GUID, "skilltree.activatedskills", "skilltreedirty")
+    inst.activatedskills = net_string(inst.GUID, "skilltree.activatedskills", "skilltreedirty")
+    inst.maxskillxp = net_ushortint(inst.GUID, "skilltree.maxskillxp", "skillxpdirty")
+    inst.skillxp = net_ushortint(inst.GUID, "skilltree.skillxp", "skillxpdirty")
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)

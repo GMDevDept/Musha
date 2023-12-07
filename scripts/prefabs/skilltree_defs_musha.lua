@@ -1,5 +1,6 @@
 local SKILLTREE_DEFS = {}
 local SKILLTREE_METAINFO = {}
+local ALL_SKILLS = {}
 
 -- Wrapper function to help modders with their strange prefab names and tree validation process.
 local function PrintFixMe(error_message)
@@ -260,5 +261,11 @@ setmetatable(SKILLTREE_DEFS, {
     end,
 })
 
+for category, skills in pairs(SKILLTREE_DEFS) do
+    for skill_name, skilldata in pairs(skills) do
+        ALL_SKILLS[skill_name] = skilldata
+    end
+end
+
 return { SKILLTREE_DEFS = SKILLTREE_DEFS, SKILLTREE_METAINFO = SKILLTREE_METAINFO, CreateSkillTreeFor =
-CreateSkillTreeFor, SKILLTREE_ORDERS = SKILLTREE_ORDERS, FN = FN }
+CreateSkillTreeFor, SKILLTREE_ORDERS = SKILLTREE_ORDERS, FN = FN, ALL_SKILLS = ALL_SKILLS }
