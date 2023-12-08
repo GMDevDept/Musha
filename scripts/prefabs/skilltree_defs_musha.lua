@@ -83,7 +83,7 @@ local function CreateSkillTreeFor(category, skills)
     SKILLTREE_DEFS[category] = skills
 end
 
-local function CountTags(prefab, targettag, activatedskills) -- NOTES(JBK): This function is ran on both server and client do not use TheSkillTree inside here.
+local function CountTags(prefab, targettag, activatedskills) -- NOTES(JBK): This function is ran on both server and client
     if not activatedskills then
         return 0
     end
@@ -102,7 +102,7 @@ local function CountTags(prefab, targettag, activatedskills) -- NOTES(JBK): This
     return tag_count
 end
 
-local function CountSkills(prefab, activatedskills) -- NOTES(JBK): This function is ran on both server and client do not use TheSkillTree inside here.
+local function CountSkills(prefab, activatedskills) -- NOTES(JBK): This function is ran on both server and client
     if not activatedskills then
         return 0
     end

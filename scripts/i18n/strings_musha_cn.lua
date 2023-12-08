@@ -159,11 +159,11 @@ STRINGS.musha = {
         launchelement = {
             rollingmagma = {
                 name = "沸滚熔岩",
-                cast = "[沸滚熔岩] 准备就绪!",
+                ready = "[沸滚熔岩] 准备就绪!",
             },
             whitefrost = {
                 name = "奔涌白霜",
-                cast = "[奔涌白霜] 准备就绪!",
+                ready = "[奔涌白霜] 准备就绪!",
             },
             poisonspore = {
                 name = "孢子炸弹",
@@ -226,6 +226,9 @@ STRINGS.musha = {
     },
 
     skilltrees = {
+        general = {
+            name = "通用技能",
+        },
         princess = {
             name = "公主",
         },

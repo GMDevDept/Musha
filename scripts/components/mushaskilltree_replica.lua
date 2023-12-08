@@ -80,6 +80,17 @@ function MushaSkillTree:GetAvailableSkillXP()
     return self:GetSkillXP() - usedtotal
 end
 
+function MushaSkillTree:ActivateSkill(skillname, category)
+    if self.inst.components.mushaskilltree ~= nil then
+        self.inst.components.mushaskilltree:ActivateSkill(skillname, category)
+    elseif self.classified ~= nil then
+        SendModRPCToServer(MOD_RPC.musha.activateskill, skillname, category)
+    else
+        print("Calling replica.mushaskilltree:ActivateSkill() failed")
+        return false
+    end
+end
+
 --------------------------------------------------------------------------
 
 -- For server side use only

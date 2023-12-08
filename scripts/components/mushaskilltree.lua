@@ -12,7 +12,7 @@ end
 local MushaSkillTree = Class(function(self, inst)
     self.inst = inst
     self.activatedskills = {}
-    self.skillxp = 0
+    self.skillxp = 10
     self.maxskillxp = 999
 end, nil, {
     skillxp = onskillxp,
@@ -47,6 +47,8 @@ end
 function MushaSkillTree:RespecSkills()
     self.activatedskills = {}
     self:UpdateSaveState()
+
+    self.inst.SoundEmitter:PlaySound("wilson_rework/ui/respec")
 end
 
 function MushaSkillTree:IsActivated(skill)

@@ -55,9 +55,8 @@ end
 ---------------------------------------------------------------------------------------------------------
 
 -- Mod RPC Handler for skill tree widget activate event
-
-local function ActivateSkill(inst, data)
-    inst.components.mushaskilltree:ActivateSkill(data.skillname)
+local function ActivateSkill(inst, skillname, category)
+    inst.components.mushaskilltree:ActivateSkill(skillname, category)
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2552,6 +2551,9 @@ local function master_postinit(inst)
     inst.components.leveler:SetMaxLevel(TUNING.musha.maxlevel)
     inst.components.leveler.exprate = TUNING.musha.exprate
     inst.components.leveler.exp_to_level = TUNING.musha.exp_to_level
+
+    -- Skilltree
+    inst:AddComponent("mushaskilltree")
 
     -- Mana
     inst:AddComponent("mana")

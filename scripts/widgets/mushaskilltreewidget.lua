@@ -14,7 +14,7 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
     Widget._ctor(self, "MushaSkillTreeWidget")
 
     self.owner = data.owner
-    self.fromfrontend = fromfrontend
+    self.fromfrontend = fromfrontend -- always nil
     self.targetdata = targetdata
 
     self.target = category
@@ -78,17 +78,6 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
     self.root.infopanel.intro:SetHAlign(ANCHOR_LEFT)
     self.root.infopanel.intro:SetString(STRINGS.SKILLTREE.INFOPANEL_DESC)
 
-    self.root.infopanel.respec_button = self.root.infopanel:AddChild(TEMPLATES.StandardButton(
-        function()
-            self:RespecSkills()
-        end, STRINGS.SKILLTREE.RESPEC, { 200, 50 }))
-    if TheInput:ControllerAttached() then
-        self.root.infopanel.respec_button:SetText(TheInput:GetLocalizedControl(TheInput:GetControllerID(),
-            CONTROL_MENU_MISC_1) .. " " .. STRINGS.SKILLTREE.RESPEC)
-    end
-
-    self.root.infopanel.respec_button:SetPosition(0, -120)
-
     self.root.tree = self.root:AddChild(mushaskilltreebuilder(self.root.infopanel, self.fromfrontend, self))
     self.root.tree:SetPosition(0, -50)
 
@@ -109,7 +98,7 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
         end
     end
 
-    self.root.tree:CreateTree(self.target, self.targetdata, self.readonly, {owner = self.owner})
+    self.root.tree:CreateTree(self.target, self.targetdata, self.readonly)
 
     if self.root.tree then
         self.root.tree:SetFocusChangeDirs()
@@ -122,29 +111,12 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
     end
 end)
 
-function MushaSkillTreeWidget:RespecSkills()
-    TheSkillTree:RespecSkills(self.target)
-    TheFrontEnd:GetSound():PlaySound("wilson_rework/ui/respec")
-
-    for skill, graphics in pairs(self.root.tree.skillgraphics) do
-        graphics.oldstatus = {}
-        graphics.status = {}
-    end
-
-    self.root.tree:RefreshTree()
-end
-
 function MushaSkillTreeWidget:SpawnFavorOverlay(pre)
     if not self.fromfrontend and (self.midlay ~= nil and self.midlay.splash == nil) then
         local favor, activatedskills, characterprefab
-        if self.readonly then -- Will not happen
-            -- characterprefab = self.targetdata.prefab
-            -- activatedskills = TheSkillTree:GetNamesFromSkillSelection(self.targetdata.skillselection, characterprefab)
-        else
-            characterprefab = self.target
-            -- NOTES(JBK): This is not readonly so the player accessing it has access to its state and it is safe to assume TheSkillTree here.
-            activatedskills = TheSkillTree:GetActivatedSkills(characterprefab)
-        end
+
+        characterprefab = self.target
+        activatedskills = self.owner.replica.mushaskilltree:GetActivatedSkills()
 
         if skilltreedefs.FN.CountTags(characterprefab, "shadow_favor", activatedskills) > 0 then
             favor = "skills_shadow"
@@ -198,11 +170,6 @@ end
 function MushaSkillTreeWidget:OnControl(control, down)
     if MushaSkillTreeWidget._base.OnControl(self, control, down) then return true end
 
-    if not down and control == CONTROL_MENU_MISC_1 and self.root.infopanel.respec_button:IsVisible() then
-        self:RespecSkills()
-        return true
-    end
-
     if not down and not TheInput:ControllerAttached() and control == CONTROL_ACTION then
         local skilltree = self.root.tree
 
@@ -223,18 +190,6 @@ end
 
 function MushaSkillTreeWidget:GetSelectedSkill()
     return self.root.tree:GetSelectedSkill()
-end
-
-function MushaSkillTreeWidget:GetHelpText()
-    local controller_id = TheInput:GetControllerID()
-    local t = {}
-
-    if self.root.infopanel.respec_button:IsVisible() then
-        table.insert(t,
-            TheInput:GetLocalizedControl(controller_id, CONTROL_MENU_MISC_1) .. " " .. STRINGS.SKILLTREE.RESPEC)
-    end
-
-    return table.concat(t, "  ")
 end
 
 return MushaSkillTreeWidget

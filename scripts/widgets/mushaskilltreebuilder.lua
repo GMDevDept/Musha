@@ -43,6 +43,7 @@ local TILEUNIT = 37
 local SkillTreeBuilder = Class(Widget, function(self, infopanel, fromfrontend, skilltreewidget)
     Widget._ctor(self, "SkillTreeBuilder")
 
+    self.owner = skilltreewidget.owner
     self.skilltreewidget = skilltreewidget
     self.fromfrontend = fromfrontend
     self.skilltreedef = nil
@@ -190,12 +191,7 @@ function SkillTreeBuilder:buildbuttons(panel, pos, data, offset)
                     return
                 end
 
-                local skilltreeupdater = nil
-                if self.fromfrontend then
-                    skilltreeupdater = TheSkillTree
-                else
-                    skilltreeupdater = ThePlayer and ThePlayer.components.skilltreeupdater or nil
-                end
+                local skilltreeupdater = ThePlayer and ThePlayer.replica.mushaskilltree or nil
 
                 self:LearnSkill(skilltreeupdater, self.target)
             else
@@ -232,22 +228,22 @@ end
 
 local function getMax(data, index)
     local max = 0
-    for i, node in pairs(data) do
-        if math.abs(node.pos[index]) > max then
-            max = math.abs(node.pos[index])
+    for skillname, skilldata in pairs(data) do
+        if math.abs(skilldata.pos[index]) > max then
+            max = math.abs(skilldata.pos[index])
         end
     end
     return max + 1
 end
 
 function SkillTreeBuilder:CreatePanel(data, offset)
-    local panel                 = self:AddChild(Widget(data.name))
+    local panel = self:AddChild(Widget(data.name))
     self.root.panels[data.name] = panel
-    panel.title                 = self:AddChild(Text(HEADERFONT, 18, STRINGS.SKILLTREE.PANELS[string.upper(panel.name)],
+    panel.title  = self:AddChild(Text(HEADERFONT, 18, STRINGS.SKILLTREE.PANELS[string.upper(panel.name)],
         UICOLOURS.GOLD))
 
-    local maxcols               = getMax(data.data, 1)
-    local maxrows               = getMax(data.data, 2)
+    local maxcols = getMax(data.data, 1)
+    local maxrows = getMax(data.data, 2)
 
     self:buildbuttons(panel, { x = 0, y = 0 }, data.data, offset)
 
@@ -270,12 +266,12 @@ end
 local function createtreetable(skilltreedef)
     local tree = {}
 
-    for i, node in pairs(skilltreedef) do
-        if not tree[node.group] then
-            tree[node.group] = {}
+    for skillname, skilldata in pairs(skilltreedef) do
+        if not tree[skilldata.group] then
+            tree[skilldata.group] = {}
         end
 
-        tree[node.group][i] = node
+        tree[skilldata.group][skillname] = skilldata
     end
 
     return tree
@@ -283,8 +279,8 @@ end
 
 ---------------------------------------------------------------
 
-local function gettitle(skill, prefabname, skillgraphics)
-    local skilldata = skilltreedefs.SKILLTREE_DEFS[prefabname][skill]
+local function gettitle(skill, category, skillgraphics)
+    local skilldata = skilltreedefs.SKILLTREE_DEFS[category][skill]
     if skilldata.lock_open then
         local lockstatus = skillgraphics[skill].status.lock_open
         if lockstatus then
@@ -301,43 +297,23 @@ local function gettitle(skill, prefabname, skillgraphics)
     end
 end
 
-local function getdesc(skill, prefabname)
-    local skilldata = skilltreedefs.SKILLTREE_DEFS[prefabname][skill]
+local function getdesc(skill, category)
+    local skilldata = skilltreedefs.SKILLTREE_DEFS[category][skill]
     return skilldata.desc
 end
 
 function SkillTreeBuilder:RefreshTree()
-    local characterprefab, availableskillpoints, activatedskills, skilltreeupdater
-    local frontend = self.fromfrontend
+    local category = self.target
     local readonly = self.readonly
+    local skilltreeupdater = ThePlayer and ThePlayer.replica.mushaskilltree or nil
 
-    if readonly then
-        -- Read only content uses self.target and self.targetdata to infer what it knows.
-        self.root.xp:Hide()
-
-        characterprefab = self.targetdata.prefab
-        activatedskills = TheSkillTree:GetNamesFromSkillSelection(self.targetdata.skillselection, characterprefab)
-        availableskillpoints = 0
-    else
-        characterprefab = self.target
-        -- Write enabled content uses ThePlayer to use what it knows.
-        self.root.xp:Show()
-
-        if frontend then
-            skilltreeupdater = TheSkillTree
-        else
-            skilltreeupdater = ThePlayer and ThePlayer.components.skilltreeupdater or nil
-        end
-
-        if skilltreeupdater == nil then
-            print("Weird state for skilltreebuilder missing skilltreeupdater component?")
-            return -- FIXME(JBK): See if this panel should disappear at this time?
-        end
-
-        availableskillpoints = skilltreeupdater:GetAvailableSkillPoints(characterprefab)
-        -- NOTES(JBK): This is not readonly so the player accessing it has access to its state and it is safe to assume TheSkillTree here.
-        activatedskills = TheSkillTree:GetActivatedSkills(characterprefab)
+    if skilltreeupdater == nil then
+        print("Weird state for skilltreebuilder missing skilltreeupdater component?")
+        return -- FIXME(JBK): See if this panel should disappear at this time?
     end
+
+    local availableskillpoints = skilltreeupdater:GetAvailableSkillXP()
+    local activatedskills = skilltreeupdater:GetActivatedSkills()
 
     local function make_connected_clickable(skill)
         if self.skilltreedef[skill].connects then
@@ -369,18 +345,18 @@ function SkillTreeBuilder:RefreshTree()
             end
             if self.skilltreedef[skill].lock_open then
                 graphics.status.lock = true
-                local lockstatus = self.skilltreedef[skill].lock_open(characterprefab, activatedskills, readonly)
+                local lockstatus = self.skilltreedef[skill].lock_open(category, activatedskills, readonly)
                 graphics.status.lock_open = lockstatus
             end
         else
             if self.skilltreedef[skill].lock_open then
                 -- MARK LOCKS and ACTIVATE CONNECTED ITEMS WHEN NOT LOCKED
                 graphics.status.lock = true
-                if self.skilltreedef[skill].lock_open(characterprefab, activatedskills, readonly) then
+                if self.skilltreedef[skill].lock_open(category, activatedskills, readonly) then
                     graphics.status.lock_open = true
                     make_connected_clickable(skill)
                 end
-            elseif skilltreeupdater:IsActivated(skill, characterprefab) then
+            elseif skilltreeupdater:IsActivated(skill) then
                 graphics.status.activated = true
                 make_connected_clickable(skill)
             end
@@ -463,8 +439,9 @@ function SkillTreeBuilder:RefreshTree()
         end
     end
 
+    self.root.xp:Show()
     self.root.xptotal:SetString(availableskillpoints)
-    if availableskillpoints <= 0 and TheSkillTree:GetSkillXP(characterprefab) >= TheSkillTree:GetMaximumExperiencePoints() then
+    if availableskillpoints <= 0 and skilltreeupdater:GetSkillXP() >= skilltreeupdater:GetMaxSkillXP() then
         self.root.xp_tospend:SetString(STRINGS.SKILLTREE.KILLPOINTS_MAXED)
         local w, h = self.root.xp_tospend:GetRegionSize()
         self.root.xp_tospend:SetPosition(30 + (w / 2), -3)
@@ -485,14 +462,7 @@ function SkillTreeBuilder:RefreshTree()
         self.infopanel.title:Hide()
         self.infopanel.activatebutton:Hide()
         self.infopanel.activatedtext:Hide()
-        self.infopanel.respec_button:Hide()
         self.infopanel.activatedbg:Hide()
-
-        if self.fromfrontend then
-            if skilltreedefs.FN.CountSkills(self.target, activatedskills) > 0 then
-                self.infopanel.respec_button:Show()
-            end
-        end
 
         if self.selectedskill then
             self.infopanel.title:Show()
@@ -503,11 +473,11 @@ function SkillTreeBuilder:RefreshTree()
             self.infopanel.intro:Hide()
 
             if not readonly then
-                if availableskillpoints > 0 and self.skillgraphics[self.selectedskill].status.activatable and not skilltreeupdater:IsActivated(self.selectedskill, characterprefab) and not self.skilltreedef[self.selectedskill].lock_open then
+                if availableskillpoints > 0 and self.skillgraphics[self.selectedskill].status.activatable and not skilltreeupdater:IsActivated(self.selectedskill) and not self.skilltreedef[self.selectedskill].lock_open then
                     self.infopanel.activatedbg:Hide()
                     self.infopanel.activatebutton:Show()
                     self.infopanel.activatebutton:SetOnClick(function()
-                        self:LearnSkill(skilltreeupdater, characterprefab)
+                        self:LearnSkill(skilltreeupdater, category)
                     end)
                     if TheInput:ControllerAttached() then
                         self.skillgraphics[self.selectedskill].button:SetHelpTextMessage(STRINGS.SKILLTREE.ACTIVATE)
@@ -527,12 +497,13 @@ function SkillTreeBuilder:RefreshTree()
     end
 end
 
-function SkillTreeBuilder:LearnSkill(skilltreeupdater, characterprefab)
+function SkillTreeBuilder:LearnSkill(skilltreeupdater, category)
     if self.selectedskill then
         if TheInput:ControllerAttached() and self.skillgraphics[self.selectedskill].status.lock then
             return
         end
-        skilltreeupdater:ActivateSkill(self.selectedskill, characterprefab)
+
+        skilltreeupdater:ActivateSkill(self.selectedskill, category)
 
         TheFrontEnd:GetSound():PlaySound("wilson_rework/ui/skill_mastered") -- wilson_rework/ui/skill_mastered
 
@@ -547,33 +518,34 @@ function SkillTreeBuilder:LearnSkill(skilltreeupdater, characterprefab)
         if skilltreedefs.FN.SkillHasTags(self.selectedskill, "shadow", self.target) or skilltreedefs.FN.SkillHasTags(self.selectedskill, "lunar", self.target) then
             self.skilltreewidget:SpawnFavorOverlay(true)
         end
-        self:RefreshTree()
     end
 end
 
-function SkillTreeBuilder:CreateTree(category, targetdata, readonly, data)
+function SkillTreeBuilder:CreateTree(category, targetdata, readonly)
     self.skilltreedef = skilltreedefs.SKILLTREE_DEFS[category]
     self.target = category
     self.targetdata = targetdata
-    self.readonly = readonly
-    self.owner = data.owner
+    self.readonly = readonly -- Always false
 
     local treedata = createtreetable(self.skilltreedef)
 
-    for panel, subdata in pairs(treedata) do
-        self:CreatePanel({ name = panel, data = subdata }, -30)
+    for group, skills in pairs(treedata) do
+        self:CreatePanel({ name = group, data = skills }, -30)
     end
 
     local current_x = -260
     local last_width = 0
 
-    --for i,panel in ipairs(self.root.panels)do
     for i, paneldata in ipairs(skilltreedefs.SKILLTREE_ORDERS[self.target]) do
         local panel = self.root.panels[paneldata[1]]
         current_x = current_x + last_width + TILESIZE
         last_width = panel.c_width
         panel:SetPosition(current_x, 170)
     end
+
+    self.inst:ListenForEvent("skilltreedirty", function()
+        self:RefreshTree()
+    end, self.owner.musha_classified)
 
     self:RefreshTree()
 end

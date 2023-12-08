@@ -259,8 +259,9 @@ local function fn()
 
     -- Net variables for skilltree
     inst.activatedskills = net_string(inst.GUID, "skilltree.activatedskills", "skilltreedirty")
-    inst.maxskillxp = net_ushortint(inst.GUID, "skilltree.maxskillxp", "skillxpdirty")
-    inst.skillxp = net_ushortint(inst.GUID, "skilltree.skillxp", "skillxpdirty")
+    inst.maxskillxp = net_ushortint(inst.GUID, "skilltree.maxskillxp", "skilltreedirty")
+    inst.skillxp = net_ushortint(inst.GUID, "skilltree.skillxp", "skilltreedirty")
+    inst.activatedskills:set("{}")
 
     --Delay net listeners until after initial values are deserialized
     inst:DoStaticTaskInTime(0, RegisterNetListeners)

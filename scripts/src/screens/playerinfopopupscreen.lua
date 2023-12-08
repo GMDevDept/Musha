@@ -155,13 +155,13 @@ local function MakeMushaTabs(self)
 	self.root.tabs:SetPosition(0, 0)
 
 	self.root.tabs.playerAvatarPopup = maketabbutton(self.root.tabs, { -165, 220 },
-		string.upper(STRINGS.SKILLTREE.INFOPANEL), function()
+		STRINGS.NAMES.MUSHA, function()
 			self:MakePlayerAvatarPopup()
 			SelectSideButton(self)
 		end, "skins",
 		{ 2, -5 }, true)
 	self.root.tabs.skillTreePopup = maketabbutton(self.root.tabs, { 165, 220 },
-		string.upper(STRINGS.SKILLTREE.SKILLTREE),
+		STRINGS.musha.skilltrees.general.name,
 		function()
 			MakeMushaSkillTree(self, "general")
 			SelectSideButton(self)
