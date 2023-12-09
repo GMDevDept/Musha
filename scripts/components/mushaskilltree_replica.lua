@@ -3,6 +3,7 @@ local MushaSkillTree = Class(function(self, inst)
 
     if TheWorld.ismastersim then
         self.classified = inst.musha_classified
+        self.inst:ListenForEvent("skilltreedirty", function() self:OnSkillTreeDirty() end, self.classified)
     elseif self.classified == nil and inst.musha_classified ~= nil then
         self:AttachClassified(inst.musha_classified)
     end
@@ -27,6 +28,7 @@ function MushaSkillTree:AttachClassified(classified)
     self.classified = classified
     self.ondetachclassified = function() self:DetachClassified() end
     self.inst:ListenForEvent("onremove", self.ondetachclassified, classified)
+    self.inst:ListenForEvent("skilltreedirty", function() self:OnSkillTreeDirty() end, self.classified)
 end
 
 function MushaSkillTree:DetachClassified()
@@ -111,6 +113,22 @@ function MushaSkillTree:SetActivatedSkills(activatedskills)
     if self.classified ~= nil then
         local jsonstr = json.encode(activatedskills)
         self.classified:SetValue("activatedskills", jsonstr)
+    end
+end
+
+--------------------------------------------------------------------------
+
+-- Will be called on both server and client side, but only takes effect on client side
+
+function MushaSkillTree:OnSkillTreeDirty()
+    if self.inst == ThePlayer then
+        -- Trigger skilltreetoast popup
+        if self:GetAvailableSkillXP() > 0 and TheFrontEnd:GetActiveScreen().name ~= "PlayerInfoPopup" then
+            ThePlayer.new_skill_available_popup = true
+            ThePlayer:PushEvent("newskillpointupdated")
+        end
+        -- Trigger crafting menu update
+        self.inst:PushEvent("onactivateskill_client")
     end
 end
 

@@ -51,10 +51,6 @@ function MushaSkillTree:RespecSkills()
     self.inst.SoundEmitter:PlaySound("wilson_rework/ui/respec")
 end
 
-function MushaSkillTree:IsActivated(skill)
-    return self.activatedskills[skill]
-end
-
 function MushaSkillTree:IsValidSkill(skillname, category)
     if category then
         if SKILLTREE_DEFS[category] and SKILLTREE_DEFS[category][skillname] then
@@ -65,6 +61,18 @@ function MushaSkillTree:IsValidSkill(skillname, category)
     else
         return ALL_SKILLS[skillname] ~= nil
     end
+end
+
+function MushaSkillTree:IsActivated(skill)
+    return self.activatedskills[skill]
+end
+
+function MushaSkillTree:CountSkillTag(tag, category) -- Category is optional
+    return skilltreedata_all.FN.CountTags(category, tag, self:GetActivatedSkills())
+end
+
+function MushaSkillTree:HasSkillTag(tag, category) -- Category is optional
+    return self:CountSkillTag(tag, category) > 0
 end
 
 function MushaSkillTree:GetSkillXP()
@@ -91,47 +99,40 @@ end
 function MushaSkillTree:ActivateSkill(skill, category)
     if not self:IsValidSkill(skill, category) then
         print("Invalid skilltree skill to ActivateSkill:", skill)
-        return false
-    end
-    if not self.activatedskills[skill] then
+    elseif not self.activatedskills[skill] then
+        local onactivate = ALL_SKILLS[skill].onactivate
+        if onactivate then
+            onactivate(self.inst)
+        end
         self.activatedskills[skill] = true
         self:UpdateSaveState()
-        return true
-    else
-        print("Error: skill already activated:", skill)
-        return false
     end
 end
 
 function MushaSkillTree:DeactivateSkill(skill, category)
     if not self:IsValidSkill(skill, category) then
         print("Invalid skilltree skill to DeactivateSkill:", skill)
-        return false
-    end
-    if self.activatedskills[skill] then
+    elseif self.activatedskills[skill] then
+        local ondeactivate = ALL_SKILLS[skill].ondeactivate
+        if ondeactivate then
+            ondeactivate(self.inst)
+        end
         self.activatedskills[skill] = nil
         self:UpdateSaveState()
-        return true
-    else
-        print("Error: skill not activated yet:", skill)
-        return false
     end
 end
 
 function MushaSkillTree:AddSkillXP(amount)
-    local oldskillxp = self:GetSkillXP()
-    local newskillxp = math.clamp(oldskillxp + amount, 0, self:GetMaxSkillXP())
-
-    if newskillxp > oldskillxp then
-        self.skillxp = newskillxp
-        return true, newskillxp
-    end
-
-    return false, oldskillxp
+    return self:SetSkillXP(self:GetSkillXP() + amount)
 end
 
 function MushaSkillTree:SetSkillXP(amount)
-    self.skillxp = math.clamp(amount, 0, self:GetMaxSkillXP())
+    local oldskillxp = self:GetSkillXP()
+    local newskillxp = math.clamp(amount, 0, self:GetMaxSkillXP())
+
+    if newskillxp ~= oldskillxp then
+        self.skillxp = newskillxp
+    end
 end
 
 function MushaSkillTree:SetMaxSkillXP(amount)

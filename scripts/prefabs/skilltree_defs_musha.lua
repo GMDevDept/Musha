@@ -83,14 +83,14 @@ local function CreateSkillTreeFor(category, skills)
     SKILLTREE_DEFS[category] = skills
 end
 
-local function CountTags(prefab, targettag, activatedskills) -- NOTES(JBK): This function is ran on both server and client
+local function CountTags(category, targettag, activatedskills) -- NOTES(JBK): This function is ran on both server and client
     if not activatedskills then
         return 0
     end
 
     local tag_count = 0
     for skill in pairs(activatedskills) do
-        local data = SKILLTREE_DEFS[prefab][skill]
+        local data = category and SKILLTREE_DEFS[category][skill] or ALL_SKILLS[skill]
         if data then
             for _, tag in ipairs(data.tags) do
                 if tag == targettag then

@@ -105,10 +105,6 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
         self.default_focus = self.root.tree:GetDefaultFocus()
     end
     self:SpawnFavorOverlay()
-
-    if ThePlayer then
-        self.inst:ListenForEvent("onaddskillxp_client", function() self.root.tree:RefreshTree() end, ThePlayer)
-    end
 end)
 
 function MushaSkillTreeWidget:SpawnFavorOverlay(pre)
