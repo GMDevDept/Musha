@@ -99,17 +99,21 @@ STRINGS.musha = {
             freezingspell = {
                 name = "唤冰法咒",
                 cast = "冰之精灵, 回应Musha的呼唤!",
+                desc = "以角色为中心对周围大范围内目标叠加冰冻累计与减速debuff\n效果范围与冰冻累计随角色等级提升",
             },
             thunderspell = {
                 name = "雷霆法咒",
                 cast = "雷之精灵, 惩罚Musha的敌人!",
+                desc = "以角色为中心对周围目标降下落雷，造成伤害并施加麻痹debuff\n效果范围与麻痹持续时间随角色等级提升",
             },
             shadowspell = {
                 name = "暗影波动",
+                desc = "以角色为中心对周围敌人造成多次范围逐渐扩大的AOE伤害，基础伤害随角色等级提升",
             },
             shadowprison = {
                 name = "暗影囚牢",
                 cast = "暗之精灵, 降下束缚的枷锁!",
+                desc = "以角色为中心对周围目标降下影之枷锁，范围内的非友方单位将被困在原地无法行动",
             },
         },
         manashield = {
@@ -124,6 +128,7 @@ STRINGS.musha = {
         },
         valkyriemode = {
             name = "女武神模式",
+            desc = "默认快捷键：R\n长按技能快捷键进行蓄力，蓄力完成后松开按键会施放[荒芜俯冲]并进入女武神模式\n女武神模式下被攻击时受到的伤害降低，同时会对除暗影阵营外的敌对生物造成额外伤害\n作为代价，女武神模式下疲劳值积累速度将大幅增加",
         },
         shadowmode = {
             name = "暗影模式",
@@ -174,36 +179,62 @@ STRINGS.musha = {
                 ready = "[绽放之蕊] 准备就绪!",
             },
         },
+        lightningstrike = {
+            name = "充能闪电",
+            desc = "默认快捷键：R\n以雷电之力缠绕全身，使下一次攻击或伤害类技能造成额外雷属性伤害\n若耐力值足够，则会消耗耐力使下一次攻击距离增加"
+        },
         setsugetsuka = {
             name = "雪月花",
+            desc = "默认快捷键：G\n短暂蓄力后向鼠标所在位置发起冲锋，对距离角色最近的目标造成多段伤害\n若[充能闪电]攻击距离加成效果已激活, 则会提升最大冲锋距离",
+        },
+        phoenixadvent = {
+            name = "凤来斩",
+            desc = "默认快捷键：G\n无法直接使用，只有[雪月花]冲锋结束后的短时间内可以施放\n挥动武器短暂蓄力后横扫周围敌人，根据命中目标数量恢复耐力值",
         },
         setsugetsukaredux = {
             name = "里太刀·雪月花",
+            desc = "雪月花冲锋结束后短时间内再次按下快捷键可以追加施放，最多连续冲锋三次",
         },
-        boost_flowery = {
+        boost_hana = {
             name = "花月轮舞",
+            desc = "里太刀·雪月花三段冲锋分别会对目标施加减速、流血及麻痹状态"
         },
-        boost_luna = {
+        boost_tsuki = {
             name = "月雪极狩",
+            desc = "雪月花会依据目标最大生命值造成额外伤害"
         },
-        boost_blizzard = {
+        boost_yuki = {
             name = "雪霰拂花",
+            desc = "雪月花冲锋距离锁定为最大，无论充能闪电是否激活"
         },
         annihilation = {
             name = "歼灭锤",
+            desc = "默认快捷键：R\n向鼠标所在位置发起一次强力跳劈\n若[充能闪电]已激活, 则会额外施加麻痹状态"
         },
         desolatedive = {
             name = "荒芜俯冲",
+            desc = "默认快捷键：R\n长按进行蓄力，蓄力完成后向鼠标所在位置发起俯冲并对周围大范围内目标造成伤害"
         },
         magpiestep = {
             name = "鹊踏斩",
+            desc = "默认快捷键：R\n无法直接使用，只有[攻击、被攻击、施放法术或使用技能]后的短时间内可以施放\n向鼠标所在位置快速踏跃, 期间角色处于无敌状态"
+        },
+        magpieslash = {
+            name = "鹊踏斩·会心击",
+            desc = "鹊踏斩会对沿途第一个目标造成伤害，若斩击成功发动则会额外恢复耐力值"
         },
         valkyrieparry = {
             name = "十方无敌",
             perfect = "就是现在!",
+            desc = "默认快捷键：T\n长按快捷键可以进入格挡姿态, 受到攻击或蓄力完成后松开快捷键会向鼠标所在位置进行突刺，击退沿途敌人并造成伤害"
+        },
+        valkyrieparry_perfect = {
+            name = "完美格挡",
+            desc = "格挡姿态下在受到攻击的一瞬间松开快捷键则会触发完美弹反。完美弹反会恢复大量耐力值并召唤一道残影反击，同时获得[精灵护盾]效果"
         },
         valkyriewhirl = {
             name = "横扫千军",
+            desc = "默认快捷键：G\n无法直接使用，只有[十方无敌]突刺结束后的短时间内可以施放\n地旋转身体并对周围敌人造成伤害、击退与打断效果"
         },
         shadowparry = {
             name = "影瞬身",
@@ -222,6 +253,70 @@ STRINGS.musha = {
                 GENERIC = "交换位置",
             },
             fail_notowner = "这个影子的主人并不是Musha。",
+        },
+        maxstamina1 = {
+            name = "耐力提升I",
+            desc = "提升耐力上限",
+        },
+        maxstamina2 = {
+            name = "耐力提升II",
+            desc = "进一步提升耐力上限",
+        },
+        maxstamina3 = {
+            name = "耐力提升III",
+            desc = "耐力上限额外随角色等级提升",
+        },
+        staminaregen1 = {
+            name = "耐力回复I",
+            desc = "提升耐力自然回复速度",
+        },
+        staminaregen2 = {
+            name = "耐力回复II",
+            desc = "进一步提升耐力自然回复速度",
+        },
+        maxmana1 = {
+            name = "魔力提升I",
+            desc = "提升魔力上限",
+        },
+        maxmana2 = {
+            name = "魔力提升II",
+            desc = "进一步提升魔力上限",
+        },
+        maxmana3 = {
+            name = "魔力提升III",
+            desc = "魔力上限额外随角色等级提升",
+        },
+        manaregen1 = {
+            name = "魔力回复I",
+            desc = "提升魔力自然回复速度",
+        },
+        manaregen2 = {
+            name = "魔力回复II",
+            desc = "进一步提升魔力自然回复速度",
+        },
+        maxhealth1 = {
+            name = "生命提升I",
+            desc = "提升生命上限",
+        },
+        maxhealth2 = {
+            name = "生命提升II",
+            desc = "进一步提升生命上限",
+        },
+        maxhealth3 = {
+            name = "生命提升III",
+            desc = "生命上限额外随角色等级提升",
+        },
+        maxsanity1 = {
+            name = "理智提升I",
+            desc = "提升理智上限",
+        },
+        maxsanity2 = {
+            name = "理智提升II",
+            desc = "进一步提升理智上限",
+        },
+        maxsanity3 = {
+            name = "理智提升III",
+            desc = "理智上限额外随角色等级提升",
         },
     },
 

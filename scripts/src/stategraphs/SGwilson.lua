@@ -1889,7 +1889,8 @@ local function DoAnnihilation(inst)
         inst:LightningDischarge()
     end
 
-    ShakeAllCameras(CAMERASHAKE.FULL, .7, .02, .5, inst, 40) -- Renew camera shaking effect caused by lightnings
+    ShakeAllCameras(CAMERASHAKE.FULL, 1, .02, .8, inst, 40) -- Renew camera shaking effect caused by lightnings
+    inst.SoundEmitter:PlaySound("dontstarve/common/together/catapult/rock_hit", nil, .4)
 
     if weapon and weapon.components.stackable then
         weapon.components.stackable:Get():Remove()
@@ -2140,6 +2141,7 @@ local function DoDive(inst)
     end
 
     ShakeAllCameras(CAMERASHAKE.FULL, 1, .02, .8, inst, 40) -- Renew camera shaking effect caused by lightnings
+    inst.SoundEmitter:PlaySound("dontstarve/common/together/catapult/rock_hit", nil, .4)
 
     if weapon and weapon.components.stackable then
         weapon.components.stackable:Get():Remove()

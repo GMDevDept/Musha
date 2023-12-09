@@ -1,17 +1,82 @@
-local UI_LEFT, UI_RIGHT = -214, 228
-local UI_VERTICAL_MIDDLE = (UI_LEFT + UI_RIGHT) * 0.5
-local UI_TOP, UI_BOTTOM = 176, 20
-local TILE_SIZE, TILE_HALFSIZE = 34, 16
-local SKILLTREESTRINGS = STRINGS.SKILLTREE.WORMWOOD
+local POS_Y_1 =  172
+local POS_Y_2 = POS_Y_1 - 38
+local POS_Y_3 = POS_Y_1 - (38 * 2)
+local POS_Y_4 = POS_Y_1 - (38 * 3)
+local POS_Y_5 = POS_Y_1 - (38 * 4)
+
+local HUMAN_POS_Y_1 = POS_Y_1
+local HUMAN_POS_Y_2 = HUMAN_POS_Y_1 - 36
+local HUMAN_POS_Y_3 = HUMAN_POS_Y_2 - 36
+local HUMAN_POS_Y_4 = HUMAN_POS_Y_3 - 48
+local HUMAN_POS_Y_5 = HUMAN_POS_Y_4 - 38
+
+local ALLEGIANCE_POS_Y_1 = POS_Y_1
+local ALLEGIANCE_POS_Y_2 = 128
+local ALLEGIANCE_POS_Y_3 = 84
+local ALLEGIANCE_POS_Y_4 = 38
+
+local WEREMETER_POS_X = -205
+
+local BEAVER_POS_X = WEREMETER_POS_X + 65
+local MOOSE_POS_X = BEAVER_POS_X + 44.5
+local GOOSE_POS_X = MOOSE_POS_X  + 43.5
+
+local QUICKPICKER_POS_X = 37
+local TREE_GUARD_POS_X = QUICKPICKER_POS_X + 40 + 32
+
+local LUCY_POS_X_1 = (QUICKPICKER_POS_X + TREE_GUARD_POS_X) * .5
+local LUCY_POS_X_2 = LUCY_POS_X_1 - 28
+local LUCY_POS_X_3 = LUCY_POS_X_1 + 31
+
+local ALLEGIANCE_LOCK_X = 202
+local ALLEGIANCE_SHADOW_X = ALLEGIANCE_LOCK_X - 23
+local ALLEGIANCE_LUNAR_X  = ALLEGIANCE_LOCK_X + 24
+
+local CURSE_TITLE_X = (GOOSE_POS_X + WEREMETER_POS_X) * .5
+local HUMAN_TITLE_X = LUCY_POS_X_1
+local ALLEGIANCE_TILE_X = ALLEGIANCE_LOCK_X
+
+local TITLE_Y = POS_Y_1 + 30
+
+local WOODIE_SKILL_STRINGS = STRINGS.SKILLTREE.WOODIE
+
+local function CreateAddTagFn(tag)
+    return function(inst) inst:AddTag(tag) end
+end
+
+local function CreateRemoveTagFn(tag)
+    return function(inst) inst:RemoveTag(tag) end
+end
+
+local function CreateAddDamageBonusVsTreeguardsFn(level)
+    return function(inst)
+        local damagetypebonus = inst.components.damagetypebonus
+        if damagetypebonus ~= nil then
+            damagetypebonus:AddBonus("evergreens", inst, TUNING.SKILLS.WOODIE.DAMAGE_BONUS_VS_TREEGUARDS, "woodie_treeguard_skill_level_"..level)
+        end
+    end
+end
+
+local function CreateRemoveDamageBonusVsTreeguardsFn(level)
+    return function(inst)
+        local damagetypebonus = inst.components.damagetypebonus
+        if damagetypebonus ~= nil then
+            damagetypebonus:RemoveBonus("evergreens", inst, "woodie_treeguard_skill_level_"..level)
+        end
+    end
+end
+
+local function RecalculateWereformSpeed(inst)
+    inst:RecalculateWereformSpeed()
+end
 
 --------------------------------------------------------------------------------------------------
 
 local ORDERS =
 {
-    { "crafting",    { UI_LEFT, UI_TOP } },
-    { "gathering",   { UI_LEFT, UI_TOP } },
-    { "allegiance1", { UI_LEFT, UI_TOP } },
-    { "allegiance2", { UI_LEFT, UI_TOP } },
+    {"curse",       { CURSE_TITLE_X,     TITLE_Y }},
+    {"human",       { HUMAN_TITLE_X,     TITLE_Y }},
+    {"allegiance",  { ALLEGIANCE_TILE_X, TITLE_Y }},
 }
 
 --------------------------------------------------------------------------------------------------
@@ -19,513 +84,501 @@ local ORDERS =
 local function BuildSkillsData(SkillTreeFns)
     local skills =
     {
-        wormwood_identify_plants2 = { -- NOTES(JBK): Changing the root name to force a respec it is not used elsewhere so this is safe.
-            title = SKILLTREESTRINGS.IDENTIFY_PLANTS_TITLE,
-            desc = SKILLTREESTRINGS.IDENTIFY_PLANTS_DESC,
-            icon = "wormwood_identify_plants",
-            pos = {(UI_LEFT + UI_RIGHT) * 0.5, UI_BOTTOM},
-
-            group = "gathering",
-            tags = {},
+        -- Wereforms transformations last longer.
+        woodie_curse_weremeter_1 = {
+            pos = {WEREMETER_POS_X, POS_Y_1},
+            group = "curse",
+            tags = {"curse", "weremeter"},
             root = true,
-            onactivate = function(owner, from_load)
-                owner:AddTag("farmplantidentifier")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("farmplantidentifier")
-            end,
             connects = {
-                "wormwood_saplingcrafting",
-                "wormwood_mushroomplanter_ratebonus1",
-                "wormwood_blooming_speed1",
-                "wormwood_blooming_farmrange1",
-            }
-        },
-
-        wormwood_saplingcrafting = {
-            title = SKILLTREESTRINGS.SAPLINGCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.SAPLINGCRAFTING_DESC,
-            icon = "wormwood_saplingcrafting",
-            pos = {UI_VERTICAL_MIDDLE - 105, UI_BOTTOM + 10},
-
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("saplingcrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("saplingcrafter")
-            end,
-            connects = {
-                "wormwood_berrybushcrafting",
+                "woodie_curse_weremeter_2",
             },
         },
-        wormwood_berrybushcrafting = {
-            title = SKILLTREESTRINGS.BERRYBUSHCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.BERRYBUSHCRAFTING_DESC,
-            icon = "wormwood_berrybushcrafting",
-            pos = {UI_VERTICAL_MIDDLE - 105 - 50, UI_BOTTOM + 10},
 
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("berrybushcrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("berrybushcrafter")
-            end,
+        -- Wereforms transformations last longer.
+        woodie_curse_weremeter_2 = {
+            pos = {WEREMETER_POS_X, POS_Y_2},
+            group = "curse",
+            tags = {"curse", "weremeter"},
             connects = {
-                "wormwood_reedscrafting",
-                "wormwood_juicyberrybushcrafting",
+                "woodie_curse_weremeter_3",
             },
         },
-        wormwood_juicyberrybushcrafting = {
-            title = SKILLTREESTRINGS.JUICYBERRYBUSHCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.JUICYBERRYBUSHCRAFTING_DESC,
-            icon = "wormwood_juicyberrybushcrafting",
-            pos = {UI_VERTICAL_MIDDLE - 115 - 60, UI_BOTTOM + 58},
 
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("juicyberrybushcrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("juicyberrybushcrafter")
-            end,
-        },
-        wormwood_reedscrafting = {
-            title = SKILLTREESTRINGS.REEDSCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.REEDSCRAFTING_DESC,
-            icon = "wormwood_reedscrafting",
-            pos = {UI_VERTICAL_MIDDLE - 105 - 100, UI_BOTTOM + 10},
-
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("reedscrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("reedscrafter")
-            end,
-            connects = {
-                "wormwood_lureplantbulbcrafting",
-            },
-        },
-        wormwood_lureplantbulbcrafting = {
-            title = SKILLTREESTRINGS.LUREPLANTCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.LUREPLANTCRAFTING_DESC,
-            icon = "wormwood_lureplantbulbcrafting",
-            pos = {UI_VERTICAL_MIDDLE - 115 - 120, UI_BOTTOM + 58},
-
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("lureplantcrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("lureplantcrafter")
-            end,
+        -- Wereforms transformations last longer.
+        woodie_curse_weremeter_3 = {
+            pos = {WEREMETER_POS_X, POS_Y_3},
+            group = "curse",
+            tags = {"curse", "weremeter"},
         },
 
-        wormwood_mushroomplanter_ratebonus1 = {
-            title = SKILLTREESTRINGS.MUSHROOMPLANTER_RATEBONUS_1_TITLE,
-            desc = SKILLTREESTRINGS.MUSHROOMPLANTER_RATEBONUS_1_DESC,
-            icon = "wormwood_mushroomplanter_ratebonus1",
-            pos = {UI_VERTICAL_MIDDLE - 35, UI_BOTTOM + 65},
+        --------------------------------------------------------------------------
 
-            group = "crafting",
-            tags = {"crafting"},
-            connects = {
-                "wormwood_mushroomplanter_ratebonus2",
-            },
-        },
-        wormwood_mushroomplanter_ratebonus2 = {
-            title = SKILLTREESTRINGS.MUSHROOMPLANTER_RATEBONUS_2_TITLE,
-            desc = SKILLTREESTRINGS.MUSHROOMPLANTER_RATEBONUS_2_DESC,
-            icon = "wormwood_mushroomplanter_ratebonus2",
-            pos = {UI_VERTICAL_MIDDLE - 90, UI_BOTTOM + 95},
-
-            group = "crafting",
-            tags = {"crafting"},
-            connects = {
-                "wormwood_mushroomplanter_upgrade",
-                "wormwood_syrupcrafting",
-            },
-        },
-        wormwood_mushroomplanter_upgrade = {
-            title = SKILLTREESTRINGS.MUSHROOMPLANTER_UPGRADE_TITLE,
-            desc = SKILLTREESTRINGS.MUSHROOMPLANTER_UPGRADE_DESC,
-            icon = "wormwood_mushroomplanter_upgrade",
-            pos = {UI_VERTICAL_MIDDLE - 90, UI_BOTTOM + 145},
-
-            group = "crafting",
-            tags = {"crafting"},
-            connects = {
-                "wormwood_moon_cap_eating",
-            },
-        },
-        wormwood_moon_cap_eating = {
-            title = SKILLTREESTRINGS.MOON_CAP_EATING_TITLE,
-            desc = SKILLTREESTRINGS.MOON_CAP_EATING_DESC,
-            icon = "wormwood_moon_cap_eating",
-            pos = {UI_VERTICAL_MIDDLE - 70, UI_BOTTOM + 190},
-
-            group = "crafting",
-            tags = {"crafting"},
-        },
-        wormwood_syrupcrafting = {
-            title = SKILLTREESTRINGS.SYRUPCRAFTING_TITLE,
-            desc = SKILLTREESTRINGS.SYRUPCRAFTING_DESC,
-            icon = "wormwood_syrupcrafting",
-            pos = {UI_VERTICAL_MIDDLE - 30, UI_BOTTOM + 125},
-
-            group = "crafting",
-            tags = {"crafting"},
-            onactivate = function(owner, from_load)
-                owner:AddTag("syrupcrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("syrupcrafter")
-            end,
-        },
-
-        wormwood_allegiance_lock_lunar_2 = SkillTreeFns.MakeCelestialChampionLock({
-            pos = {UI_RIGHT - 3.5, UI_TOP - 45},
-            group = "allegiance2",
-        }),
-
-        wormwood_allegiance_count_lock_2 = {
-            desc = SKILLTREESTRINGS.COUNT_LOCK_2_DESC,
-            pos = {UI_RIGHT - 3.5, UI_TOP - 12},
-            group = "allegiance2",
-            tags = {"allegiance", "lock"},
-            locks = {"wormwood_allegiance_lock_lunar_2"},
+        woodie_curse_master_lock = {
+            pos = {WEREMETER_POS_X, POS_Y_4},
+            group = "curse",
+            tags = {"curse", "lock"},
+            root = true,
             lock_open = function(prefabname, activatedskills, readonly)
-                return SkillTreeFns.CountTags(prefabname, "blooming", activatedskills) >= 5
-            end,
-        },
-
-        wormwood_allegiance_lunar_plant_gear_1 = {
-            title = SKILLTREESTRINGS.LUNAR_GEAR_1_TITLE,
-            desc = SKILLTREESTRINGS.LUNAR_GEAR_1_DESC,
-            icon = "wormwood_allegiance_lunar_plant_gear_1",
-            pos = {UI_RIGHT - 3.5, UI_TOP + 25},
-            locks = {"wormwood_allegiance_lock_lunar_2", "wormwood_allegiance_count_lock_2"},
-
-            onactivate = function(owner, from_load)
-                if not owner.components.skilltreeupdater:IsActivated("wormwood_allegiance_lunar_mutations_1") then
-                    owner:AddTag("player_lunar_aligned")
-                    if owner.components.damagetyperesist then
-                        owner.components.damagetyperesist:AddResist("lunar_aligned", owner, TUNING.SKILLS.WILSON_ALLEGIANCE_LUNAR_RESIST, "wormwood_allegiance_lunar")
-                    end
-                    if owner.components.damagetypebonus then
-                        owner.components.damagetypebonus:AddBonus("shadow_aligned", owner, TUNING.SKILLS.WILSON_ALLEGIANCE_VS_SHADOW_BONUS, "wormwood_allegiance_lunar")
-                    end
-                end
-            end,
-            ondeactivate = function(owner, from_load)
-                if not owner.components.skilltreeupdater:IsActivated("wormwood_allegiance_lunar_mutations_1") then
-                    owner:RemoveTag("player_lunar_aligned")
-                    if owner.components.damagetyperesist then
-                        owner.components.damagetyperesist:RemoveResist("lunar_aligned", owner, "wormwood_allegiance_lunar")
-                    end
-                    if owner.components.damagetypebonus then
-                        owner.components.damagetypebonus:RemoveBonus("shadow_aligned", owner, "wormwood_allegiance_lunar")
-                    end
-                end
-            end,
-
-            group = "allegiance2",
-            tags = {"allegiance", "lunar", "lunar_favor"},
-            connects = {
-                "wormwood_allegiance_lunar_plant_gear_2",
-            },
-        },
-        wormwood_allegiance_lunar_plant_gear_2 = {
-            title = SKILLTREESTRINGS.LUNAR_GEAR_2_TITLE,
-            desc = SKILLTREESTRINGS.LUNAR_GEAR_2_DESC,
-            icon = "wormwood_allegiance_lunar_plant_gear_2",
-            pos = {UI_RIGHT - 3.5, UI_TOP + 65},
-
-            group = "allegiance2",
-            tags = {"allegiance", "lunar", "lunar_favor"},
-        },
-
-        wormwood_blooming_speed1 = {
-            title = SKILLTREESTRINGS.BLOOMING_SPEED1_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_SPEED1_DESC,
-            icon = "wormwood_blooming_speed1",
-            pos = {UI_VERTICAL_MIDDLE + 105, UI_BOTTOM + 10},
-
-            group = "gathering",
-            tags = {"blooming"},
-            onactivate = function(owner, from_load)
-                local bloomness = owner.components.bloomness
-                if bloomness then
-                    local skilltreeupdater = owner.components.skilltreeupdater
-                    if not (skilltreeupdater:IsActivated("wormwood_blooming_speed2")
-                            or skilltreeupdater:IsActivated("wormwood_blooming_speed3")) then
-                        bloomness:SetDurations(TUNING.WORMWOOD_BLOOM_STAGE_DURATION_UPGRADED1, bloomness.full_bloom_duration)
-                    end
-                end
+                return SkillTreeFns.CountTags(prefabname, "curse", activatedskills) >= 6
             end,
             connects = {
-                "wormwood_blooming_speed2",
+                "woodie_curse_master",
             },
         },
-        wormwood_blooming_speed2 = {
-            title = SKILLTREESTRINGS.BLOOMING_SPEED2_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_SPEED2_DESC,
-            icon = "wormwood_blooming_speed2",
-            pos = {UI_VERTICAL_MIDDLE + 105 + 50, UI_BOTTOM + 10},
 
-            group = "gathering",
-            tags = {"blooming"},
-            onactivate = function(owner, from_load)
-                local bloomness = owner.components.bloomness
-                if bloomness then
-                    local skilltreeupdater = owner.components.skilltreeupdater
-                    if not skilltreeupdater:IsActivated("wormwood_blooming_speed3") then
-                        bloomness:SetDurations(TUNING.WORMWOOD_BLOOM_STAGE_DURATION_UPGRADED2, bloomness.full_bloom_duration)
-                    end
-                end
-            end,
+        -- No health and sanity penalties for eating Kitschy Idols.
+        -- Returns to human form without having an empty stomach.
+        woodie_curse_master = {
+            pos = {WEREMETER_POS_X, POS_Y_5},
+            group = "curse",
+            tags = {"curse"},
+            onactivate   = CreateAddTagFn("cursemaster"),
+            ondeactivate = CreateRemoveTagFn("cursemaster"),
+        },
+
+        --------------------------------------------------------------------------
+
+        -- The Werebeaver mines faster.
+        woodie_curse_beaver_1 = {
+            pos = {BEAVER_POS_X, POS_Y_1},
+            group = "curse",
+            tags = {"curse", "beaver"},
+            root = true,
             connects = {
-                "wormwood_blooming_max_upgrade",
-                "wormwood_blooming_overheatprotection",
+                "woodie_curse_beaver_2",
             },
-        },
-        wormwood_blooming_overheatprotection = {
-            title = SKILLTREESTRINGS.BLOOMING_OVERHEATPROTECTION_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_OVERHEATPROTECTION_DESC,
-            icon = "wormwood_blooming_overheatprotection",
-            pos = {UI_VERTICAL_MIDDLE + 165, UI_BOTTOM + 60},
-
-            group = "gathering",
-            tags = {"blooming"},
-
             onactivate = function(inst)
-                if inst.fullbloom then
-                    inst.components.temperature.inherentsummerinsulation = TUNING.INSULATION_MED_LARGE
-                end
-            end,
-            ondeactivate = function(inst)
-                if inst.fullbloom then
-                    inst.components.temperature.inherentsummerinsulation = TUNING.INSULATION_SMALL
-                else
-                    inst.components.temperature.inherentsummerinsulation = 0
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWerebeaver() and inst.components.worker ~= nil then
+                    local modifiers = TUNING.SKILLS.WOODIE.BEAVER_WORK_MULTIPLIER
+
+                    inst.components.worker:SetAction(ACTIONS.MINE, .5 * modifiers.MINE)
                 end
             end,
         },
-        wormwood_blooming_max_upgrade = {
-            title = SKILLTREESTRINGS.BLOOMING_MAX_UPGRADE_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_MAX_UPGRADE_DESC,
-            icon = "wormwood_blooming_speed3",
-            pos = {UI_VERTICAL_MIDDLE + 105 + 100, UI_BOTTOM + 10},
 
-            group = "gathering",
-            tags = {"blooming"},
-            onactivate = function(owner, from_load)
-                local bloomness = owner.components.bloomness
-                if bloomness then
-                    local skilltreeupdater = owner.components.skilltreeupdater
-                    if not skilltreeupdater:IsActivated("wormwood_blooming_speed3") then
-                        bloomness:SetDurations(bloomness.stage_duration, TUNING.WORMWOOD_BLOOM_FULL_DURATION_UPGRADED)
-                    end
-                end
-            end,
+        -- The Werebeaver chops faster.
+        woodie_curse_beaver_2 = {
+            pos = {BEAVER_POS_X, POS_Y_2},
+            group = "curse",
+            tags = {"curse", "beaver"},
             connects = {
-                "wormwood_blooming_photosynthesis",
+                "woodie_curse_beaver_3",
             },
-        },
-
-        wormwood_blooming_photosynthesis = {
-            title = SKILLTREESTRINGS.BLOOMING_PHOTOSYNTHESIS_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_PHOTOSYNTHESIS_DESC,
-            icon = "wormwood_blooming_photosynthesis",
-            pos = {UI_VERTICAL_MIDDLE + 165 + 55, UI_BOTTOM + 60},
-
-            group = "gathering",
-            tags = {"blooming"},
-
             onactivate = function(inst)
-                inst:WatchWorldState("isday", inst.UpdatePhotosynthesisState)
-                inst:UpdatePhotosynthesisState(TheWorld.state.isday)
-            end,
-            ondeactivate = function(inst)
-                inst:StopWatchingWorldState("isday", inst.UpdatePhotosynthesisState)
-                inst:UpdatePhotosynthesisState(TheWorld.state.isday)
-            end,
-        },
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWerebeaver() and inst.components.worker ~= nil then
+                    local modifiers = TUNING.SKILLS.WOODIE.BEAVER_WORK_MULTIPLIER
 
-        wormwood_blooming_farmrange1 = {
-            title = SKILLTREESTRINGS.BLOOMING_FARMRANGE1_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_FARMRANGE1_DESC,
-            icon = "wormwood_blooming_farmrange1",
-            pos = {UI_VERTICAL_MIDDLE + 55, UI_BOTTOM + 45 + TILE_SIZE},
-
-            group = "gathering",
-            tags = {"blooming"},
-            onactivate = function(owner)
-                owner:AddTag("farmplantfastpicker")
-            end,
-            ondeactivate = function(owner)
-                owner:RemoveTag("farmplantfastpicker")
-            end,
-            connects = {
-                "wormwood_quick_selffertilizer",
-            },
-        },
-
-        wormwood_quick_selffertilizer = {
-            title = SKILLTREESTRINGS.QUICK_SELFFERTILIZER_TITLE,
-            desc = SKILLTREESTRINGS.QUICK_SELFFERTILIZER_DESC,
-            icon = "wormwood_quick_selffertilizer",
-            pos = {UI_VERTICAL_MIDDLE + 95, UI_BOTTOM + 115},
-
-            group = "gathering",
-            tags = {"blooming"},
-            connects = {
-                "wormwood_blooming_trapbramble",
-                "wormwood_bugs",
-            },
-        },
-        wormwood_bugs = {
-            title = SKILLTREESTRINGS.BUGS_TITLE,
-            desc = SKILLTREESTRINGS.BUGS_DESC,
-            icon = "wormwood_bugs",
-            pos = {UI_VERTICAL_MIDDLE + 43, UI_BOTTOM + 150},
-
-            group = "gathering",
-            tags = {"blooming"},
-        },
-
-        wormwood_blooming_trapbramble = {
-            title = SKILLTREESTRINGS.BLOOMING_TRAPBRAMBLE_TITLE,
-            desc = SKILLTREESTRINGS.BLOOMING_TRAPBRAMBLE_DESC,
-            icon = "wormwood_blooming_trapbramble",
-            pos = {UI_VERTICAL_MIDDLE + 137, UI_BOTTOM + 145},
-
-            group = "gathering",
-            tags = {"blooming"},
-            connects = {
-                "wormwood_armor_bramble",
-            },
-        },
-
-        wormwood_armor_bramble = {
-            title = SKILLTREESTRINGS.ARMOR_BRAMBLE_TITLE,
-            desc = SKILLTREESTRINGS.ARMOR_BRAMBLE_DESC,
-            icon = "wormwood_armor_bramble",
-            pos = {UI_VERTICAL_MIDDLE + 120, UI_BOTTOM + 187},
-
-            group = "gathering",
-            tags = {"blooming"},
-
-            onactivate = function(owner)
-                local item = owner.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
-
-                if item ~= nil and item:HasTag("bramble_resistant") and item._onattackother ~= nil then
-                    item:ListenForEvent("onattackother", item._onattackother, owner)
-                end
-            end,
-
-            ondeactivate = function(owner)
-                local item = owner.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
-
-                if item ~= nil and item:HasTag("bramble_resistant") and item._onattackother ~= nil then
-                    item:RemoveEventCallback("onattackother", item._onattackother, owner)
+                    inst.components.worker:SetAction(ACTIONS.CHOP, 4 * modifiers.CHOP)
                 end
             end,
         },
 
-        wormwood_allegiance_lock_lunar_1 = SkillTreeFns.MakeCelestialChampionLock({
-            pos = {UI_LEFT + 13, UI_BOTTOM + 110},
-            group = "allegiance1",
-        }),
-        wormwood_allegiance_count_lock_1 = {
-            desc = SKILLTREESTRINGS.COUNT_LOCK_1_DESC,
-            pos = {UI_LEFT + 13, UI_BOTTOM + 140},
-            group = "allegiance1",
-            tags = {"allegiance", "lock"},
-            locks = {"wormwood_allegiance_lock_lunar_1"},
+        -- The Werebeaver can chop, mine and break hard materials.
+        woodie_curse_beaver_3 = {
+            pos = {BEAVER_POS_X, POS_Y_3},
+            group = "curse",
+            tags = {"curse", "beaver", "recoilimmune"},
+            connects = {
+                "woodie_curse_beaver_lock",
+            },
+            onactivate = function(inst)
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWerebeaver() then
+                    inst:AddTag("toughworker")
+                end
+            end,
+        },
+
+        woodie_curse_beaver_lock = {
+            pos = {BEAVER_POS_X, POS_Y_4},
+            group = "curse",
+            tags = {"curse", "lock"},
             lock_open = function(prefabname, activatedskills, readonly)
-                return SkillTreeFns.CountTags(prefabname, "crafting", activatedskills) >= 5
+                return
+                    SkillTreeFns.CountTags(prefabname, "beaver", activatedskills) >= 3 and
+                    SkillTreeFns.CountTags(prefabname, "moose_epic", activatedskills) == 0 and
+                    SkillTreeFns.CountTags(prefabname, "goose_epic", activatedskills) == 0
             end,
-        },
-        wormwood_allegiance_lunar_mutations_1 = {
-            title = SKILLTREESTRINGS.LUNAR_MUTATIONS_1_TITLE,
-            desc = SKILLTREESTRINGS.LUNAR_MUTATIONS_1_DESC,
-            icon = "wormwood_lunar_mutations_1",
-            pos = {UI_LEFT + 13, UI_BOTTOM + 175},
-            locks = {"wormwood_allegiance_lock_lunar_1", "wormwood_allegiance_count_lock_1"},
-
-            onactivate = function(owner, from_load)
-                owner:AddTag("carratcrafter")
-
-                if not owner.components.skilltreeupdater:IsActivated("wormwood_allegiance_lunar_plant_gear_1") then
-                    owner:AddTag("player_lunar_aligned")
-                    if owner.components.damagetyperesist then
-                        owner.components.damagetyperesist:AddResist("lunar_aligned", owner, TUNING.SKILLS.WILSON_ALLEGIANCE_LUNAR_RESIST, "wormwood_allegiance_lunar")
-                    end
-                    if owner.components.damagetypebonus then
-                        owner.components.damagetypebonus:AddBonus("shadow_aligned", owner, TUNING.SKILLS.WILSON_ALLEGIANCE_VS_SHADOW_BONUS, "wormwood_allegiance_lunar")
-                    end
-                end
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("carratcrafter")
-
-                if not owner.components.skilltreeupdater:IsActivated("wormwood_allegiance_lunar_plant_gear_1") then
-                    owner:RemoveTag("player_lunar_aligned")
-                    if owner.components.damagetyperesist then
-                        owner.components.damagetyperesist:RemoveResist("lunar_aligned", owner, "wormwood_allegiance_lunar")
-                    end
-                    if owner.components.damagetypebonus then
-                        owner.components.damagetypebonus:RemoveBonus("shadow_aligned", owner, "wormwood_allegiance_lunar")
-                    end
-                end
-            end,
-            group = "allegiance1",
-            tags = {"allegiance", "lunar", "lunar_favor"},
             connects = {
-                "wormwood_allegiance_lunar_mutations_2",
-                "wormwood_allegiance_lunar_mutations_3",
+                "woodie_curse_epic_beaver",
             },
         },
-        wormwood_allegiance_lunar_mutations_2 = {
-            title = SKILLTREESTRINGS.LUNAR_MUTATIONS_2_TITLE,
-            desc = SKILLTREESTRINGS.LUNAR_MUTATIONS_2_DESC,
-            icon = "wormwood_lunar_mutations_2",
-            pos = {UI_LEFT - 14, UI_TOP + 60},
 
-            onactivate = function(owner, from_load)
-                owner:AddTag("lightfliercrafter")
-            end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("lightfliercrafter")
-            end,
-            group = "allegiance1",
-            tags = {"allegiance", "lunar", "lunar_favor"},
+        -- The Werebeaver can smack the ground with its tail, destroying everything around it.
+        woodie_curse_epic_beaver = {
+            pos = {BEAVER_POS_X, POS_Y_5},
+            group = "curse",
+            tags = {"curse", "beaver_epic"},
         },
-        wormwood_allegiance_lunar_mutations_3 = {
-            title = SKILLTREESTRINGS.LUNAR_MUTATIONS_3_TITLE,
-            desc = SKILLTREESTRINGS.LUNAR_MUTATIONS_3_DESC,
-            icon = "wormwood_lunar_mutations_3",
-            pos = {UI_LEFT + 40, UI_TOP + 60},
 
-            onactivate = function(owner, from_load)
-                owner:AddTag("fruitdragoncrafter")
+        --------------------------------------------------------------------------
+
+        -- The Werebeaver is more resistant to hitting obstacles and walks a little faster.
+        woodie_curse_moose_1 = {
+            pos = {MOOSE_POS_X, POS_Y_1},
+            group = "curse",
+            tags = {"curse", "moose"},
+            root = true,
+            onactivate   = RecalculateWereformSpeed,
+            ondeactivate = RecalculateWereformSpeed,
+            connects = {
+                "woodie_curse_moose_2",
+            },
+        },
+
+        -- The Weremoose gains slow health regeneration.
+        woodie_curse_moose_2 = {
+            pos = {MOOSE_POS_X, POS_Y_2},
+            group = "curse",
+            tags = {"curse", "moose"},
+            connects = {
+                "woodie_curse_moose_3",
+            },
+            onactivate = function(inst)
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWeremoose() then
+                    local regendata = TUNING.SKILLS.WOODIE.MOOSE_HEALTH_REGEN
+                    inst.components.health:StartRegen(regendata.amount, regendata.period)
+                end
             end,
-            ondeactivate = function(owner, from_load)
-                owner:RemoveTag("fruitdragoncrafter")
+        },
+
+        -- The Werebeaver can stop his dash whenever he wants.
+        woodie_curse_moose_3 = {
+            pos = {MOOSE_POS_X, POS_Y_3},
+            group = "curse",
+            tags = {"curse", "moose"},
+            connects = {
+                "woodie_curse_moose_lock",
+            },
+        },
+
+        woodie_curse_moose_lock = {
+            pos = {MOOSE_POS_X, POS_Y_4},
+            group = "curse",
+            tags = {"curse", "lock"},
+            lock_open = function(prefabname, activatedskills, readonly)
+                return
+                    SkillTreeFns.CountTags(prefabname, "moose", activatedskills) >= 3 and
+                    SkillTreeFns.CountTags(prefabname, "beaver_epic", activatedskills) == 0 and
+                    SkillTreeFns.CountTags(prefabname, "goose_epic", activatedskills) == 0
             end,
-            group = "allegiance1",
-            tags = {"allegiance", "lunar", "lunar_favor"},
+            connects = {
+                "woodie_curse_epic_moose",
+            },
+        },
+
+        -- The Werebeaver has learned to throw stronger punches and has a tougher coat.
+        woodie_curse_epic_moose = {
+            pos = {MOOSE_POS_X, POS_Y_5},
+            group = "curse",
+            tags = {"curse", "moose_epic"},
+            onactivate = function(inst)
+                inst:AddTag("weremoosecombo")
+
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWeremoose() then
+                    inst.components.planardefense:AddBonus(inst, TUNING.SKILLS.WOODIE.MOOSE_PLANAR_DEF, "weremoose_skill")
+                end
+            end,
+            ondeactivate = CreateRemoveTagFn("weremoosecombo"),
+        },
+
+        --------------------------------------------------------------------------
+
+        -- The weregoose runs faster.
+        woodie_curse_goose_1 = {
+            pos = {GOOSE_POS_X, POS_Y_1},
+            group = "curse",
+            tags = {"curse", "goose"},
+            root = true,
+            onactivate   = RecalculateWereformSpeed,
+            ondeactivate = RecalculateWereformSpeed,
+            connects = {
+                "woodie_curse_goose_2",
+            },
+        },
+
+        -- The weregoose is completely waterproof.
+        woodie_curse_goose_2 = {
+            pos = {GOOSE_POS_X, POS_Y_2},
+            group = "curse",
+            tags = {"curse", "goose"},
+            connects = {
+                "woodie_curse_goose_3",
+            },
+            onactivate = function(inst)
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWeregoose() then
+                    inst.components.moisture:SetInherentWaterproofness(TUNING.WATERPROOFNESS_ABSOLUTE)
+                end
+            end,
+        },
+
+        -- The weregoose can dodge an attack from time to time.
+        woodie_curse_goose_3 = {
+            pos = {GOOSE_POS_X, POS_Y_3},
+            group = "curse",
+            tags = {"curse", "goose"},
+            connects = {
+                "woodie_curse_goose_lock",
+            },
+            onactivate = function(inst)
+                -- For load (skills activation occurs after onload functions).
+                if inst:IsWeregoose() and not inst.components.attackdodger then
+                    inst:AddComponent("attackdodger")
+                    inst.components.attackdodger:SetCooldownTime(TUNING.SKILLS.WOODIE.GOOSE_DODGE_COOLDOWN_TIME)
+                    inst.components.attackdodger:SetOnDodgeFn(inst.OnDodgeAttack)
+                end
+            end,
+        },
+
+        woodie_curse_goose_lock = {
+            pos = {GOOSE_POS_X, POS_Y_4},
+            group = "curse",
+            tags = {"curse", "lock"},
+            lock_open = function(prefabname, activatedskills, readonly)
+                return
+                    SkillTreeFns.CountTags(prefabname, "goose", activatedskills) >= 3 and
+                    SkillTreeFns.CountTags(prefabname, "beaver_epic", activatedskills) == 0 and
+                    SkillTreeFns.CountTags(prefabname, "moose_epic", activatedskills) == 0
+            end,
+            connects = {
+                "woodie_curse_epic_goose",
+            },
+        },
+
+        -- The Weregoose can fly around to explore the world, but it's a little out of control.
+        woodie_curse_epic_goose = {
+            pos = {GOOSE_POS_X, POS_Y_5},
+            group = "curse",
+            tags = {"curse", "goose_epic"},
+        },
+
+        --------------------------------------------------------------------------
+
+        -- Can use Lucy to carve boards more efficiently.
+        woodie_human_lucy_1 = {
+            pos = {LUCY_POS_X_1, HUMAN_POS_Y_4},
+            group = "human",
+            tags = {"human", "lucy"},
+            root = true,
+            onactivate   = CreateAddTagFn("woodcarver1"),
+            ondeactivate = CreateRemoveTagFn("woodcarver1"),
+            connects = {
+                "woodie_human_lucy_2",
+                "woodie_human_lucy_3",
+            },
+        },
+
+        -- Can use Lucy to carve a nice "woodcarvedhat" for protection.
+        woodie_human_lucy_2 = {
+            pos = {LUCY_POS_X_2, HUMAN_POS_Y_5},
+            group = "human",
+            tags = {"human", "lucy"},
+            onactivate   = CreateAddTagFn("woodcarver2"),
+            ondeactivate = CreateRemoveTagFn("woodcarver2"),
+        },
+
+        -- Can use Lucy to carve a "walking_stick" for easy mobility.
+        woodie_human_lucy_3 = {
+            pos = {LUCY_POS_X_3, HUMAN_POS_Y_5},
+            group = "human",
+            tags = {"human", "lucy"},
+            onactivate   = CreateAddTagFn("woodcarver3"),
+            ondeactivate = CreateRemoveTagFn("woodcarver3"),
+        },
+
+        --------------------------------------------------------------------------
+
+        -- Collect stuff faster.
+        woodie_human_quickpicker_1 = {
+            pos = {QUICKPICKER_POS_X, HUMAN_POS_Y_1},
+            group = "human",
+            tags = {"human", "quickpicker"},
+            onactivate   = CreateAddTagFn("woodiequickpicker"),
+            ondeactivate = CreateRemoveTagFn("woodiequickpicker"),
+            root = true,
+            connects = {
+                "woodie_human_quickpicker_2",
+            },
+        },
+
+        -- Collect stuff faster.
+        woodie_human_quickpicker_2 = {
+            pos = {QUICKPICKER_POS_X, HUMAN_POS_Y_2},
+            group = "human",
+            tags = {"human", "quickpicker"},
+            connects = {
+                "woodie_human_quickpicker_3",
+            },
+        },
+
+        -- Collect stuff faster.
+        woodie_human_quickpicker_3 = {
+            pos = {QUICKPICKER_POS_X, HUMAN_POS_Y_3},
+            group = "human",
+            tags = {"human", "quickpicker"},
+        },
+
+        --------------------------------------------------------------------------
+
+        -- Does more damage to Treeguards.
+        woodie_human_treeguard_1 = {
+            pos = {TREE_GUARD_POS_X, HUMAN_POS_Y_1},
+            group = "human",
+            tags = {"human", "treeguard"},
+            root = true,
+            onactivate   = CreateAddDamageBonusVsTreeguardsFn(1),
+            ondeactivate = CreateRemoveDamageBonusVsTreeguardsFn(1),
+            connects = {
+                "woodie_human_treeguard_2",
+            },
+        },
+
+        -- Does more damage to Treeguards.
+        woodie_human_treeguard_2 = {
+            pos = {TREE_GUARD_POS_X, HUMAN_POS_Y_2},
+            group = "human",
+            tags = {"human", "treeguard"},
+            onactivate   = CreateAddDamageBonusVsTreeguardsFn(2),
+            ondeactivate = CreateRemoveDamageBonusVsTreeguardsFn(2),
+            connects = {
+                "woodie_human_treeguard_max",
+            },
+        },
+
+        -- Can craft "leif_idol", an extremely burnable effigy.
+        woodie_human_treeguard_max = {
+            pos = {TREE_GUARD_POS_X, HUMAN_POS_Y_3},
+            group = "human",
+            tags = {"human", "treeguard"},
+            onactivate   = CreateAddTagFn("leifidolcrafter"),
+            ondeactivate = CreateRemoveTagFn("leifidolcrafter"),
+        },
+
+        --------------------------------------------------------------------------
+
+        woodie_allegiance_lock_1 = {
+            pos = {ALLEGIANCE_LOCK_X, ALLEGIANCE_POS_Y_1},
+            group = "allegiance",
+            tags = {"allegiance","lock"},
+            root = true,
+            lock_open = function(prefabname, activatedskills, readonly)
+                return SkillTreeFns.CountSkills(prefabname, activatedskills) >= 12
+            end,
+        },
+
+        woodie_allegiance_lock_2 = SkillTreeFns.MakeFuelWeaverLock(
+            { pos = {ALLEGIANCE_SHADOW_X, ALLEGIANCE_POS_Y_2} }
+        ),
+
+
+        woodie_allegiance_lock_4 = SkillTreeFns.MakeNoLunarLock(
+            { pos = {ALLEGIANCE_SHADOW_X, ALLEGIANCE_POS_Y_3} }
+        ),
+
+        -- Woodie no longer draws the aggression of shadow creatures when transformed into one of the wereforms.
+        woodie_allegiance_shadow = {
+            icon = "wilson_favor_shadow",
+            pos = {ALLEGIANCE_SHADOW_X , ALLEGIANCE_POS_Y_4},
+            group = "allegiance",
+            tags = {"allegiance","shadow","shadow_favor"},
+            locks = {"woodie_allegiance_lock_1", "woodie_allegiance_lock_2", "woodie_allegiance_lock_4"},
+
+            onactivate = function(inst, fromload)
+                inst:AddTag("player_shadow_aligned")
+                inst:UpdateShadowDominanceState()
+
+                local damagetyperesist = inst.components.damagetyperesist
+                if damagetyperesist then
+                    damagetyperesist:AddResist("shadow_aligned", inst, TUNING.SKILLS.WOODIE.ALLEGIANCE_SHADOW_RESIST, "allegiance_shadow")
+                end
+                local damagetypebonus = inst.components.damagetypebonus
+                if damagetypebonus then
+                    damagetypebonus:AddBonus("lunar_aligned", inst, TUNING.SKILLS.WOODIE.ALLEGIANCE_VS_LUNAR_BONUS, "allegiance_shadow")
+                end
+            end,
+            ondeactivate = function(inst, fromload)
+                inst:RemoveTag("player_shadow_aligned")
+                inst:UpdateShadowDominanceState()
+
+                local damagetyperesist = inst.components.damagetyperesist
+                if damagetyperesist then
+                    damagetyperesist:RemoveResist("shadow_aligned", inst, "allegiance_shadow")
+                end
+                local damagetypebonus = inst.components.damagetypebonus
+                if damagetypebonus then
+                    damagetypebonus:RemoveBonus("lunar_aligned", inst, "allegiance_shadow")
+                end
+            end,
+        },
+
+        woodie_allegiance_lock_3 = SkillTreeFns.MakeCelestialChampionLock(
+            { pos = {ALLEGIANCE_LUNAR_X, ALLEGIANCE_POS_Y_2} }
+        ),
+
+        woodie_allegiance_lock_5 = SkillTreeFns.MakeNoShadowLock(
+            { pos = {ALLEGIANCE_LUNAR_X, ALLEGIANCE_POS_Y_3} }
+        ),
+
+        -- Woodie's curse is no longer triggered by full moons.
+        woodie_allegiance_lunar = {
+            icon = "wilson_favor_lunar",
+            pos = {ALLEGIANCE_LUNAR_X , ALLEGIANCE_POS_Y_4},
+            group = "allegiance",
+            tags = {"allegiance","lunar","lunar_favor"},
+            locks = {"woodie_allegiance_lock_1", "woodie_allegiance_lock_3", "woodie_allegiance_lock_5"},
+
+            onactivate = function(inst, fromload)
+                inst:AddTag("player_lunar_aligned")
+
+                local damagetyperesist = inst.components.damagetyperesist
+                if damagetyperesist then
+                    damagetyperesist:AddResist("lunar_aligned", inst, TUNING.SKILLS.WOODIE.ALLEGIANCE_LUNAR_RESIST, "allegiance_lunar")
+                end
+                local damagetypebonus = inst.components.damagetypebonus
+                if damagetypebonus then
+                    damagetypebonus:AddBonus("shadow_aligned", inst, TUNING.SKILLS.WOODIE.ALLEGIANCE_VS_SHADOW_BONUS, "allegiance_lunar")
+                end
+            end,
+            ondeactivate = function(inst, fromload)
+                inst:RemoveTag("player_lunar_aligned")
+
+                local damagetyperesist = inst.components.damagetyperesist
+                if damagetyperesist then
+                    damagetyperesist:RemoveResist("lunar_aligned", inst, "allegiance_lunar")
+                end
+                local damagetypebonus = inst.components.damagetypebonus
+                if damagetypebonus then
+                    damagetypebonus:RemoveBonus("shadow_aligned", inst, "allegiance_lunar")
+                end
+            end,
         },
     }
 
+
+    for name, data in pairs(skills) do
+        local uppercase_name = string.upper(name)
+
+        if not data.desc then
+            data.desc = WOODIE_SKILL_STRINGS[uppercase_name.."_DESC"]
+        end
+
+        -- If it's not a lock.
+        if not data.lock_open then
+            if not data.title then
+                data.title = WOODIE_SKILL_STRINGS[uppercase_name.."_TITLE"]
+            end
+
+            if not data.icon then
+                data.icon = name
+            end
+        end
+    end
 
     return {
         SKILLS = skills,

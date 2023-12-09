@@ -1633,7 +1633,7 @@ local function ValkyrieKeyDown(inst, x, y, z)
             inst.startmagpiestep:push()
             inst.novalkyriekeyonlongpress = true
         else
-            if not inst:HasTag("lightningstrikeready") then
+            if not inst:HasTag("lightningstrikeready") and inst.components.mushaskilltree:IsActivated("lightningstrike") then
                 if inst.components.mana.current < TUNING.musha.skills.lightningstrike.manacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                     CustomPlayFailedAnim(inst)
@@ -2168,7 +2168,7 @@ local function OnModeChange(inst)
         inst:AddTag("stronggrip")
         inst.components.drownable:SetCustomTuningsFn(GetDrowningDamgeTunings)
 
-        LightningRecharge(inst)
+        if inst.components.mushaskilltree:IsActivated("lightningstrike") then LightningRecharge(inst) end
         inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
 
         inst.components.skinner:SetSkinName("musha_valkyrie")
