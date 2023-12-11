@@ -23,15 +23,15 @@ function MushaSkillTree:OnSave()
     return { activatedskills = self.activatedskills, skillxp = self.skillxp }
 end
 
+function MushaSkillTree:UpdateSaveState()
+    self.inst.replica.mushaskilltree:SetActivatedSkills(self.activatedskills)
+end
+
 function MushaSkillTree:OnLoad(data)
     if type(data.activatedskills) == "table" then
         for k, v in pairs(data.activatedskills) do
-            if not self:IsValidSkill(k) then
-                print("Invalid skilltree skill to OnLoad:", k)
-                data.activatedskills[k] = nil
-            end
+            self:ActivateSkill(k, nil, true, true)
         end
-        self.activatedskills = data.activatedskills
     end
     self:UpdateSaveState()
 
@@ -40,14 +40,11 @@ function MushaSkillTree:OnLoad(data)
     end
 end
 
-function MushaSkillTree:UpdateSaveState()
-    self.inst.replica.mushaskilltree:SetActivatedSkills(self.activatedskills)
-end
-
 function MushaSkillTree:RespecSkills()
-    self.activatedskills = {}
+    for k, v in pairs(self.activatedskills) do
+        self:DeactivateSkill(k, nil, true)
+    end
     self:UpdateSaveState()
-
     self.inst.SoundEmitter:PlaySound("wilson_rework/ui/respec")
 end
 
@@ -96,29 +93,35 @@ function MushaSkillTree:GetActivatedSkills()
     return self.activatedskills
 end
 
-function MushaSkillTree:ActivateSkill(skill, category)
+function MushaSkillTree:ActivateSkill(skill, category, locally, init)
     if not self:IsValidSkill(skill, category) then
         print("Invalid skilltree skill to ActivateSkill:", skill)
     elseif not self.activatedskills[skill] then
+        self.activatedskills[skill] = true
+        if not locally then
+            self:UpdateSaveState()
+        end
+
         local onactivate = ALL_SKILLS[skill].onactivate
         if onactivate then
-            onactivate(self.inst)
+            onactivate(self.inst, {init = init})
         end
-        self.activatedskills[skill] = true
-        self:UpdateSaveState()
     end
 end
 
-function MushaSkillTree:DeactivateSkill(skill, category)
+function MushaSkillTree:DeactivateSkill(skill, category, locally)
     if not self:IsValidSkill(skill, category) then
         print("Invalid skilltree skill to DeactivateSkill:", skill)
     elseif self.activatedskills[skill] then
+        self.activatedskills[skill] = nil
+        if not locally then
+            self:UpdateSaveState()
+        end
+
         local ondeactivate = ALL_SKILLS[skill].ondeactivate
         if ondeactivate then
             ondeactivate(self.inst)
         end
-        self.activatedskills[skill] = nil
-        self:UpdateSaveState()
     end
 end
 

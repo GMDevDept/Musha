@@ -117,7 +117,6 @@ function Leveler:OnLoad(data)
         self:SetExperience(data.exp)
         self:SetLevel(data.lvl)
         self.exp_to_level = data.exp_to_level
-        self:DoDelta(0) -- Force on dirty
     end
 end
 

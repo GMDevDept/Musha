@@ -27,14 +27,11 @@ local Stamina = Class(function(self, inst)
 
     local period = 1
     self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
-end,
-    nil,
-    {
-        max = onmax,
-        current = oncurrent,
-        ratelevel = onratelevel,
-    }
-)
+end, nil, {
+    max = onmax,
+    current = oncurrent,
+    ratelevel = onratelevel,
+})
 
 function Stamina:OnSave()
     return self.current ~= self.max and { stamina = self.current } or nil
@@ -82,6 +79,7 @@ end
 function Stamina:SetMax(amount)
     self.max = amount
     self.current = amount
+    self:DoDelta(0)
 end
 
 function Stamina:SetRateLevel(ratelevel)
@@ -100,6 +98,9 @@ function Stamina:Recalc(dt)
 
     local inst = self.inst
 
+    local skillbonus = inst.components.mushaskilltree:IsActivated("staminaregen2") and TUNING.musha.skills.staminaregen2.bonus
+        or inst.components.mushaskilltree:IsActivated("staminaregen1") and TUNING.musha.skills.staminaregen1.bonus or 0
+
     local m = inst.sg:HasStateTag("sleeping") and
         (inst.sg:HasStateTag("tent") and 50
             or inst.sg:HasStateTag("bedroll") and 33
@@ -111,8 +112,8 @@ function Stamina:Recalc(dt)
         or inst.sg:HasStateTag("fishing") and -5
         or inst.sg:HasStateTag("musha_valkyrieparrying") and TUNING.musha.skills.valkyrieparry.staminaongoingcost
         or inst.sg:HasStateTag("busy") and 0
-        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2
-        or inst.sg:HasStateTag("idle") and 10
+        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2 + skillbonus
+        or inst.sg:HasStateTag("idle") and 5 + skillbonus
         or 0
 
     self.baserate = TUNING.musha.staminarate + m
@@ -139,9 +140,12 @@ function Stamina:DoDelta(delta, overtime, follow_invincible)
     local old = self.current
     self.current = math.clamp(self.current + delta, 0, self.max)
 
-    self.inst:PushEvent("staminadelta",
-        { oldpercent = old / self.max, newpercent = self.current / self.max, overtime = overtime,
-            delta = self.current - old })
+    self.inst:PushEvent("staminadelta", {
+        oldpercent = old / self.max,
+        newpercent = self.current / self.max,
+        overtime = overtime,
+        delta = self.current - old
+    })
 
     if old > 0 then
         if self.current <= 0 then

@@ -51,6 +51,13 @@ local function BuildSkillsData(SkillTreeFns)
                 "maxstamina2",
                 "staminaregen1",
             },
+
+            onactivate = function(inst, data)
+                inst:RecalcStatus("stamina", data.init)
+            end,
+            ondeactivate = function(inst, data)
+                inst:RecalcStatus("stamina")
+            end,
         },
         maxstamina2 = {
             title = STRINGS.musha.skills.maxstamina2.name,
@@ -63,6 +70,13 @@ local function BuildSkillsData(SkillTreeFns)
             connects = {
                 "maxstamina3",
             },
+
+            onactivate = function(inst, data)
+                inst:RecalcStatus("stamina", data.init)
+            end,
+            ondeactivate = function(inst, data)
+                inst:RecalcStatus("stamina")
+            end,
         },
         maxstamina3 = {
             title = STRINGS.musha.skills.maxstamina3.name,
@@ -72,6 +86,13 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+
+            onactivate = function(inst, data)
+                inst:RecalcStatus("stamina", data.init)
+            end,
+            ondeactivate = function(inst, data)
+                inst:RecalcStatus("stamina")
+            end,
         },
         staminaregen1 = {
             title = STRINGS.musha.skills.staminaregen1.name,

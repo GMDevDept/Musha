@@ -60,9 +60,9 @@ TUNING.musha = {
         },
     },
 
-    damagemultiplier = 0.8,
-    damageonmaxstamina = 0.8,
-    damageonminstamina = 0.5,
+    damagemultiplier = 0.75,
+    damageonmaxstamina = 0.75,
+    damageonminstamina = 1.5,
     areahitdamagepercent = 0.25,
     areaattackrange = 3,
 
@@ -144,6 +144,22 @@ TUNING.musha = {
         250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 },
 
     skills = {
+        maxstamina1 = {
+            bonus = 30,
+        },
+        maxstamina2 = {
+            bonus = 70,
+        },
+        maxstamina3 = {
+            bonus = 70,
+            bonusmultiplier = 5, -- per level
+        },
+        staminaregen1 = {
+            bonus = 0.5,
+        },
+        staminaregen2 = {
+            bonus = 1,
+        },
         treasuresniffing = {
             max = 960, -- 2 days
             regen = 1,

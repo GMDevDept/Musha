@@ -280,11 +280,11 @@ STRINGS.musha = {
         },
         staminaregen1 = {
             name = "耐力回复I",
-            desc = "提升耐力自然回复速度",
+            desc = "提升移动和站立时的耐力自然回复速度",
         },
         staminaregen2 = {
             name = "耐力回复II",
-            desc = "进一步提升耐力自然回复速度",
+            desc = "进一步提升移动和站立时的耐力自然回复速度",
         },
         maxmana1 = {
             name = "魔力提升I",

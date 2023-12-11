@@ -73,14 +73,6 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
--- Reset damage multiplier on stamina change
-local function OnStaminaDelta(inst)
-    local multiplier = inst.components.stamina:GetDamageMultiplier()
-    inst.components.combat.externaldamagemultipliers:SetModifier(inst, multiplier, "staminalevel")
-end
-
----------------------------------------------------------------------------------------------------------
-
 -- Bonus damage
 local function BonusDamageFn(inst, target, damage, weapon) -- Triggered by target's Combat:GetAttacked, and only when damage > 0
     local bonusdamage = 0
@@ -1115,7 +1107,7 @@ local function ElementTakeTurns(inst, data)
     local max = 0
 
     for k, v in pairs(TUNING.musha.skills.launchelement) do
-        if inst.skills[k] then
+        if inst.components.mushaskilltree:IsActivated(k) then
             table.insert(availables, k)
         end
         max = max + 1
@@ -2375,9 +2367,32 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Recalculate max status on skill tree change
+
+local function RecalcStatus(inst, status, init)
+    -- For health and sanity their OnLoad fn are called before mushaskilltree.OnLoad, for stamina and mana their loading sequence can be set by reordering inst:AddComponent (currently after mushaskilltree)
+    if status == "stamina" then
+        local base = TUNING.musha.maxstamina
+        local bonus = inst.components.mushaskilltree:IsActivated("maxstamina3")
+            and (TUNING.musha.skills.maxstamina3.bonus + TUNING.musha.skills.maxstamina3.bonusmultiplier * inst.components.leveler:GetLevel())
+            or inst.components.mushaskilltree:IsActivated("maxstamina2") and TUNING.musha.skills.maxstamina2.bonus
+            or inst.components.mushaskilltree:IsActivated("maxstamina1") and TUNING.musha.skills.maxstamina1.bonus or 0
+
+        if init then
+            inst.components.stamina.max = base + bonus
+        else
+            inst.components.stamina:SetMax(base + bonus)
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- When level up
 local function OnLevelUp(inst, data)
-    return
+    for status in { "health", "sanity", "stamina", "mana" } do
+        inst:RecalcStatus(status)
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2610,13 +2625,13 @@ local function master_postinit(inst)
     -- Character specific attributes
     inst.mode:set_local(0) -- Force to trigger dirty event on next :set()
     inst.fatiguelevel:set_local(0) -- Force to trigger dirty event on next :set()
-    inst.skills = {}
     inst.companionhotkeysenabled = true
     inst.shadowmushafollowonly = false
     inst.elementmode = 1 -- 1: magma, 2: frost, 3: poison, 4: bloom
     inst.plantpool = { 1, 2, 3, 4 }
     inst.DecideNormalOrFull = DecideNormalOrFull
     inst.DecideFatigueLevel = DecideFatigueLevel
+    inst.RecalcStatus = RecalcStatus
     inst.StartSneaking = StartSneaking
     inst.StopSneaking = StopSneaking
     inst.PrincessBlessing = PrincessBlessing
@@ -2632,7 +2647,6 @@ local function master_postinit(inst)
 
     -- Event handlers
     inst:ListenForEvent("levelup", OnLevelUp)
-    inst:ListenForEvent("staminadelta", OnStaminaDelta)
     inst:ListenForEvent("fatiguelevelchange", OnFatigueLevelChange)
     inst:ListenForEvent("treasurefull", OnTreasureSniffingReady)
     inst:ListenForEvent("oneat", OnEatFood)
