@@ -1,8 +1,8 @@
 local function ClassPostConstructFn(self)
     local _GetAttacked = self.GetAttacked
     function self:GetAttacked(attacker, damage, weapon, stimuli, ...)
-        if not (self.inst.components.health and self.inst.components.health:IsDead())
-            and self.inst:HasTag("manashieldactivated") then
+        if self.inst:HasTag("manashieldactivated")
+            and not (self.inst.components.health and self.inst.components.health:IsDead()) then
             -- By this way 'attacked' event won't be pushed to self.inst and 'onhitother' event won't be pushed to attacker
             -- Thus attacked effects will be cancelled if manashield is active (including stategraph event)
 
@@ -11,9 +11,9 @@ local function ClassPostConstructFn(self)
             self.inst:PushEvent("manashieldonattacked",
                 { attacker = attacker, damage = damage, weapon = weapon, stimuli = stimuli }) -- Here is original damage before calculating equipments and health absorb multipliers
             return false
-        elseif not (self.inst.components.health and self.inst.components.health:IsDead())
-            and (self.inst.sg and self.inst.sg:HasStateTag("musha_shadowparry"))
-            and (self.inst.components.rider and self.inst.components.rider:IsRiding()) then
+        elseif (self.inst.sg and self.inst.sg:HasStateTag("musha_shadowparry"))
+            and (self.inst.components.rider and self.inst.components.rider:IsRiding())
+            and not (self.inst.components.health and self.inst.components.health:IsDead()) then
             -- Damageredirecttarget is not nil When riding, need to push 'blocked' event to trigger shadow parry
             -- No worry about 'attacked' event since character has 100% combat damage reduction when shadow parry is active
 

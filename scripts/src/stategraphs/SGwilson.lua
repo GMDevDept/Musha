@@ -75,7 +75,7 @@ AddStategraphPostInit("wilson", function(self)
     self.states["thaw"].onenter = function(inst)
         if inst:HasTag("musha") then
             if inst.mode:value() == 2 then
-                inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+                inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             else
                 inst.sg:AddStateTag("musha_nointerrupt")
             end
@@ -93,7 +93,7 @@ AddStategraphPostInit("wilson", function(self)
     self.states["attack"].onenter = function(inst)
         if inst:HasTag("musha") then
             inst:DoTaskInTime(8 * FRAMES, function() -- ? Seems to be not necessary to cancel task on new state
-                inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+                inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             end)
         end
         _onenter(inst)
@@ -104,7 +104,7 @@ AddStategraphPostInit("wilson", function(self)
     local _onenter = self.states["hit"].onenter
     self.states["hit"].onenter = function(inst)
         if inst:HasTag("musha") then
-            inst.components.timer:StartTimer("premagpiestep", 2 * TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", 2 * TUNING.musha.skills.magpiestep.usewindow)
         end
         _onenter(inst)
     end
@@ -445,7 +445,7 @@ local musha_smite = State {
         TimeEvent(18 * FRAMES, function(inst)
             inst:PerformBufferedAction()
             inst.sg:RemoveStateTag("abouttoattack")
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
     },
 
@@ -832,7 +832,7 @@ local musha_spell = State {
             inst.bufferedspell = nil
             inst.bufferedbookfx = nil
 
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end)
     },
 
@@ -1619,7 +1619,7 @@ local musha_setsugetsuka = State {
             inst.sg:RemoveStateTag("nointerrupt")
             inst.sg:RemoveStateTag("musha_nointerrupt")
 
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             inst.components.timer:StartTimer("clearsetsugetsukacounter", TUNING.musha.skills.setsugetsuka.usewindow)
             inst:ListenForEvent("timerdone", ClearSetsuGetsuKaCounter)
         end),
@@ -1772,7 +1772,7 @@ local musha_phoenixadvent = State {
             inst.components.colouradder:PushColour("lunge", 1, 1, 0, 0)
             inst.sg.statemem.flash = 1
             inst:ScreenFlash(1)
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
         TimeEvent(36 * FRAMES, function(inst)
             inst.components.bloomer:PopBloom("lunge")
@@ -2013,7 +2013,7 @@ local musha_annihilation = State {
             inst.components.colouradder:PushColour("leap", 1, 1, 0, 0)
             inst.sg.statemem.flash = 1.3
             inst.sg:RemoveStateTag("nointerrupt")
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
         TimeEvent(25 * FRAMES, function(inst)
             inst.components.bloomer:PopBloom("leap")
@@ -2081,9 +2081,11 @@ AddStategraphEvent("wilson_client", EventHandler("startannihilation",
 
 local function DesolateDiveOnTimerDone(inst, data)
     if data.name == "cooldown_desolatedive" then
-        inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
-            .. STRINGS.musha.skills.desolatedive.name
-            .. STRINGS.musha.skills.cooldownfinished.part2)
+        if inst.components.mushaskilltree:IsActivated("desolatedive") then
+            inst.components.talker:Say(STRINGS.musha.skills.cooldownfinished.part1
+                .. STRINGS.musha.skills.desolatedive.name
+                .. STRINGS.musha.skills.cooldownfinished.part2)
+        end
         inst:RemoveEventCallback("timerdone", DesolateDiveOnTimerDone)
     end
 end
@@ -2422,7 +2424,7 @@ local musha_desolatedive_pst = State {
             inst.sg:RemoveStateTag("nopredict")
             inst.sg:RemoveStateTag("musha_nointerrupt")
 
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
         TimeEvent(8 * FRAMES, function(inst)
             inst.components.bloomer:PopBloom("superjump")
@@ -2508,6 +2510,10 @@ local musha_magpiestep = State {
             inst.Physics:SetMotorVel(math.sqrt(distsq(inst.sg.statemem.startingpos.x, inst.sg.statemem.startingpos.z,
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end
+
+        if inst.components.mushaskilltree:IsActivated("magpieslash") then
+            inst.sg.statemem.slashready = true
+        end
     end,
 
     onupdate = function(inst)
@@ -2515,7 +2521,7 @@ local musha_magpiestep = State {
             ApplyPhantom(inst, "asa_dodge")
         end
 
-        if not inst.sg.statemem.attackdone then
+        if inst.sg.statemem.slashready then
             local radius = TUNING.musha.skills.magpiestep.radius
             local must_tags = { "_combat" }
             local ignore_tags = { "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead", "playerghost",
@@ -2535,9 +2541,10 @@ local musha_magpiestep = State {
                     TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
                 target.components.combat:GetAttacked(inst, damage, weapon)
 
+                inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregenonhit)
                 inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
                 inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
-                inst.sg.statemem.attackdone = true
+                inst.sg.statemem.slashready = nil
             end
         end
     end,
@@ -2811,6 +2818,8 @@ local function DoParryAttack(inst, target)
                 + TUNING.musha.skills.valkyrieparry.damagereflectionrate
                 * (target.components.combat.defaultdamage > 0 and target.components.combat.defaultdamage
                     or inst.components.combat:CalcDamage(target, weapon))
+                + (target.components.health ~= nil and
+                    target.components.health.currenthealth * TUNING.musha.skills.valkyrieparry.extradamagemultiplier or 0)
             target.components.combat:GetAttacked(inst, damage, weapon)
             inst:PushEvent("onattackother", { target = target })
 
@@ -2851,7 +2860,7 @@ local musha_valkyrieparry_hit = State {
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.skills.valkyrieparry.damagetakenmultiplier, "valkyrieparry")
 
-        inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+        inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
 
         inst.sg.statemem.flash = 0.9
         inst.sg:SetTimeout(TUNING.musha.skills.valkyrieparry.perfecttimewindow * FRAMES)
@@ -2868,15 +2877,19 @@ local musha_valkyrieparry_hit = State {
     events =
     {
         EventHandler("startvalkyriestab", function(inst)
-            if inst.sg.statemem.parrytarget then
-                DoParryAttack(inst, inst.sg.statemem.parrytarget)
+            if inst.components.mushaskilltree:IsActivated("valkyrieparry_perfect") then
+                if inst.sg.statemem.parrytarget then
+                    DoParryAttack(inst, inst.sg.statemem.parrytarget)
+                end
+                inst.components.stamina:DoDelta(TUNING.musha.skills.valkyrieparry.staminaregen)
+                inst:AddDebuff("manashield", "manashield",
+                    { duration = TUNING.musha.skills.valkyrieparry.shieldduration })
+                inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
+                inst.components.talker:Say(STRINGS.musha.skills.valkyrieparry.perfect)
+                inst.sg:GoToState("musha_valkyriestab", { perfect = true })
+            else
+                inst.sg:GoToState("musha_valkyriestab")
             end
-            inst.components.stamina:DoDelta(TUNING.musha.skills.valkyrieparry.staminaregen)
-            inst:AddDebuff("manashield", "manashield",
-                { duration = TUNING.musha.skills.valkyrieparry.shieldduration })
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/equip_item_gold")
-            inst.components.talker:Say(STRINGS.musha.skills.valkyrieparry.perfect)
-            inst.sg:GoToState("musha_valkyriestab", { perfect = true })
         end),
         EventHandler("staminadepleted", function(inst)
             inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
@@ -2976,7 +2989,7 @@ local musha_valkyriestab = State {
             inst.sg:RemoveStateTag("busy")
             inst.sg:RemoveStateTag("musha_nointerrupt")
             inst.Physics:SetMotorVel(0, 0, 0)
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
             inst.components.timer:StartTimer("prevalkyriewhirl", TUNING.musha.skills.valkyriewhirl.usewindow)
         end),
     },
@@ -3102,7 +3115,7 @@ local musha_valkyriewhirl = State {
         TimeEvent(10 * FRAMES, function(inst)
             inst.sg:RemoveStateTag("busy")
             inst.sg:RemoveStateTag("musha_nointerrupt")
-            inst.components.timer:StartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
+            inst.components.timer:CustomStartTimer("premagpiestep", TUNING.musha.skills.magpiestep.usewindow)
         end),
     },
 

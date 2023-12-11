@@ -113,7 +113,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
     if inst.sg:HasStateTag("busy") or inst.sg:HasStateTag("musha_nointerrupt") or inst.sg:HasStateTag("musha_spell") then
         return
     elseif (inst.mode:value() == 0 or inst.mode:value() == 1) then
-        if not inst.skills.freezingspell then
+        if not inst.components.mushaskilltree:IsActivated("freezingspell") then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
         elseif inst.components.timer:TimerExists("cooldown_freezingspell") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -145,7 +145,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             inst.castmanaspell:push()
         end
     elseif inst.mode:value() == 2 then
-        if not inst.skills.thunderspell then
+        if not inst.components.mushaskilltree:IsActivated("thunderspell") then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
         elseif inst.components.timer:TimerExists("cooldown_thunderspell") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -210,7 +210,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
                 inst.castmanaspell:push()
             end
         else
-            if not inst.skills.shadowspell then
+            if not inst.components.mushaskilltree:IsActivated("shadowspell") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_shadowspell") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1

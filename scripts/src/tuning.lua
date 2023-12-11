@@ -3,17 +3,17 @@ TUNING.musha = {
 
     freezecooldowntime = 5,
 
-    health = 200,
+    health = 80,
     hunger = 200,
-    sanity = 200,
+    sanity = 80,
 
     stalefoodhungerrate = 1 / 3,
     spoiledfoodhungerrate = 1 / 6,
 
-    maxmana = 200,
+    maxmana = 80,
     manaregenspeed = 0.5,
 
-    maxstamina = 200,
+    maxstamina = 80,
     staminarate = 0,
 
     maxfatigue = 100,
@@ -90,9 +90,9 @@ TUNING.musha = {
             fatiguemultiplier = 2,
             manaregenbyelectric = 10,
             manaongoingmodifier = 0,
-            healthregenonkill = 0.02,
-            sanityregenonkill = 0.01,
-            manaregenonkill = 0.025,
+            healthregenonkill = 0.025,
+            sanityregenonkill = 0.025,
+            manaregenonkill = 0.05,
             drowningdamage = {
                 HEALTH_PENALTY = 0,
                 HUNGER = 0,
@@ -142,35 +142,6 @@ TUNING.musha = {
         220, 230, 240, 250, 260, 270, 280, 290, 300 }, -- len = 30
     _exp_to_level = { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 175, 200,
         250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 },
-
-    leveltounlockskill = { -- Maintain src/timers.lua after adding new skill with cooldown timer
-        freezingspell     = 0,
-        manashield        = 0,
-        princessblessing  = 0,
-        valkyriemode      = 0, -- Should be same as desolatedive
-        shadowmode        = 0,
-        thunderspell      = 0,
-        shadowspell       = 0,
-        shadowprison      = 0,
-        sneak             = 0,
-        sneakspeedboost   = 0,
-        rollingmagma      = 0,
-        whitefrost        = 0,
-        poisonspore       = 0,
-        bloomingfield     = 0,
-        setsugetsuka      = 0,
-        setsugetsukaredux = 0,
-        phoenixadvent     = 0,
-        annihilation      = 0,
-        desolatedive      = 0,
-        magpiestep        = 0,
-        valkyrieparry     = 0,
-        valkyriewhirl     = 0,
-        shadowparry       = 0,
-        voidphantom       = 0,
-        phantomslash      = 0,
-        phantomblossom    = 0,
-    },
 
     skills = {
         treasuresniffing = {
@@ -401,19 +372,19 @@ TUNING.musha = {
             mindist = 10,
             damagemultiplier = 0.5,
             extradamagemultiplier = 0.05, -- by target's max health
-            maxdamagemultiplier = 5,
+            maxdamagemultiplier = 10,
             speedmultiplier = 0.25,
             maxchargingtime = 10,
             cooldown = 20,
             sinkhole = {
                 destructionradius = 3.5,
-                centerdamage = 25,
+                centerdamage = 50,
                 collapsetime = 0.2,
                 repairtime = { 2, 3, 7 }, -- Sum = duration
             },
         },
         magpiestep = {
-            staminaregen = 5,
+            staminaregenonhit = 10,
             maxdist = 10,
             usewindow = 0.5,
             radius = 2,
@@ -425,10 +396,11 @@ TUNING.musha = {
             damagetakenmultiplier = 0,
             cooldown = 10,
             perfecttimewindow = 6, -- Frames
-            shieldduration = 4,
+            shieldduration = 6,
             staminaregen = 50,
             damagereflectionbase = 50,
-            damagereflectionrate = 2,
+            damagereflectionrate = 1,
+            extradamagemultiplier = 0.02, -- by target's max currenthealth
         },
         valkyriestab = {
             damageperhit = 10 / 3, -- per frame
@@ -438,8 +410,8 @@ TUNING.musha = {
         valkyriewhirl = {
             staminacost = 25,
             basedamagemultiplier = 0.5,
-            extradamagemultiplier = 0.05, -- by target's max health
-            maxdamagemultiplier = 2.5,
+            extradamagemultiplier = 0.025, -- by target's max health
+            maxdamagemultiplier = 5,
             radius = 5,
             usewindow = 1,
         },

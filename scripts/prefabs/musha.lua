@@ -61,6 +61,18 @@ end
 
 ---------------------------------------------------------------------------------------------------------
 
+-- Push event when debuff is added or removed
+
+local function OnDebuffAdded(inst, name, debuff, data)
+    inst:PushEvent("debuffadded", { name = name, debuff = debuff, data = data })
+end
+
+local function OnDebuffRemoved(inst, name, debuff)
+    inst:PushEvent("debuffremoved", { name = name, debuff = debuff })
+end
+
+---------------------------------------------------------------------------------------------------------
+
 -- Reset damage multiplier on stamina change
 local function OnStaminaDelta(inst)
     local multiplier = inst.components.stamina:GetDamageMultiplier()
@@ -724,7 +736,7 @@ local function ShieldKeyLongPressed(inst, data)
         end
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("musha_spell") then
-            if not inst.skills.princessblessing then
+            if not inst.components.mushaskilltree:IsActivated("princessblessing") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_princessblessing") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -741,7 +753,7 @@ local function ShieldKeyLongPressed(inst, data)
                 DoPrincessBlessing(inst)
             end
         elseif inst.mode:value() == 2 then
-            if not inst.skills.valkyrieparry then
+            if not inst.components.mushaskilltree:IsActivated("valkyrieparry") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
@@ -761,7 +773,7 @@ local function ShieldKeyLongPressed(inst, data)
                 inst.startvalkyrieparry:push()
             end
         elseif inst.mode:value() == 3 then
-            if not inst.skills.shadowparry then
+            if not inst.components.mushaskilltree:IsActivated("shadowparry") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_shadowparry") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -808,7 +820,7 @@ local function ShieldKeyUp(inst, x, y, z)
     if inst.components.timer:TimerExists("shieldkeyonlongpress") then
         if inst:HasTag("manashieldactivated") then
             inst:RemoveDebuff("manashield")
-        elseif not inst.skills.manashield then
+        elseif not inst.components.mushaskilltree:IsActivated("manashield") then
             inst.components.talker:Say(STRINGS.musha.lack_of_exp)
         elseif inst.components.timer:TimerExists("cooldown_manashield") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -881,7 +893,7 @@ local function RollingMagma(inst, data)
         inst:ListenForEvent("timerdone", RollingMagmaOnTimerDone)
 
         return true
-    elseif not inst.skills.rollingmagma then
+    elseif not inst.components.mushaskilltree:IsActivated("rollingmagma") then
         return false, STRINGS.musha.lack_of_exp
     elseif inst.components.timer:TimerExists("cooldown_rollingmagma") then
         local reason = STRINGS.musha.skills.incooldown.part1
@@ -943,7 +955,7 @@ local function WhiteFrost(inst, data)
         inst:ListenForEvent("timerdone", WhiteFrostOnTimerDone)
 
         return true
-    elseif not inst.skills.whitefrost then
+    elseif not inst.components.mushaskilltree:IsActivated("whitefrost") then
         return false, STRINGS.musha.lack_of_exp
     elseif inst.components.timer:TimerExists("cooldown_whitefrost") then
         local reason = STRINGS.musha.skills.incooldown.part1
@@ -1005,7 +1017,7 @@ local function PoisonSpore(inst, data)
         inst:ListenForEvent("timerdone", PoisonSporeOnTimerDone)
 
         return true
-    elseif not inst.skills.poisonspore then
+    elseif not inst.components.mushaskilltree:IsActivated("poisonspore") then
         return false, STRINGS.musha.lack_of_exp
     elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
         local reason = STRINGS.musha.skills.incooldown.part1
@@ -1070,7 +1082,7 @@ local function BloomingField(inst, data)
         inst:ListenForEvent("timerdone", BloomingFieldOnTimerDone)
 
         return true
-    elseif not inst.skills.bloomingfield then
+    elseif not inst.components.mushaskilltree:IsActivated("bloomingfield") then
         return false, STRINGS.musha.lack_of_exp
     elseif inst.components.timer:TimerExists("cooldown_bloomingfield") then
         local reason = STRINGS.musha.skills.incooldown.part1
@@ -1432,7 +1444,7 @@ end
 
 local function StartSneaking(inst)
     inst:AddTag("sneaking")
-    if inst.skills.shadowprison then inst:AddTag("shadowprisonready") end -- For MANASPELL action's strfn
+    if inst.components.mushaskilltree:IsActivated("shadowprison") then inst:AddTag("shadowprisonready") end -- For MANASPELL action's strfn
     inst:RemoveTag("scarytoprey")
     inst.components.talker:Say(STRINGS.musha.skills.sneak.start)
     inst:ListenForEvent("attacked", SneakFailed)
@@ -1442,7 +1454,7 @@ local function StartSneaking(inst)
     inst.components.timer:StartTimer("entersneak", TUNING.musha.skills.sneak.preparetime)
     inst:ListenForEvent("timerdone", EnterSneak)
 
-    if inst.skills.sneakspeedboost then
+    if inst.components.mushaskilltree:IsActivated("sneakspeedboost") then
         SneakSpeedBoost(inst)
     end
 end
@@ -1542,7 +1554,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                     end
                 end
             else
-                if not inst.skills.valkyriemode then
+                if not inst.components.mushaskilltree:IsActivated("valkyriemode") then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.rider:IsRiding() then
                     inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
@@ -1566,7 +1578,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 end
             end
         elseif inst.mode:value() == 2 then
-            if not inst.skills.desolatedive then
+            if not inst.components.mushaskilltree:IsActivated("desolatedive") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
@@ -1586,7 +1598,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 inst.startdesolatedive_pre:push()
             end
         elseif inst.mode:value() == 3 then
-            if not inst.skills.phantomblossom then
+            if not inst.components.mushaskilltree:IsActivated("phantomblossom") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
@@ -1628,8 +1640,8 @@ local function ValkyrieKeyDown(inst, x, y, z)
     inst.bufferedcursorpos = Vector3(x, y, z)
 
     if inst.mode:value() == 2 then
-        if inst.components.timer:TimerExists("premagpiestep") and not inst.components.rider:IsRiding() then
-            inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregen)
+        if inst.components.timer:TimerExists("premagpiestep") and inst.components.mushaskilltree:IsActivated("magpiestep")
+            and not inst.components.rider:IsRiding() then
             inst.startmagpiestep:push()
             inst.novalkyriekeyonlongpress = true
         else
@@ -1679,7 +1691,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
     elseif inst.mode:value() == 2 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress")
             and not inst.noannihilation and not inst.components.rider:IsRiding() then
-            if not inst.skills.annihilation then
+            if not inst.components.mushaskilltree:IsActivated("annihilation") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_annihilation") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -1705,7 +1717,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
     elseif inst.mode:value() == 3 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
             if inst.components.timer:TimerExists("phantomslashready") then
-                if not inst.skills.phantomslash then
+                if not inst.components.mushaskilltree:IsActivated("phantomslash") then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.stamina.current < TUNING.musha.skills.phantomslash.staminacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
@@ -1715,7 +1727,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
                     StartPhantomSlash(inst, { target = inst.bufferedphantomslashtarget })
                 end
             else
-                if not inst.skills.voidphantom then
+                if not inst.components.mushaskilltree:IsActivated("voidphantom") then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.timer:TimerExists("cooldown_voidphantom") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -1774,7 +1786,7 @@ local function ShadowKeyLongPressed(inst, data)
         end
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
-            if not inst.skills.shadowmode then
+            if not inst.components.mushaskilltree:IsActivated("shadowmode") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
@@ -1841,7 +1853,8 @@ local function ShadowKeyUp(inst, x, y, z)
         end
     elseif inst.mode:value() == 2 and not inst.components.rider:IsRiding() then
         if inst.components.timer:TimerExists("shadowkeyonlongpress") then
-            if inst.components.timer:TimerExists("prevalkyriewhirl") and inst.skills.valkyriewhirl then
+            if inst.components.timer:TimerExists("prevalkyriewhirl")
+                and inst.components.mushaskilltree:IsActivated("valkyriewhirl") then
                 if inst.components.stamina.current < TUNING.musha.skills.valkyriewhirl.staminacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
                     CustomPlayFailedAnim(inst)
@@ -1849,25 +1862,27 @@ local function ShadowKeyUp(inst, x, y, z)
                     inst.components.stamina:DoDelta(-TUNING.musha.skills.valkyriewhirl.staminacost)
                     inst.startvalkyriewhirl:push()
                 end
-            elseif inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent
-                and ((inst.skills.setsugetsukaredux and inst.setsugetsuka_counter >= 3)
-                    or not inst.skills.setsugetsukaredux) then
+            elseif inst.components.timer:TimerExists("clearsetsugetsukacounter")
+                and inst.components.mushaskilltree:IsActivated("phoenixadvent")
+                and ((inst.components.mushaskilltree:IsActivated("setsugetsukaredux") and inst.setsugetsuka_counter >= 3)
+                    or not inst.components.mushaskilltree:IsActivated("setsugetsukaredux")) then
                 inst.startphoenixadvent:push()
-            elseif not inst.skills.setsugetsuka then
+            elseif not inst.components.mushaskilltree:IsActivated("setsugetsuka") then
                 inst.components.talker:Say(STRINGS.musha.lack_of_exp)
             elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
                 inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                 CustomPlayFailedAnim(inst)
             elseif inst.components.stamina.current < TUNING.musha.skills.setsugetsuka.staminacost then
                 inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
-                if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.skills.phoenixadvent then
+                if inst.components.timer:TimerExists("clearsetsugetsukacounter")
+                    and inst.components.mushaskilltree:IsActivated("phoenixadvent") then
                     inst.startphoenixadvent:push()
                 else
                     CustomPlayFailedAnim(inst)
                 end
             else
                 if inst.components.timer:TimerExists("clearsetsugetsukacounter") and inst.setsugetsuka_counter < 3
-                    and inst.skills.setsugetsukaredux then
+                    and inst.components.mushaskilltree:IsActivated("setsugetsukaredux") then
                     inst.components.mana:DoDelta(-TUNING.musha.skills.setsugetsuka.manacost)
                     inst.components.stamina:DoDelta(-TUNING.musha.skills.setsugetsuka.staminacost)
                     inst:PushEvent("startsetsugetsuka")
@@ -1894,7 +1909,7 @@ local function ShadowKeyUp(inst, x, y, z)
                 inst.components.sanity:DoDelta(TUNING.musha.skills.sneak.sanitycost)
                 inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
             else
-                if not inst.skills.sneak then
+                if not inst.components.mushaskilltree:IsActivated("sneak") then
                     inst.components.talker:Say(STRINGS.musha.lack_of_exp)
                 elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
@@ -2157,18 +2172,26 @@ local function OnModeChange(inst)
         inst.components.mana.modifiers:SetModifier(inst,
             TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
 
-        inst:AddTag("areaattack")
-        inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)
-
-        inst:ListenForEvent("killed", ValkyrieOnKilled)
-
         inst.components.inventory.isexternallyinsulated:SetModifier(inst, true, "valkyriebuff")
         inst:ListenForEvent("attacked", ValkyrieOnAttacked)
 
-        inst:AddTag("stronggrip")
-        inst.components.drownable:SetCustomTuningsFn(GetDrowningDamgeTunings)
+        if inst.components.mushaskilltree:IsActivated("areaattack") then
+            inst:AddTag("areaattack")
+            inst:ListenForEvent("onattackother", ValkyrieOnAttackOther)
+        end
 
-        if inst.components.mushaskilltree:IsActivated("lightningstrike") then LightningRecharge(inst) end
+        if inst.components.mushaskilltree:IsActivated("fightingspirit") then
+            inst:ListenForEvent("killed", ValkyrieOnKilled)
+        end
+
+        if inst.components.mushaskilltree:IsActivated("stronggrip") then
+            inst:AddTag("stronggrip")
+            inst.components.drownable:SetCustomTuningsFn(GetDrowningDamgeTunings)
+        end
+
+        if inst.components.mushaskilltree:IsActivated("lightningstrike") then
+            LightningRecharge(inst)
+        end
         inst:ListenForEvent("timerdone", LightningStrikeOnTimerDone)
 
         inst.components.skinner:SetSkinName("musha_valkyrie")
@@ -2354,32 +2377,7 @@ end
 
 -- When level up
 local function OnLevelUp(inst, data)
-    inst.skills.freezingspell     = data.lvl >= TUNING.musha.leveltounlockskill.freezingspell and true or nil
-    inst.skills.manashield        = data.lvl >= TUNING.musha.leveltounlockskill.manashield and true or nil
-    inst.skills.princessblessing  = data.lvl >= TUNING.musha.leveltounlockskill.princessblessing and true or nil
-    inst.skills.valkyriemode      = data.lvl >= TUNING.musha.leveltounlockskill.valkyriemode and true or nil -- Should be same as desolatedive?
-    inst.skills.shadowmode        = data.lvl >= TUNING.musha.leveltounlockskill.shadowmode and true or nil
-    inst.skills.thunderspell      = data.lvl >= TUNING.musha.leveltounlockskill.thunderspell and true or nil
-    inst.skills.shadowspell       = data.lvl >= TUNING.musha.leveltounlockskill.shadowspell and true or nil
-    inst.skills.shadowprison      = data.lvl >= TUNING.musha.leveltounlockskill.shadowprison and true or nil
-    inst.skills.sneak             = data.lvl >= TUNING.musha.leveltounlockskill.sneak and true or nil
-    inst.skills.sneakspeedboost   = data.lvl >= TUNING.musha.leveltounlockskill.sneakspeedboost and true or nil
-    inst.skills.rollingmagma      = data.lvl >= TUNING.musha.leveltounlockskill.rollingmagma and true or nil
-    inst.skills.whitefrost        = data.lvl >= TUNING.musha.leveltounlockskill.whitefrost and true or nil
-    inst.skills.poisonspore       = data.lvl >= TUNING.musha.leveltounlockskill.poisonspore and true or nil
-    inst.skills.bloomingfield     = data.lvl >= TUNING.musha.leveltounlockskill.bloomingfield and true or nil
-    inst.skills.setsugetsuka      = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsuka and true or nil
-    inst.skills.setsugetsukaredux = data.lvl >= TUNING.musha.leveltounlockskill.setsugetsukaredux and true or nil
-    inst.skills.phoenixadvent     = data.lvl >= TUNING.musha.leveltounlockskill.phoenixadvent and true or nil
-    inst.skills.annihilation      = data.lvl >= TUNING.musha.leveltounlockskill.annihilation and true or nil
-    inst.skills.desolatedive      = data.lvl >= TUNING.musha.leveltounlockskill.desolatedive and true or nil
-    inst.skills.magpiestep        = data.lvl >= TUNING.musha.leveltounlockskill.magpiestep and true or nil
-    inst.skills.valkyrieparry     = data.lvl >= TUNING.musha.leveltounlockskill.valkyrieparry and true or nil
-    inst.skills.valkyriewhirl     = data.lvl >= TUNING.musha.leveltounlockskill.valkyriewhirl and true or nil
-    inst.skills.shadowparry       = data.lvl >= TUNING.musha.leveltounlockskill.shadowparry and true or nil
-    inst.skills.voidphantom       = data.lvl >= TUNING.musha.leveltounlockskill.voidphantom and true or nil
-    inst.skills.phantomslash      = data.lvl >= TUNING.musha.leveltounlockskill.phantomslash and true or nil
-    inst.skills.phantomblossom    = data.lvl >= TUNING.musha.leveltounlockskill.phantomblossom and true or nil
+    return
 end
 
 ---------------------------------------------------------------------------------------------------------
@@ -2426,12 +2424,10 @@ local function OnLoad(inst)
     for _, name in pairs(Timers) do
         inst.components.timer:StopTimer(name)
     end
-
-    OnLevelUp(inst, inst.components.leveler)
 end
 
 local function OnNewSpawn(inst)
-    OnLevelUp(inst, inst.components.leveler)
+    return
 end
 
 local function OnDespawn(inst)
@@ -2587,6 +2583,10 @@ local function master_postinit(inst)
     inst.components.combat.damagemultiplier = TUNING.musha.damagemultiplier
     inst.components.combat.areahitdamagepercent = TUNING.musha.areahitdamagepercent
     inst.components.combat.bonusdamagefn = BonusDamageFn
+
+    -- Debuffable
+    inst.components.debuffable.ondebuffadded = OnDebuffAdded
+    inst.components.debuffable.ondebuffremoved = OnDebuffRemoved
 
     -- Petleash
     inst._onpetlost = function(pet) inst.components.sanity:RemoveSanityPenalty(pet) end

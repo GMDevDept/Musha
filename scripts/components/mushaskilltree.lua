@@ -12,7 +12,7 @@ end
 local MushaSkillTree = Class(function(self, inst)
     self.inst = inst
     self.activatedskills = {}
-    self.skillxp = 10
+    self.skillxp = 20
     self.maxskillxp = 999
 end, nil, {
     skillxp = onskillxp,
@@ -64,7 +64,7 @@ function MushaSkillTree:IsValidSkill(skillname, category)
 end
 
 function MushaSkillTree:IsActivated(skill)
-    return self.activatedskills[skill]
+    return self.activatedskills[skill] == true
 end
 
 function MushaSkillTree:CountSkillTag(tag, category) -- Category is optional
