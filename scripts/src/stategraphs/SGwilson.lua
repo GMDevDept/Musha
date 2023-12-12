@@ -86,6 +86,43 @@ end)
 
 ---------------------------------------------------------------------------------------------------------
 
+-- No hurt sound during setsugetsuka and phoenixadvent
+AddStategraphPostInit("wilson", function(self)
+    local _fn = self.events["attacked"].fn
+    self.events["attacked"].fn = function(inst, data)
+        if inst.sg:HasStateTag("musha_setsugetsuka_pre")
+            or inst.sg:HasStateTag("musha_setsugetsuka")
+            or inst.sg:HasStateTag("musha_phoenixadvent") then
+
+            local _hurtsoundvolume = inst.hurtsoundvolume
+            inst.hurtsoundvolume = 0
+
+            local _return = _fn(inst, data)
+            inst.hurtsoundvolume = _hurtsoundvolume
+
+            return _return
+        else
+            return _fn(inst, data)
+        end
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
+-- No knockback when musha is nointerrupt
+AddStategraphPostInit("wilson", function(self)
+    local _fn = self.events["knockback"].fn
+    self.events["knockback"].fn = function(inst, data)
+        if inst.prefab == "musha" and inst.sg:HasStateTag("nointerrupt") then
+            return
+        else
+            return _fn(inst, data)
+        end
+    end
+end)
+
+---------------------------------------------------------------------------------------------------------
+
 -- Add magpie step cast window after attacking or being attacked
 
 AddStategraphPostInit("wilson", function(self)
