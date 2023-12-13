@@ -114,7 +114,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
         return
     elseif (inst.mode:value() == 0 or inst.mode:value() == 1) then
         if not inst.components.mushaskilltree:IsActivated("freezingspell") then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            inst.components.talker:Say(STRINGS.musha.lack_of_xp)
         elseif inst.components.timer:TimerExists("cooldown_freezingspell") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                 .. STRINGS.musha.skills.manaspells.freezingspell.name
@@ -146,7 +146,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
         end
     elseif inst.mode:value() == 2 then
         if not inst.components.mushaskilltree:IsActivated("thunderspell") then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            inst.components.talker:Say(STRINGS.musha.lack_of_xp)
         elseif inst.components.timer:TimerExists("cooldown_thunderspell") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                 .. STRINGS.musha.skills.manaspells.thunderspell.name
@@ -211,7 +211,7 @@ AddAction("MANASPELL", STRINGS.musha.skills.manaspells.actionstrings.GENERIC, fu
             end
         else
             if not inst.components.mushaskilltree:IsActivated("shadowspell") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.timer:TimerExists("cooldown_shadowspell") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.manaspells.shadowspell.name

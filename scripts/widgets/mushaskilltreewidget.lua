@@ -73,6 +73,12 @@ local MushaSkillTreeWidget = Class(Widget, function(self, category, targetdata, 
     self.root.infopanel.desc:SetMultilineTruncatedString(STRINGS.SKILLTREE.INFOPANEL_DESC, 3, 400, nil, nil, true, 6)
     self.root.infopanel.desc:Hide()
 
+    self.root.infopanel.unlocklevel = self.root.infopanel:AddChild(Text(CHATFONT, 16, "unlocklevel", UICOLOURS.BROWN_DARK))
+    self.root.infopanel.unlocklevel:SetPosition(-180, 26)
+
+    self.root.infopanel.lack_of_exp = self.root.infopanel:AddChild(Text(CHATFONT, 18, STRINGS.musha.lack_of_exp, UICOLOURS.BROWN_DARK))
+    self.root.infopanel.lack_of_exp:SetPosition(0, -45)
+
     self.root.infopanel.intro = self.root.infopanel:AddChild(Text(CHATFONT, 18, "desc", UICOLOURS.BROWN_DARK))
     self.root.infopanel.intro:SetPosition(0, -10)
     self.root.infopanel.intro:SetHAlign(ANCHOR_LEFT)

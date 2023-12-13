@@ -55,12 +55,9 @@ local SkillTreeBuilder = Class(Widget, function(self, infopanel, fromfrontend, s
     self.root.panels = {}
 
     self.root.xp = self.root:AddChild(Widget("xp"))
-    self.root.xp:SetPosition(3, 215)
+    self.root.xp:SetPosition(40, 215)
 
     local COLOR = UICOLOURS.BLACK
-    if self.fromfrontend then
-        COLOR = UICOLOURS.GOLD
-    end
 
     self.root.xpicon = self.root.xp:AddChild(Image("images/skilltree.xml", "skill_icon_textbox_white.tex"))
     self.root.xpicon:SetPosition(0, 0)
@@ -73,10 +70,25 @@ local SkillTreeBuilder = Class(Widget, function(self, infopanel, fromfrontend, s
     self.root.xp_tospend = self.root.xp:AddChild(Text(HEADERFONT, 15, 0, COLOR))
     self.root.xp_tospend:SetHAlign(ANCHOR_LEFT)
     self.root.xp_tospend:SetString(STRINGS.SKILLTREE.SKILLPOINTS_TO_SPEND)
-
-
     local w, h = self.root.xp_tospend:GetRegionSize()
     self.root.xp_tospend:SetPosition(30 + (w / 2), -3)
+
+    self.root.leveler = self.root:AddChild(Widget("leveler"))
+    self.root.leveler:SetPosition(-30, 215)
+
+    self.root.levelicon = self.root.leveler:AddChild(Image("images/skilltree.xml", "skill_icon_textbox_white.tex"))
+    self.root.levelicon:SetPosition(0, 0)
+    self.root.levelicon:ScaleToSize(50, 50)
+    self.root.levelicon:SetTint(COLOR[1], COLOR[2], COLOR[3], 1)
+
+    self.root.level = self.root.leveler:AddChild(Text(HEADERFONT, 20, 0, COLOR))
+    self.root.level:SetPosition(0, -4)
+    self.root.level:SetString(self.owner.replica.leveler:GetLevel())
+
+    self.root.leveltext = self.root.leveler:AddChild(Text(HEADERFONT, 15, 0, COLOR))
+    self.root.leveltext:SetHAlign(ANCHOR_RIGHT)
+    self.root.leveltext:SetString(STRINGS.musha.currentlevel)
+    self.root.leveltext:SetPosition(-30 - (w / 2), -3)
 end)
 
 
@@ -188,6 +200,10 @@ function SkillTreeBuilder:buildbuttons(panel, pos, data, offset)
         skillbutton:SetOnClick(function()
             if TheInput:ControllerAttached() then
                 if not self.selectedskill or not self.skillgraphics[self.selectedskill].status.activatable or not self.infopanel.activatebutton:IsVisible() then
+                    return
+                end
+
+                if self.skilltreedef[self.selectedskill].unlocklevel and self.skilltreedef[self.selectedskill].unlocklevel > self.owner.replica.leveler:GetLevel() then
                     return
                 end
 
@@ -460,6 +476,8 @@ function SkillTreeBuilder:RefreshTree()
 
     if self.infopanel then
         self.infopanel.title:Hide()
+        self.infopanel.unlocklevel:Hide()
+        self.infopanel.lack_of_exp:Hide()
         self.infopanel.activatebutton:Hide()
         self.infopanel.activatedtext:Hide()
         self.infopanel.activatedbg:Hide()
@@ -470,9 +488,13 @@ function SkillTreeBuilder:RefreshTree()
             self.infopanel.desc:Show()
             self.infopanel.desc:SetMultilineTruncatedString(getdesc(self.selectedskill, self.target), 3, 400, nil, nil,
                 true, 6)
+            self.infopanel.unlocklevel:Show()
+            self.infopanel.unlocklevel:SetString(STRINGS.musha.unlocklevel .. ": " .. tostring(self.skilltreedef[self.selectedskill].unlocklevel or 0))
             self.infopanel.intro:Hide()
 
-            if not readonly then
+            if self.skilltreedef[self.selectedskill].unlocklevel and self.skilltreedef[self.selectedskill].unlocklevel > self.owner.replica.leveler:GetLevel() then
+                self.infopanel.lack_of_exp:Show()
+            elseif not readonly then
                 if availableskillpoints > 0 and self.skillgraphics[self.selectedskill].status.activatable and not skilltreeupdater:IsActivated(self.selectedskill) and not self.skilltreedef[self.selectedskill].lock_open then
                     self.infopanel.activatedbg:Hide()
                     self.infopanel.activatebutton:Show()

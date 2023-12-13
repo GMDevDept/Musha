@@ -86,6 +86,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
 
             onactivate = function(inst, data)
                 inst:RecalcStatus("stamina", data.init)
@@ -102,6 +103,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
             connects = {
                 "staminaregen2",
             },
@@ -114,6 +116,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 10,
         },
 
         setsugetsuka = {

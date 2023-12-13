@@ -729,7 +729,7 @@ local function ShieldKeyLongPressed(inst, data)
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 and not inst.sg:HasStateTag("musha_spell") then
             if not inst.components.mushaskilltree:IsActivated("princessblessing") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.timer:TimerExists("cooldown_princessblessing") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.princessblessing.name
@@ -746,7 +746,7 @@ local function ShieldKeyLongPressed(inst, data)
             end
         elseif inst.mode:value() == 2 then
             if not inst.components.mushaskilltree:IsActivated("valkyrieparry") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
                 CustomPlayFailedAnim(inst)
@@ -766,7 +766,7 @@ local function ShieldKeyLongPressed(inst, data)
             end
         elseif inst.mode:value() == 3 then
             if not inst.components.mushaskilltree:IsActivated("shadowparry") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.timer:TimerExists("cooldown_shadowparry") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.shadowparry.name
@@ -813,7 +813,7 @@ local function ShieldKeyUp(inst, x, y, z)
         if inst:HasTag("manashieldactivated") then
             inst:RemoveDebuff("manashield")
         elseif not inst.components.mushaskilltree:IsActivated("manashield") then
-            inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+            inst.components.talker:Say(STRINGS.musha.lack_of_xp)
         elseif inst.components.timer:TimerExists("cooldown_manashield") then
             inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                 .. STRINGS.musha.skills.manashield.name
@@ -886,7 +886,7 @@ local function RollingMagma(inst, data)
 
         return true
     elseif not inst.components.mushaskilltree:IsActivated("rollingmagma") then
-        return false, STRINGS.musha.lack_of_exp
+        return false, STRINGS.musha.lack_of_xp
     elseif inst.components.timer:TimerExists("cooldown_rollingmagma") then
         local reason = STRINGS.musha.skills.incooldown.part1
             .. STRINGS.musha.skills.launchelement.rollingmagma.name
@@ -948,7 +948,7 @@ local function WhiteFrost(inst, data)
 
         return true
     elseif not inst.components.mushaskilltree:IsActivated("whitefrost") then
-        return false, STRINGS.musha.lack_of_exp
+        return false, STRINGS.musha.lack_of_xp
     elseif inst.components.timer:TimerExists("cooldown_whitefrost") then
         local reason = STRINGS.musha.skills.incooldown.part1
             .. STRINGS.musha.skills.launchelement.whitefrost.name
@@ -1010,7 +1010,7 @@ local function PoisonSpore(inst, data)
 
         return true
     elseif not inst.components.mushaskilltree:IsActivated("poisonspore") then
-        return false, STRINGS.musha.lack_of_exp
+        return false, STRINGS.musha.lack_of_xp
     elseif inst.components.timer:TimerExists("cooldown_poisonspore") then
         local reason = STRINGS.musha.skills.incooldown.part1
             .. STRINGS.musha.skills.launchelement.poisonspore.name
@@ -1075,7 +1075,7 @@ local function BloomingField(inst, data)
 
         return true
     elseif not inst.components.mushaskilltree:IsActivated("bloomingfield") then
-        return false, STRINGS.musha.lack_of_exp
+        return false, STRINGS.musha.lack_of_xp
     elseif inst.components.timer:TimerExists("cooldown_bloomingfield") then
         local reason = STRINGS.musha.skills.incooldown.part1
             .. STRINGS.musha.skills.launchelement.bloomingfield.name
@@ -1164,7 +1164,7 @@ local function LaunchElement(inst, data, norecur)
     if success then
         return LaunchElement(inst, data)
     elseif reason2 == "noskill" then
-        inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+        inst.components.talker:Say(STRINGS.musha.lack_of_xp)
         return false
     elseif reason2 == "noalter" then
         inst.components.talker:Say(reason1)
@@ -1547,7 +1547,7 @@ local function ValkyrieKeyLongPressed(inst, data)
                 end
             else
                 if not inst.components.mushaskilltree:IsActivated("valkyriemode") then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    inst.components.talker:Say(STRINGS.musha.lack_of_xp)
                 elseif inst.components.rider:IsRiding() then
                     inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
                     CustomPlayFailedAnim(inst)
@@ -1571,7 +1571,7 @@ local function ValkyrieKeyLongPressed(inst, data)
             end
         elseif inst.mode:value() == 2 then
             if not inst.components.mushaskilltree:IsActivated("desolatedive") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
                 CustomPlayFailedAnim(inst)
@@ -1591,7 +1591,7 @@ local function ValkyrieKeyLongPressed(inst, data)
             end
         elseif inst.mode:value() == 3 then
             if not inst.components.mushaskilltree:IsActivated("phantomblossom") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.rider:IsRiding() then
                 inst.components.talker:Say(STRINGS.musha.mount_not_allowed)
                 CustomPlayFailedAnim(inst)
@@ -1684,7 +1684,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
         if inst.components.timer:TimerExists("valkyriekeyonlongpress")
             and not inst.noannihilation and not inst.components.rider:IsRiding() then
             if not inst.components.mushaskilltree:IsActivated("annihilation") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.timer:TimerExists("cooldown_annihilation") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.annihilation.name
@@ -1710,7 +1710,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
             if inst.components.timer:TimerExists("phantomslashready") then
                 if not inst.components.mushaskilltree:IsActivated("phantomslash") then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    inst.components.talker:Say(STRINGS.musha.lack_of_xp)
                 elseif inst.components.stamina.current < TUNING.musha.skills.phantomslash.staminacost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_stamina)
                     CustomPlayFailedAnim(inst)
@@ -1720,7 +1720,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
                 end
             else
                 if not inst.components.mushaskilltree:IsActivated("voidphantom") then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    inst.components.talker:Say(STRINGS.musha.lack_of_xp)
                 elseif inst.components.timer:TimerExists("cooldown_voidphantom") then
                     inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                         .. STRINGS.musha.skills.voidphantom.name
@@ -1779,7 +1779,7 @@ local function ShadowKeyLongPressed(inst, data)
 
         if inst.mode:value() == 0 or inst.mode:value() == 1 then
             if not inst.components.mushaskilltree:IsActivated("shadowmode") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.timer:TimerExists("cooldown_shadowmode") then
                 inst.components.talker:Say(STRINGS.musha.skills.incooldown.part1
                     .. STRINGS.musha.skills.shadowmode.name
@@ -1837,7 +1837,7 @@ local function ShadowKeyUp(inst, x, y, z)
                 if success then
                     LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
                 elseif reason == "noskill" then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    inst.components.talker:Say(STRINGS.musha.lack_of_xp)
                 elseif reason == "noalter" then
                     LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
                 end
@@ -1860,7 +1860,7 @@ local function ShadowKeyUp(inst, x, y, z)
                     or not inst.components.mushaskilltree:IsActivated("setsugetsukaredux")) then
                 inst.startphoenixadvent:push()
             elseif not inst.components.mushaskilltree:IsActivated("setsugetsuka") then
-                inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                inst.components.talker:Say(STRINGS.musha.lack_of_xp)
             elseif inst.components.mana.current < TUNING.musha.skills.setsugetsuka.manacost then
                 inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                 CustomPlayFailedAnim(inst)
@@ -1902,7 +1902,7 @@ local function ShadowKeyUp(inst, x, y, z)
                 inst.components.talker:Say(STRINGS.musha.skills.sneak.stop)
             else
                 if not inst.components.mushaskilltree:IsActivated("sneak") then
-                    inst.components.talker:Say(STRINGS.musha.lack_of_exp)
+                    inst.components.talker:Say(STRINGS.musha.lack_of_xp)
                 elseif inst.components.sanity.current < TUNING.musha.skills.sneak.sanitycost then
                     inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                     CustomPlayFailedAnim(inst)

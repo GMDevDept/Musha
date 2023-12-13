@@ -2,7 +2,8 @@ STRINGS.musha = {
     segmentation = "------------------",
     segmentation_long = "------------------------------\n",
 
-    lack_of_exp = "Musha需要更多技能点数来解锁这个技能。",
+    lack_of_xp = "Musha需要更多技能点数来解锁这个技能。",
+    lack_of_exp = "Musha需要提升她的等级来解锁这个技能",
     lack_of_mana = "Musha的魔力不够了!",
     lack_of_sanity = "Musha的理智值不够了!",
     lack_of_stamina = "Musha的耐力值不够了!",
@@ -12,6 +13,9 @@ STRINGS.musha = {
 
     switchkeybindings_on = "随从命令快捷键: 开启",
     switchkeybindings_off = "随从命令快捷键: 关闭",
+
+    currentlevel = "当前等级",
+    unlocklevel = "解锁等级",
 
     shadowmushaorder_follow = "影子们, 停下手中的活儿, 到Musha身边来!",
     shadowmushaorder_resume = "影子们, 行动起来吧!",
