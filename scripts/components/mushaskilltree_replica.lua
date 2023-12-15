@@ -1,3 +1,6 @@
+local skilltreedata = require("prefabs/skilltree_defs_musha")
+local ALL_SKILLS_COUNT = skilltreedata.ALL_SKILLS_COUNT
+
 local MushaSkillTree = Class(function(self, inst)
     self.inst = inst
 
@@ -123,7 +126,8 @@ end
 function MushaSkillTree:OnSkillTreeDirty()
     if self.inst == ThePlayer then
         -- Trigger skilltreetoast popup
-        if self:GetAvailableSkillXP() > 0 and TheFrontEnd:GetActiveScreen().name ~= "PlayerInfoPopup" then
+        if self:GetAvailableSkillXP() > 0 and GetTableSize(self:GetActivatedSkills()) < ALL_SKILLS_COUNT
+            and TheFrontEnd:GetActiveScreen().name ~= "PlayerInfoPopup" then
             ThePlayer.new_skill_available_popup = true
             ThePlayer:PushEvent("newskillpointupdated")
         end

@@ -1,5 +1,5 @@
-local skilltreedata_all = require("prefabs/skilltree_defs_musha")
-local SKILLTREE_DEFS, ALL_SKILLS = skilltreedata_all.SKILLTREE_DEFS, skilltreedata_all.ALL_SKILLS
+local skilltreedata = require("prefabs/skilltree_defs_musha")
+local SKILLTREE_DEFS, ALL_SKILLS, FN = skilltreedata.SKILLTREE_DEFS, skilltreedata.ALL_SKILLS, skilltreedata.FN
 
 local function onskillxp(self, skillxp)
     self.inst.replica.mushaskilltree:SetSkillXP(skillxp)
@@ -65,7 +65,7 @@ function MushaSkillTree:IsActivated(skill)
 end
 
 function MushaSkillTree:CountSkillTag(tag, category) -- Category is optional
-    return skilltreedata_all.FN.CountTags(category, tag, self:GetActivatedSkills())
+    return FN.CountTags(category, tag, self:GetActivatedSkills())
 end
 
 function MushaSkillTree:HasSkillTag(tag, category) -- Category is optional
