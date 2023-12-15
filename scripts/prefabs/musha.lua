@@ -2584,6 +2584,9 @@ local function master_postinit(inst)
     -- Treasure sniffing
     inst:AddComponent("treasurehunter")
 
+    -- Kill counter
+    inst:AddComponent("mushacareer")
+
     -- Read books
     inst:AddComponent("reader")
 

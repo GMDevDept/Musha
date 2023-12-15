@@ -93,6 +93,23 @@ function MushaSkillTree:GetActivatedSkills()
     return self.activatedskills
 end
 
+function MushaSkillTree:AddSkillXP(amount)
+    return self:SetSkillXP(self:GetSkillXP() + amount)
+end
+
+function MushaSkillTree:SetSkillXP(amount)
+    local oldskillxp = self:GetSkillXP()
+    local newskillxp = math.clamp(amount, 0, self:GetMaxSkillXP())
+
+    if newskillxp ~= oldskillxp then
+        self.skillxp = newskillxp
+    end
+end
+
+function MushaSkillTree:SetMaxSkillXP(amount)
+    self.maxskillxp = amount
+end
+
 function MushaSkillTree:ActivateSkill(skill, category, locally, init)
     if not self:IsValidSkill(skill, category) then
         print("Invalid skilltree skill to ActivateSkill:", skill)
@@ -123,23 +140,6 @@ function MushaSkillTree:DeactivateSkill(skill, category, locally)
             ondeactivate(self.inst)
         end
     end
-end
-
-function MushaSkillTree:AddSkillXP(amount)
-    return self:SetSkillXP(self:GetSkillXP() + amount)
-end
-
-function MushaSkillTree:SetSkillXP(amount)
-    local oldskillxp = self:GetSkillXP()
-    local newskillxp = math.clamp(amount, 0, self:GetMaxSkillXP())
-
-    if newskillxp ~= oldskillxp then
-        self.skillxp = newskillxp
-    end
-end
-
-function MushaSkillTree:SetMaxSkillXP(amount)
-    self.maxskillxp = amount
 end
 
 return MushaSkillTree

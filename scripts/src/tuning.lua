@@ -66,6 +66,8 @@ TUNING.musha = {
     areahitdamagepercent = 0.25,
     areaattackrange = 3,
 
+    killcounterrange = 25,
+
     sleep = {
         fatiguerate = {
             poor = -0.5,

@@ -23,6 +23,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 3,
             root = true,
             connects = {
                 "thunderspell",
@@ -86,7 +87,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
-            unlocklevel = 5,
+            unlocklevel = 10,
 
             onactivate = function(inst, data)
                 inst:RecalcStatus("stamina", data.init)
@@ -149,6 +150,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 10,
         },
 
         valkyrieparry = {
@@ -172,6 +174,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
         },
         valkyriewhirl = {
             title = STRINGS.musha.skills.valkyriewhirl.name,
@@ -181,6 +184,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
         },
 
         lightningstrike = {
@@ -211,6 +215,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
         },
 
         desolatedive = {
@@ -221,6 +226,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 5,
         },
 
         magpiestep = {
@@ -243,6 +249,7 @@ local function BuildSkillsData(SkillTreeFns)
 
             group = "generic",
             tags = {},
+            unlocklevel = 10,
         },
 
         stronggrip = {
