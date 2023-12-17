@@ -1,7 +1,6 @@
 local UI_LEFT, UI_RIGHT = -214, 228
 local UI_VERTICAL_MIDDLE = (UI_LEFT + UI_RIGHT) * 0.5
 local UI_TOP, UI_BOTTOM = 176, 20
-local TILE_SIZE, TILE_HALFSIZE = 34, 16
 
 --------------------------------------------------------------------------------------------------
 

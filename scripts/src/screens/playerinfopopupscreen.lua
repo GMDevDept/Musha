@@ -119,6 +119,7 @@ local function MakeSideBar(self)
 		button:SetOnClick(function()
 			MakeMushaSkillTree(self, data.name, true)
 			SelectSideButton(self, buttonwidget)
+			self.owner._skilltab = data.name
 		end)
 
 		buttonwidget.focusimg = button:AddChild(Image("images/scrapbook.xml", "tab_over.tex"))
@@ -143,6 +144,8 @@ local function MakeSideBar(self)
 		text:SetPosition(10, -8)
 
 		buttonwidget:SetPosition(275 + buttonwidth / 2, y)
+
+		self[data.name] = buttonwidget
 	end
 
 	for i, data in ipairs(buttons) do
@@ -165,6 +168,7 @@ local function MakeMushaTabs(self)
 		function()
 			MakeMushaSkillTree(self, "general")
 			SelectSideButton(self)
+			self.owner._skilltab = "general"
 		end, "skills",
 		{ -2, -5 })
 end
@@ -180,7 +184,8 @@ local function ClassPostConstructFn(self)
 		self.bg_scratches:Kill()
 		self:MakeBG()
 
-		MakeMushaSkillTree(self, "general")
+		MakeMushaSkillTree(self, self.owner._skilltab or "general", self.owner._skilltab and self.owner._skilltab ~= "general")
+		SelectSideButton(self, self.owner._skilltab and self.owner._skilltab ~= "general" and self[self.owner._skilltab])
 	end
 end
 

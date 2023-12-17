@@ -104,11 +104,11 @@ local function ontick(inst)
             end
 
             if v.components.locomotor ~= nil then
-                v.components.locomotor:SetExternalSpeedMultiplier(inst, "bloomingfield",
+                v.components.locomotor:SetExternalSpeedMultiplier(inst, "chargedbloomingfield",
                     TUNING.musha.skills.launchelement.bloomingfield.charged.speedmultiplier)
 
                 v:DoTaskInTime(interval - FRAMES, function()
-                    v.components.locomotor:RemoveExternalSpeedMultiplier(inst, "bloomingfield")
+                    v.components.locomotor:RemoveExternalSpeedMultiplier(inst, "chargedbloomingfield")
                 end)
             end
         elseif v:HasTag("sleeper") and not v.components.sleeper:IsAsleep() then

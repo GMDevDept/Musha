@@ -1405,6 +1405,7 @@ local function BackStab(inst, data)
             function()
                 inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
                 inst.updaterunninganim:push()
+                inst.task_removebackstabspeedboost = nil
             end)
     end
 end
@@ -2382,6 +2383,18 @@ local function RecalcStatus(inst, status, init)
             inst.components.stamina.max = base + bonus
         else
             inst.components.stamina:SetMax(base + bonus)
+        end
+    elseif status == "mana" then
+        local base = TUNING.musha.maxmana
+        local bonus = inst.components.mushaskilltree:IsActivated("maxmana3")
+            and (TUNING.musha.skills.maxmana3.bonus + TUNING.musha.skills.maxmana3.bonusmultiplier * inst.components.leveler:GetLevel())
+            or inst.components.mushaskilltree:IsActivated("maxmana2") and TUNING.musha.skills.maxmana2.bonus
+            or inst.components.mushaskilltree:IsActivated("maxmana1") and TUNING.musha.skills.maxmana1.bonus or 0
+
+        if init then
+            inst.components.mana.max = base + bonus
+        else
+            inst.components.mana:SetMax(base + bonus)
         end
     end
 end

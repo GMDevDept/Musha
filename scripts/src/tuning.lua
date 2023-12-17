@@ -146,6 +146,49 @@ TUNING.musha = {
         250, 300, 350, 400, 500, 600, 700, 800, 900, 1000 },
 
     skills = {
+        maxhealth1 = {
+            bonus = 30,
+        },
+        maxhealth2 = {
+            bonus = 70,
+        },
+        maxhealth3 = {
+            bonus = 70,
+            bonusmultiplier = 5, -- per level
+        },
+        maxhunger1 = {
+            bonus = 25,
+        },
+        maxhunger2 = {
+            bonus = 25,
+            bonusmultiplier = 2.5, -- per level
+        },
+        maxsanity1 = {
+            bonus = 30,
+        },
+        maxsanity2 = {
+            bonus = 70,
+        },
+        maxsanity3 = {
+            bonus = 70,
+            bonusmultiplier = 5, -- per level
+        },
+        maxmana1 = {
+            bonus = 30,
+        },
+        maxmana2 = {
+            bonus = 70,
+        },
+        maxmana3 = {
+            bonus = 70,
+            bonusmultiplier = 5, -- per level
+        },
+        manaregen1 = {
+            bonus = 0.25,
+        },
+        manaregen2 = {
+            bonus = 0.5,
+        },
         maxstamina1 = {
             bonus = 30,
         },
@@ -332,7 +375,9 @@ TUNING.musha = {
                 radius = 8, -- same as SPIDER_HEALING_RADIUS
                 playerhealthregen = 25,
                 nonplayerhealthregen = 50,
-                cooldown = 5,
+                speedmultiplier = 1.5,
+                duration = 10,
+                cooldown = 10,
                 charged = {
                     extramanacost = 75,
                     chargetime = 2,

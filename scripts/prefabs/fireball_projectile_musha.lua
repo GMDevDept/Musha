@@ -116,16 +116,29 @@ local function HealingOnExplode(inst)
         x, y, z = inst.Transform:GetWorldPosition()
     end
 
-    local must_tags = { "_health" }
     local must_one_of_tags = { "companion", "musha_companion", "player" }
     local range = TUNING.musha.skills.launchelement.bloomingfield.radius
 
-    CustomDoAOE(inst, range, must_tags, nil, must_one_of_tags, function(v)
-        local heal_amount = v:HasTag("player") and TUNING.musha.skills.launchelement.bloomingfield.playerhealthregen or
-            TUNING.musha.skills.launchelement.bloomingfield.nonplayerhealthregen
+    CustomDoAOE(inst, range, nil, nil, must_one_of_tags, function(v)
+        if v.components.health ~= nil and not v.components.health:IsDead() then
+            local heal_amount = v:HasTag("player") and TUNING.musha.skills.launchelement.bloomingfield.playerhealthregen or
+                TUNING.musha.skills.launchelement.bloomingfield.nonplayerhealthregen
 
-        v.components.health:DoDelta(heal_amount, false, inst.owner)
-        CustomAttachFx(v, "spider_heal_target_fx")
+            v.components.health:DoDelta(heal_amount, false, inst.owner)
+            CustomAttachFx(v, "spider_heal_target_fx")
+        end
+
+        if v.components.locomotor ~= nil then
+            CustomCancelTask(v.task_cancelbloomingfieldspeedup)
+
+            v.components.locomotor:SetExternalSpeedMultiplier(v, "bloomingfield",
+                TUNING.musha.skills.launchelement.bloomingfield.speedmultiplier)
+
+            v.task_cancelbloomingfieldspeedup =  v:DoTaskInTime(TUNING.musha.skills.launchelement.bloomingfield.duration, function()
+                v.components.locomotor:RemoveExternalSpeedMultiplier(v, "bloomingfield")
+                v.task_cancelbloomingfieldspeedup = nil
+            end)
+        end
     end)
 
     local scale = 1.35

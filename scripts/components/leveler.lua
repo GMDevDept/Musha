@@ -20,7 +20,7 @@ local Leveler = Class(function(self, inst)
     self.exp = 0
     self.maxexp = 0
 
-    self.lvl = 0
+    self.lvl = 15
     self.maxlvl = 30
 
     self.exprate = 1
