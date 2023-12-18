@@ -173,6 +173,9 @@ GLOBAL.c_mushagodmode = function(player)
         if player.components.fatigue then
             player.components.fatigue:SetPercent(0)
         end
+        if player.components.melody then
+            player.components.melody:SetPercent(1)
+        end
         if player:HasTag("musha") then
             for _, name in pairs(Timers) do
                 player.components.timer:SetTimeLeft(name, 0)

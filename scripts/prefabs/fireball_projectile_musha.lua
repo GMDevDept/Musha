@@ -49,10 +49,9 @@ local function FireballOnExplode(inst)
         postprefab.owner = inst.owner
         postprefab.Transform:SetPosition(x, 0, z)
         postprefab.SoundEmitter:PlaySound("dontstarve/common/together/infection_burst")
+        postprefab.SoundEmitter:PlaySound("dontstarve/common/blackpowder_explo")
         postprefab:DoTaskInTime(25 * FRAMES, postprefab.TriggerFX)
         postprefab:DoTaskInTime(TUNING.musha.skills.launchelement.rollingmagma.duration, postprefab.KillFX)
-
-        inst.SoundEmitter:PlaySound("dontstarve/common/blackpowder_explo")
         ShakeAllCameras(CAMERASHAKE.FULL, .4, .02, .5, inst, 40)
     else
         local postprefab = SpawnPrefab("small_puff")
@@ -144,6 +143,7 @@ local function HealingOnExplode(inst)
     local scale = 1.35
     SpawnHealFx(x, y, z, "spider_heal_ground_fx", scale)
     SpawnHealFx(x, y, z, "spider_heal_fx", scale)
+    inst.SoundEmitter:PlaySound("dontstarve/creatures/chester/raise")
 end
 
 --------------------------------------------------------------------------

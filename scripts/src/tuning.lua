@@ -79,6 +79,7 @@ TUNING.musha = {
 
     charactermode = {
         full = {
+            hungerthreshold = 150,
             healthregen = 0.1,
             sanityregen = 0.1,
             staminaregen = 1,
@@ -215,9 +216,9 @@ TUNING.musha = {
             max = 100,
             regen_small = 1,
             regen_large = 1.5,
-            minrequired = 20,
+            minrequired = 25,
             full = {
-                manarecover = 50,
+                manarecover = 100,
                 manaregen = 5,
                 staminaregen = 5,
                 speedboost = 1.3,
@@ -225,12 +226,12 @@ TUNING.musha = {
                 cooldown = 480,
             },
             partial = {
-                manarecover = 30,
-                manaregen = 3,
-                staminaregen = 3,
-                speedboost = 1.2,
-                duration = 30,
-                cooldown = 60,
+                manarecover = 50,
+                manaregen = 2.5,
+                staminaregen = 2.5,
+                speedboost = 1.15,
+                duration = 60,
+                cooldown = 120,
             },
         },
         freezingspell = {

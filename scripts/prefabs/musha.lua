@@ -369,6 +369,14 @@ local function ToggleSleep(inst)
 
     if inst:HasDebuff("elementloaded") then
         inst.components.debuffable:RemoveDebuff("elementloaded")
+
+        local element = CustomFindKeyByValue(elementlist, inst.elementmode)
+        if TUNING.musha.skills.launchelement[element].manacost then
+            inst.components.mana:DoDelta(TUNING.musha.skills.launchelement[element].manacost)
+        end
+        if TUNING.musha.skills.launchelement[element].sanitycost then
+            inst.components.sanity:DoDelta(TUNING.musha.skills.launchelement[element].sanitycost)
+        end
     elseif inst.components.rider:IsRiding() then
         inst.components.rider:Dismount()
     elseif not inst.sg:HasStateTag("sleeping") and not (inst.sg:HasStateTag("idle") or inst.sg:HasStateTag("running")) then
@@ -909,6 +917,7 @@ local function RollingMagma(inst, data)
 end
 
 local function ChargedRollingMagma(inst)
+    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.rollingmagma.charged.extramanacost)
     inst.components.debuffable:RemoveDebuff("elementloaded")
     inst:AddDebuff("elementloaded", "deer_fire_charge_musha")
 end
@@ -971,6 +980,7 @@ local function WhiteFrost(inst, data)
 end
 
 local function ChargedWhiteFrost(inst)
+    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.whitefrost.charged.extramanacost)
     inst.components.debuffable:RemoveDebuff("elementloaded")
     inst:AddDebuff("elementloaded", "deer_ice_charge_musha")
 end
@@ -1036,6 +1046,8 @@ local function PoisonSpore(inst, data)
 end
 
 local function ChargedPoisonSpore(inst)
+    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.charged.extramanacost)
+    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.charged.extramanacost)
     local debuff = inst.components.debuffable:GetDebuff("elementloaded")
     debuff.charged:push() -- No need to set bounce time here because entity will be removed and respawned
 end
@@ -1098,6 +1110,7 @@ local function BloomingField(inst, data)
 end
 
 local function ChargedBloomingField(inst)
+    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.bloomingfield.charged.extramanacost)
     inst.components.debuffable:RemoveDebuff("elementloaded")
     inst:AddDebuff("elementloaded", "deer_blossom_charge_musha")
 end
@@ -1176,6 +1189,7 @@ end
 
 local function OnElementCharged(inst, data)
     if data.name == "chargingelement" then
+        inst.nolaunchelement = nil
         if inst:HasDebuff("elementloaded") then
             if inst.elementmode == 1 then
                 ChargedRollingMagma(inst)
@@ -1477,7 +1491,7 @@ local function DecideNormalOrFull(inst)
         return
     end
 
-    if inst.components.hunger:GetPercent() < 0.75 then
+    if inst.components.hunger.current < TUNING.musha.charactermode.full.hungerthreshold then
         inst.mode:set(0)
     else
         inst.mode:set(1)
@@ -1515,7 +1529,10 @@ local function ValkyrieKeyLongPressed(inst, data)
             if inst:HasDebuff("elementloaded") then
                 local element = CustomFindKeyByValue(elementlist, inst.elementmode)
                 if TUNING.musha.skills.launchelement[element].charged then
-                    if TUNING.musha.skills.launchelement[element].charged.extramanacost and
+                    inst.nolaunchelement = true
+                    if not inst.components.mushaskilltree:IsActivated("charged" .. element) then
+                        inst.components.talker:Say(STRINGS.musha.lack_of_xp)
+                    elseif TUNING.musha.skills.launchelement[element].charged.extramanacost and
                         inst.components.mana.current < TUNING.musha.skills.launchelement[element].charged.extramanacost then
                         inst.components.talker:Say(STRINGS.musha.lack_of_mana)
                         CustomPlayFailedAnim(inst)
@@ -1525,11 +1542,6 @@ local function ValkyrieKeyLongPressed(inst, data)
                         inst.components.talker:Say(STRINGS.musha.lack_of_sanity)
                         CustomPlayFailedAnim(inst)
                     else
-                        inst.components.mana:DoDelta(-
-                            (TUNING.musha.skills.launchelement[element].charged.extramanacost or 0))
-                        inst.components.sanity:DoDelta(-
-                            (TUNING.musha.skills.launchelement[element].charged.extrasanitycost or 0))
-
                         local function ElementRemoved(inst, data)
                             if data.name == "elementloaded" then
                                 inst:RemoveEventCallback("timerdone", OnElementCharged)
@@ -1666,6 +1678,7 @@ end
 local function ValkyrieKeyUp(inst, x, y, z)
     if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
         inst.noannihilation = nil
+        inst.nolaunchelement = nil
         inst.components.timer:StopTimer("valkyriekeyonlongpress")
         inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
         return
@@ -1676,8 +1689,12 @@ local function ValkyrieKeyUp(inst, x, y, z)
     if inst.mode:value() == 0 or inst.mode:value() == 1 then
         if inst.components.timer:TimerExists("valkyriekeyonlongpress") then
             LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
-        elseif inst:HasDebuff("elementloaded") then -- Charged element
-            LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+        elseif inst:HasDebuff("elementloaded") then
+            if inst.nolaunchelement then -- Stop charging
+                inst:PushEvent("debuffremoved", { name = "elementloaded" })
+            else -- Launch charged element
+                LaunchElement(inst, { CursorPosition = Vector3(x, y, z) })
+            end
         elseif inst.sg:HasStateTag("musha_desolatedive_pre") then
             inst.startdesolatedive:push()
         end
@@ -1765,6 +1782,7 @@ local function ValkyrieKeyUp(inst, x, y, z)
     end
 
     inst.noannihilation = nil
+    inst.nolaunchelement = nil
     inst.components.timer:StopTimer("valkyriekeyonlongpress")
     inst:RemoveEventCallback("timerdone", ValkyrieKeyLongPressed)
 end
