@@ -1374,7 +1374,6 @@ local function CancelSneakSpeedBoost(inst)
     inst:RemoveEventCallback("staminadepleted", CancelSneakSpeedBoost)
     inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "sneakspeedboost")
     inst.components.stamina.modifiers:RemoveModifier(inst, "sneakspeedboost")
-    inst.updaterunninganim:push()
 end
 
 local function SneakSpeedBoost(inst)
@@ -1385,7 +1384,6 @@ local function SneakSpeedBoost(inst)
             "sneakspeedboost")
         inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
         ResetSneakSpeedMultiplier(inst)
-        inst.updaterunninganim:push()
     end
 end
 
@@ -1414,11 +1412,9 @@ local function BackStab(inst, data)
         CustomCancelTask(inst.task_removebackstabspeedboost)
         inst.components.locomotor:SetExternalSpeedMultiplier(inst, "backstabspeedboost",
             (TUNING.musha.skills.sneakspeedboost.max)) -- Note: LocoMotor:SetExternalSpeedMultiplier(source, key, multiplier)
-        inst.updaterunninganim:push()
         inst.task_removebackstabspeedboost = inst:DoTaskInTime(TUNING.musha.skills.sneakspeedboost.backstabbonustime,
             function()
                 inst.components.locomotor:RemoveExternalSpeedMultiplier(inst, "backstabspeedboost")
-                inst.updaterunninganim:push()
                 inst.task_removebackstabspeedboost = nil
             end)
     end
