@@ -161,132 +161,133 @@ local function StashChest(inst, stash)
 end
 
 local function GenerateLoot(stash, count)
-    local lootlist = {}
+    if count ~= 0 then
+        local lootlist = {}
 
-    local function additem(name)
-        local item = SpawnPrefab(name)
-        StashLoot(item, stash)
-    end
-
-    local collection1 = {
-        boneshard = 4,
-        houndstooth = 4,
-        stinger = 4,
-        tentaclespots = 2,
-        beefalowool = 4,
-        feather_robin = 1,
-        feather_robin_winter = 1,
-        feather_crow = 1,
-        feather_canary = 1,
-        pigskin = 4,
-        manrabbit_tail = 4,
-        spidergland = 4,
-    }
-
-    local collection2 = {
-        nightmarefuel = 4,
-        livinglog = 4,
-        petals_evil = 4,
-        petals = 4,
-        purplegem = 1,
-    }
-
-    local collection3 = {
-        gears = 4,
-        cutreeds = 4,
-        log = 4,
-        rocks = 4,
-        nitre = 4,
-        charcoal = 4,
-        moonglass = 2,
-    }
-
-    local collection4 = {
-        boards = 4,
-        cutstone = 4,
-        rope = 4,
-        papyrus = 4,
-        transistor = 2,
-        marblebean = 2,
-    }
-
-    local foodlist = require("preparedfoods")
-    local additionalfoods = require("preparedfoods_warly")
-
-    for k, v in pairs(additionalfoods) do
-        foodlist[k] = v
-    end
-
-    local food = GetRandomItem(foodlist)
-    table.insert(lootlist, food.name)
-
-    local collections = { collection1, collection2, collection3, collection4 }
-
-    for i = 1, math.random(1, 3) do
-        local collection = GetRandomItem(collections)
-        local item = weighted_random_choice(collection)
-        for i = 1, math.random(2, 4) do
-            table.insert(lootlist, item)
+        local function additem(name)
+            local item = SpawnPrefab(name)
+            StashLoot(item, stash)
         end
-    end
 
-    for i = 1, math.random(2, 5) do
-        table.insert(lootlist, "goldnugget")
-    end
+        local collection1 = {
+            boneshard = 4,
+            houndstooth = 4,
+            stinger = 4,
+            tentaclespots = 2,
+            beefalowool = 4,
+            feather_robin = 1,
+            feather_robin_winter = 1,
+            feather_crow = 1,
+            feather_canary = 1,
+            pigskin = 4,
+            manrabbit_tail = 4,
+            spidergland = 4,
+        }
 
-    if math.random() < 0.7 then
-        for i = 1, math.random(1, 3) do
-            table.insert(lootlist, "taffy")
+        local collection2 = {
+            nightmarefuel = 4,
+            livinglog = 4,
+            petals_evil = 4,
+            petals = 4,
+            purplegem = 1,
+        }
+
+        local collection3 = {
+            gears = 4,
+            cutreeds = 4,
+            log = 4,
+            rocks = 4,
+            nitre = 4,
+            charcoal = 4,
+            moonglass = 2,
+        }
+
+        local collection4 = {
+            boards = 4,
+            cutstone = 4,
+            rope = 4,
+            papyrus = 4,
+            transistor = 2,
+            marblebean = 2,
+        }
+
+        local foodlist = require("preparedfoods")
+        local additionalfoods = require("preparedfoods_warly")
+
+        for k, v in pairs(additionalfoods) do
+            foodlist[k] = v
         end
-    else
-        table.insert(lootlist, "jellybean")
-    end
 
-    if math.random() < 0.10 then
-        table.insert(lootlist, "mandrake")
-    end
+        local food = GetRandomItem(foodlist)
+        table.insert(lootlist, food.name)
 
-    if math.random() < 0.15 then
-        table.insert(lootlist, "purplegem")
-    end
+        local collections = { collection1, collection2, collection3, collection4 }
 
-    if math.random() < 0.05 then
-        table.insert(lootlist, "greengem")
-    end
-
-    if math.random() < 0.05 then
-        table.insert(lootlist, "yellowgem")
-    end
-
-    if math.random() < 0.05 then
-        table.insert(lootlist, "orangegem")
-    end
-
-    if math.random() < 0.5 then
         for i = 1, math.random(1, 3) do
-            if math.random() < 0.5 then
-                table.insert(lootlist, "redgem")
+            local collection = GetRandomItem(collections)
+            local item = weighted_random_choice(collection)
+            for i = 1, math.random(2, 4) do
+                table.insert(lootlist, item)
             end
         end
-    end
 
-    if math.random() < 0.5 then
-        for i = 1, math.random(1, 3) do
-            if math.random() < 0.5 then
-                table.insert(lootlist, "bluegem")
+        for i = 1, math.random(2, 5) do
+            table.insert(lootlist, "goldnugget")
+        end
+
+        if math.random() < 0.7 then
+            for i = 1, math.random(1, 3) do
+                table.insert(lootlist, "taffy")
+            end
+        else
+            table.insert(lootlist, "jellybean")
+        end
+
+        if math.random() < 0.10 then
+            table.insert(lootlist, "mandrake")
+        end
+
+        if math.random() < 0.15 then
+            table.insert(lootlist, "purplegem")
+        end
+
+        if math.random() < 0.05 then
+            table.insert(lootlist, "greengem")
+        end
+
+        if math.random() < 0.05 then
+            table.insert(lootlist, "yellowgem")
+        end
+
+        if math.random() < 0.05 then
+            table.insert(lootlist, "orangegem")
+        end
+
+        if math.random() < 0.5 then
+            for i = 1, math.random(1, 3) do
+                if math.random() < 0.5 then
+                    table.insert(lootlist, "redgem")
+                end
             end
         end
-    end
 
-    for i, loot in ipairs(lootlist) do
-        additem(loot)
+        if math.random() < 0.5 then
+            for i = 1, math.random(1, 3) do
+                if math.random() < 0.5 then
+                    table.insert(lootlist, "bluegem")
+                end
+            end
+        end
+
+        for i, loot in ipairs(lootlist) do
+            additem(loot)
+        end
     end
 
     local chest
     local treasurechests, weightedtable = require("src/treasurechests")[1], require("src/treasurechests")[2]
 
     if count == 0 then
-        stash.loot = {} -- No additional loots with the first chest
         chest = treasurechests.gift_birth
     elseif count == 2 then
         chest = treasurechests.gift_shadow
