@@ -187,7 +187,6 @@ STRINGS.musha = {
             rollingmagma = {
                 name = "沸滚熔岩",
                 desc = "默认快捷键：R\n向鼠标指定方向掷出沸腾的熔岩块，造成伤害并使温度快速升高\n（元素装填就绪时，再次按R发射当前元素，按G切换其他可用元素，按Z取消装填）",
-                ready = "[沸滚熔岩] 准备就绪!",
             },
             chargedrollingmagma = {
                 name = "沸滚熔岩·裂变",
@@ -196,7 +195,6 @@ STRINGS.musha = {
             whitefrost = {
                 name = "奔涌白霜",
                 desc = "默认快捷键：R\n向鼠标指定方向掷出低温霜球，命中地面时生成一片逐渐扩大的霜冻区域，期间会使范围内物体温度快速降低，同时降低移动速度",
-                ready = "[奔涌白霜] 准备就绪!",
             },
             chargedwhitefrost = {
                 name = "奔涌白霜·冰河",
@@ -205,7 +203,6 @@ STRINGS.musha = {
             poisonspore = {
                 name = "孢子炸弹",
                 desc = "默认快捷键：R\n向鼠标指定方向掷出孢子炸弹，命中地面时生成一片剧毒孢子云，每秒对范围内非友方单位造成伤害，并使其中有新鲜度的物品迅速腐烂",
-                ready = "[孢子炸弹] 准备就绪!",
             },
             chargedpoisonspore = {
                 name = "孢子炸弹·连锁",
@@ -214,7 +211,6 @@ STRINGS.musha = {
             bloomingfield = {
                 name = "绽放之蕊",
                 desc = "默认快捷键：R\n向鼠标指定方向掷出绽放法球，命中地面时恢复范围内所有友方单位生命值并提高移动速度，非玩家友方单位还会受到额外的生命回复",
-                ready = "[绽放之蕊] 准备就绪!",
             },
             chargedbloomingfield = {
                 name = "绽放之蕊·花轮",

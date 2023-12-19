@@ -910,8 +910,6 @@ local function RollingMagma(inst, data)
         inst:AddDebuff("elementloaded", "fireball_projectile_musha")
         inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
         inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
-        inst.components.talker:Say(STRINGS.musha.skills.launchelement.rollingmagma.ready)
-
         return true
     end
 end
@@ -973,7 +971,6 @@ local function WhiteFrost(inst, data)
         inst:AddDebuff("elementloaded", "frostball_projectile_musha")
         inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
         inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
-        inst.components.talker:Say(STRINGS.musha.skills.launchelement.whitefrost.ready)
 
         return true
     end
@@ -1039,8 +1036,6 @@ local function PoisonSpore(inst, data)
         inst:AddDebuff("elementloaded", "sporebomb_musha")
         inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
         inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
-        inst.components.talker:Say(STRINGS.musha.skills.launchelement.poisonspore.ready)
-
         return true
     end
 end
@@ -1103,8 +1098,6 @@ local function BloomingField(inst, data)
         inst:AddDebuff("elementloaded", "blossom_projectile_musha")
         inst.SoundEmitter:PlaySound("dontstarve/maxwell/shadowmax_appear")
         inst.SoundEmitter:PlaySound("dontstarve/common/together/moonbase/beam_stop")
-        inst.components.talker:Say(STRINGS.musha.skills.launchelement.bloomingfield.ready)
-
         return true
     end
 end
@@ -2290,7 +2283,7 @@ local function SetFatigueGrogginess(inst, data)
 end
 
 local function DecideFatigueLevel(inst)
-    if inst.components.health:IsDead() or inst:HasTag("playerghost") or inst.sg:HasStateTag("musha_nointerrupt") then
+    if inst.components.health:IsDead() or inst:HasTag("playerghost") then
         return
     end
 
@@ -2455,7 +2448,7 @@ end
 local function OnPreload(inst, data)
 end
 
--- When loading or spawning the character
+-- When loading the character from a saved game
 local function OnLoad(inst)
     if inst:HasTag("playerghost") then
         OnBecameGhost(inst)
@@ -2468,12 +2461,12 @@ local function OnLoad(inst)
     end
 end
 
+-- When the character is spawned for the first time
 local function OnNewSpawn(inst)
-    return
+    OnBecameHuman(inst)
 end
 
 local function OnDespawn(inst)
-    return
 end
 
 ---------------------------------------------------------------------------------------------------------
