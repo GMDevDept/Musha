@@ -225,14 +225,44 @@ local function FreezingSpell(inst)
             if v.components.freezable:IsFrozen() then
                 CustomOnFreeze(v)
             else
-                v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not frozen
+                v:AddDebuff("freezingspell", "debuff_slowdown", {
+                    duration =  TUNING.musha.skills.freezingspell.slowdownduration,
+                }) -- Add slowdown debuff if not frozen
             end
             validtargets = validtargets + 1
         elseif not v.components.freezable and v:HasTag("locomotor") then
-            v:AddDebuff("freezingspell", "debuff_slowdown") -- Add slowdown debuff if not freezable
+            v:AddDebuff("freezingspell", "debuff_slowdown", {
+                duration = TUNING.musha.skills.freezingspell.slowdownduration,
+            }) -- Add slowdown debuff if not freezable
             validtargets = validtargets + 1
         end
     end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
+
+    if inst.components.mushaskilltree:IsActivated("freezingspellboost") then
+        local FIRE_CANT_TAGS = { "INLIMBO", "lighter" }
+        local FIRE_ONEOF_TAGS = { "fire", "smolder" }
+
+        CustomDoAOE(inst, range, nil, FIRE_CANT_TAGS, FIRE_ONEOF_TAGS, function(v)
+            if v.components.burnable ~= nil and v.components.fueled == nil then
+                v.components.burnable:Extinguish(true, 0)
+                validtargets = validtargets + 1
+            end
+        end)
+
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local size = TILE_SCALE -- 4
+
+        for i = x - range, x + range, size do
+            for j = z - range, z + range, size do
+                local distsq = inst:GetDistanceSqToPoint(i, y, j)
+                if math.sqrt(distsq) <= range and TheWorld.Map:GetTileAtPoint(i, 0, j) == WORLD_TILES.FARMING_SOIL then
+                    TheWorld.components.farming_manager:AddSoilMoistureAtPoint(i, y, j,
+                        TUNING.musha.skills.freezingspellboost.addsoilmoisture)
+                    validtargets = validtargets + 1
+                end
+            end
+        end
+    end
 
     inst.components.mana:DoDelta(-
         math.min(TUNING.musha.skills.freezingspell.manacost * validtargets, TUNING.musha.skills.freezingspell.maxmanacost))

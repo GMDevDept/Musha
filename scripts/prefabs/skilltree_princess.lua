@@ -120,11 +120,25 @@ local function BuildSkillsData(SkillTreeFns)
             unlocklevel = 15,
         },
 
+        wormwood_bugs = {
+            title = STRINGS.musha.skills.wormwood_bugs.name,
+            desc = STRINGS.musha.skills.wormwood_bugs.desc,
+            icon = "wormwood_bugs",
+            pos = { UI_LEFT + 130, UI_TOP },
+
+            group = "generic",
+            tags = {},
+            root = true,
+            redirect_isactivated = function(inst, data)
+                return inst.mode:value() == 1
+            end,
+        },
+
         manashield = {
             title = STRINGS.musha.skills.manashield.name,
             desc = STRINGS.musha.skills.manashield.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 130, UI_TOP },
+            pos = { UI_LEFT + 130, UI_TOP - 70 },
 
             group = "generic",
             tags = {},
@@ -139,7 +153,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.manashielddurability1.name,
             desc = STRINGS.musha.skills.manashielddurability1.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 110, UI_TOP - 45 },
+            pos = { UI_LEFT + 110, UI_TOP - 70 - 45 },
 
             group = "generic",
             tags = {},
@@ -152,7 +166,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.manashielddurability2.name,
             desc = STRINGS.musha.skills.manashielddurability2.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 110, UI_TOP - 45 - 40 },
+            pos = { UI_LEFT + 110, UI_TOP - 70 - 45 - 40 },
 
             group = "generic",
             tags = {},
@@ -162,7 +176,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.princessblessing.name,
             desc = STRINGS.musha.skills.princessblessing.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 150, UI_TOP - 45 },
+            pos = { UI_LEFT + 150, UI_TOP - 70 - 45 },
 
             group = "generic",
             tags = {},
@@ -175,7 +189,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.princessblessingduration1.name,
             desc = STRINGS.musha.skills.princessblessingduration1.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 150, UI_TOP - 45 - 40 },
+            pos = { UI_LEFT + 150, UI_TOP - 70 - 45 - 40 },
 
             group = "generic",
             tags = {},
@@ -186,7 +200,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.rollingmagma.name,
             desc = STRINGS.musha.skills.launchelement.rollingmagma.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 220, UI_TOP },
+            pos = { UI_LEFT + 260, UI_TOP - 50 },
 
             group = "generic",
             tags = {},
@@ -200,7 +214,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.chargedrollingmagma.name,
             desc = STRINGS.musha.skills.launchelement.chargedrollingmagma.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 220, UI_TOP - 40 },
+            pos = { UI_LEFT + 260, UI_TOP - 50 - 40 },
 
             group = "generic",
             tags = {},
@@ -211,7 +225,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.whitefrost.name,
             desc = STRINGS.musha.skills.launchelement.whitefrost.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 260, UI_TOP },
+            pos = { UI_LEFT + 300, UI_TOP - 50 },
 
             group = "generic",
             tags = {},
@@ -225,7 +239,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.chargedwhitefrost.name,
             desc = STRINGS.musha.skills.launchelement.chargedwhitefrost.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 260, UI_TOP - 40 },
+            pos = { UI_LEFT + 300, UI_TOP - 50 - 40 },
 
             group = "generic",
             tags = {},
@@ -236,7 +250,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.poisonspore.name,
             desc = STRINGS.musha.skills.launchelement.poisonspore.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 300, UI_TOP },
+            pos = { UI_LEFT + 340, UI_TOP - 50 },
 
             group = "generic",
             tags = {},
@@ -250,7 +264,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.chargedpoisonspore.name,
             desc = STRINGS.musha.skills.launchelement.chargedpoisonspore.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 300, UI_TOP - 40 },
+            pos = { UI_LEFT + 340, UI_TOP - 50 - 40 },
 
             group = "generic",
             tags = {},
@@ -261,7 +275,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.bloomingfield.name,
             desc = STRINGS.musha.skills.launchelement.bloomingfield.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 340, UI_TOP },
+            pos = { UI_LEFT + 380, UI_TOP - 50 },
 
             group = "generic",
             tags = {},
@@ -275,7 +289,7 @@ local function BuildSkillsData(SkillTreeFns)
             title = STRINGS.musha.skills.launchelement.chargedbloomingfield.name,
             desc = STRINGS.musha.skills.launchelement.chargedbloomingfield.desc,
             icon = "woodie_curse_weremeter_2",
-            pos = { UI_LEFT + 340, UI_TOP - 40 },
+            pos = { UI_LEFT + 380, UI_TOP - 50 - 40 },
 
             group = "generic",
             tags = {},

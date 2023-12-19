@@ -42,6 +42,7 @@ modimport("scripts/src/hotkeys.lua") -- Add key handlers
 modimport("scripts/src/components/combat.lua") -- Redefine components/combat for manashieldonattacked event
 modimport("scripts/src/components/fueled.lua") -- Redefine components/fueled for musha's equipments
 modimport("scripts/src/components/locomotor.lua") -- Redefine components/locomotor to update running anim on speed change
+modimport("scripts/src/components/skilltreeupdater.lua") -- Redefine components/skilltreeupdater to redirect IsActivated to mushaskilltree
 modimport("scripts/src/components/timer.lua") -- Redefine components/timer for premagpiestep event
 modimport("scripts/src/prefabs/fuels.lua") -- Add fueltype for musha's equipments
 modimport("scripts/src/prefabs/nightmarefuel.lua") -- Add edible component to remove sanity penalty under shadow mode

@@ -368,6 +368,10 @@ STRINGS.musha = {
             name = "理智提升III",
             desc = "理智上限额外随角色等级提升",
         },
+        wormwood_bugs = {
+            name = "公主的亲和I",
+            desc = "在充盈状态下，蜜蜂与蝴蝶不会主动对Musha产生敌意",
+        },
     },
 
     skilltrees = {

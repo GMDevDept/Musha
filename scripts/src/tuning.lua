@@ -238,24 +238,28 @@ TUNING.musha = {
             manacost = 5,
             maxmanacost = 15,
             range = 14,
-            rangegrowth = 0.2,
+            rangegrowth = 0.4,
             coldness = 1,
             coldnessgrowth = 0.1,
+            slowdownduration = 15,
             cooldown = 3,
+        },
+        freezingspellboost = {
+            addsoilmoisture = 50, -- max = 100
         },
         thunderspell = {
             manacost = 5,
             maxmanacost = 15,
             range = 14,
             damage = 20,
-            damagegrowth = 1,
+            damagegrowth = 2,
             cooldown = 10,
-            duration = 8,
-            durationgrowth = 0.4,
+            duration = 15,
+            durationgrowth = 0.5,
         },
         shadowspell = {
-            basedamage = 10,
-            damagegrowth = 5, -- per 5 levels
+            basedamage = 20,
+            damagegrowth = 10, -- per 5 levels
             sanitycost = 50,
             cooldown = 5,
         },
