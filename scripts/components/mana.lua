@@ -98,15 +98,18 @@ function Mana:Recalc(dt)
         return
     end
 
-    local baserate = math.abs(self.baserate)
+    local baserate = self.baserate
+    local skillbonus = self.inst.components.mushaskilltree:IsActivated("manaregen2") and TUNING.musha.skills.manaregen2.bonus
+        or self.inst.components.mushaskilltree:IsActivated("manaregen1") and TUNING.musha.skills.manaregen1.bonus or 0
+    local modemult = self.inst.mode:value() == 1 and TUNING.musha.charactermode.full.manaregenmult or 1
 
-    self.rate = self:ModifierOnly() and self.modifiers:Get() or self.baserate + self.modifiers:Get()
+    self.rate = self:ModifierOnly() and self.modifiers:Get() or (baserate + skillbonus) * modemult + self.modifiers:Get()
 
-    self.ratelevel = (self.rate > 3 * baserate and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate > 2 * baserate and RATE_SCALE.INCREASE_MED) or
-        (self.rate > 1 * baserate and RATE_SCALE.INCREASE_LOW) or
-        (self.rate < -2 * baserate and RATE_SCALE.DECREASE_HIGH) or
-        (self.rate < -1 * baserate and RATE_SCALE.DECREASE_MED) or
+    self.ratelevel = (self.rate > 3 * (baserate + skillbonus) and RATE_SCALE.INCREASE_HIGH) or
+        (self.rate > 2 * (baserate + skillbonus) and RATE_SCALE.INCREASE_MED) or
+        (self.rate > 1 * (baserate + skillbonus) and RATE_SCALE.INCREASE_LOW) or
+        (self.rate < -2 * (baserate + skillbonus) and RATE_SCALE.DECREASE_HIGH) or
+        (self.rate < -1 * (baserate + skillbonus) and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or
         RATE_SCALE.NEUTRAL
 

@@ -100,6 +100,7 @@ function Stamina:Recalc(dt)
 
     local skillbonus = inst.components.mushaskilltree:IsActivated("staminaregen2") and TUNING.musha.skills.staminaregen2.bonus
         or inst.components.mushaskilltree:IsActivated("staminaregen1") and TUNING.musha.skills.staminaregen1.bonus or 0
+    local modebonus = inst.mode:value() == 1 and TUNING.musha.charactermode.full.staminaregen or 0
 
     local m = inst.sg:HasStateTag("sleeping") and
         (inst.sg:HasStateTag("tent") and 50
@@ -112,13 +113,11 @@ function Stamina:Recalc(dt)
         or inst.sg:HasStateTag("fishing") and -5
         or inst.sg:HasStateTag("musha_valkyrieparrying") and TUNING.musha.skills.valkyrieparry.staminaongoingcost
         or inst.sg:HasStateTag("busy") and 0
-        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2 + skillbonus
-        or inst.sg:HasStateTag("idle") and 5 + skillbonus
+        or (inst.sg:HasStateTag("moving") or inst.sg:HasStateTag("running")) and 2 + skillbonus + modebonus
+        or inst.sg:HasStateTag("idle") and 5 + skillbonus + modebonus
         or 0
 
-    self.baserate = TUNING.musha.staminarate + m
-
-    self.rate = self:ModifierOnly() and self.modifiers:Get() or self.baserate + self.modifiers:Get()
+    self.rate = self:ModifierOnly() and self.modifiers:Get() or self.baserate + m + self.modifiers:Get()
 
     self.ratelevel = (self.rate >= 5 and RATE_SCALE.INCREASE_HIGH) or
         (self.rate >= 2 and RATE_SCALE.INCREASE_MED) or

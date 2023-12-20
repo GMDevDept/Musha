@@ -2076,9 +2076,6 @@ local function OnModeChange(inst)
     if previousmode == 1 and currentmode ~= 1 then
         inst.components.sanity.externalmodifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.hunger.burnratemodifiers:RemoveModifier(inst, "fullmodebuff")
-        inst.components.fatigue.multipliers:RemoveModifier(inst, "fullmodebuff")
-        inst.components.stamina.modifiers:RemoveModifier(inst, "fullmodebuff")
-        inst.components.mana.modifiers:RemoveModifier(inst, "fullmodebuff")
         inst.components.eater:SetDiet({ FOODGROUP.OMNI })
         inst.components.eater.preferseatingtags = nil
         inst.components.eater.stale_hunger = TUNING.musha.stalefoodhungerrate
@@ -2089,7 +2086,6 @@ local function OnModeChange(inst)
     if previousmode == 2 and currentmode ~= 2 then
         inst.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "valkyriebuff") -- Note: SourceModifierList:RemoveModifier(source, key)
         inst.components.mana.modifiers:RemoveModifier(inst, "valkyriebuff")
-        inst.components.fatigue.multipliers:RemoveModifier(inst, "valkyriebuff")
 
         inst:RemoveTag("areaattack")
         inst:RemoveEventCallback("onattackother", ValkyrieOnAttackOther)
@@ -2160,12 +2156,8 @@ local function OnModeChange(inst)
     if currentmode == 1 then
         inst.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.musha.charactermode.full.hungerdrain,
             "fullmodebuff")
-        inst.components.fatigue.multipliers:SetModifier(inst, TUNING.musha.charactermode.full.fatiguemultiplier,
-            "fullmodebuff")
         inst.components.sanity.externalmodifiers:SetModifier(inst, TUNING.musha.charactermode.full.sanityregen,
             "fullmodebuff")
-        inst.components.stamina.modifiers:SetModifier(inst, TUNING.musha.charactermode.full.staminaregen, "fullmodebuff")
-        inst.components.mana.modifiers:SetModifier(inst, TUNING.musha.charactermode.full.manaregen, "fullmodebuff")
         inst.task_fullmodehealthregen = inst:DoPeriodicTask(1, function()
             if not inst.components.health:IsDead() then
                 inst.components.health:DoDelta(TUNING.musha.charactermode.full.healthregen, true, "regen")
@@ -2197,8 +2189,6 @@ local function OnModeChange(inst)
 
         inst.components.combat.externaldamagetakenmultipliers:SetModifier(inst,
             TUNING.musha.charactermode.valkyrie.damagetakenmultiplier, "valkyriebuff")
-        inst.components.fatigue.multipliers:SetModifier(inst,
-            TUNING.musha.charactermode.valkyrie.fatiguemultiplier, "valkyriebuff")
         inst.components.mana.modifiers:SetModifier(inst,
             TUNING.musha.charactermode.valkyrie.manaongoingmodifier, "valkyriebuff")
 

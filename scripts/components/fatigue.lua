@@ -14,21 +14,21 @@ local function OnTaskTick(inst, self, period)
     self:Recalc(period)
 end
 
-local Fatigue = Class(function(self, inst)
-    self.inst = inst
-    self.max = TUNING.musha.maxfatigue
-    self.current = 0
+local Fatigue = Class(
+    function(self, inst)
+        self.inst = inst
+        self.max = TUNING.musha.maxfatigue
+        self.current = 0
 
-    self.ispaused = false
-    self.baserate = TUNING.musha.fatiguebaserate
-    self.modifiers = SourceModifierList(inst, 0, SourceModifierList.additive)
-    self.multipliers = SourceModifierList(inst)
-    self.rate = 0 -- Dynamic, delta per second
-    self.ratelevel = RATE_SCALE.NEUTRAL -- 0: neutral, 1-3: upwards, 4-6: downwards
+        self.ispaused = false
+        self.baserate = TUNING.musha.fatiguebaserate
+        self.modifiers = SourceModifierList(inst, 0, SourceModifierList.additive)
+        self.rate = 0 -- Dynamic, delta per second
+        self.ratelevel = RATE_SCALE.NEUTRAL -- 0: neutral, 1-3: upwards, 4-6: downwards
 
-    local period = 1
-    self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
-end,
+        local period = 1
+        self.inst:DoPeriodicTask(period, OnTaskTick, nil, self, period)
+    end,
     nil,
     {
         max = onmax,
@@ -90,10 +90,6 @@ function Fatigue:SetRateLevel(ratelevel)
     self.inst.replica.fatigue:SetRateLevel(ratelevel)
 end
 
-function Fatigue:ModifierOnly()
-    return
-end
-
 function Fatigue:Recalc(dt)
     if self.ispaused then
         return
@@ -102,26 +98,28 @@ function Fatigue:Recalc(dt)
     local inst = self.inst
     local stamina = inst.components.stamina:GetPercent()
 
-    local m = inst.sg:HasStateTag("sleeping") and
-        (inst.sg:HasStateTag("tent") and TUNING.musha.sleep.fatiguerate.perfect
+    if inst.sg:HasStateTag("sleeping") then
+        self.rate = (inst.sg:HasStateTag("tent") and TUNING.musha.sleep.fatiguerate.perfect
             or inst.sg:HasStateTag("bedroll") and TUNING.musha.sleep.fatiguerate.good
             or inst.sg:HasStateTag("knockout") and TUNING.musha.sleep.fatiguerate.poor
-            or -1) * (TheWorld.state.isday and TUNING.musha.sleep.fatiguerate.daytimemultiplier or 1)
-        or stamina == 0 and TUNING.musha.fatiguerate5
-        or stamina < 0.2 and TUNING.musha.fatiguerate4
-        or stamina < 0.4 and TUNING.musha.fatiguerate3
-        or stamina < 0.6 and TUNING.musha.fatiguerate2
-        or stamina < 0.8 and TUNING.musha.fatiguerate1
-        or 0
+            or 0) * (TheWorld.state.isday and TUNING.musha.sleep.fatiguerate.daytimemultiplier or 1)
+    else
+        local modemult = self.inst.mode:value() == 2 and TUNING.musha.charactermode.valkyrie.fatiguemultiplier
+            or self.inst.mode:value() == 1 and TUNING.musha.charactermode.full.fatiguemultiplier or 1
 
-    self.baserate = TUNING.musha.fatiguebaserate + m
+        local m = stamina == 0 and TUNING.musha.fatiguerate5
+            or stamina < 0.2 and TUNING.musha.fatiguerate4
+            or stamina < 0.4 and TUNING.musha.fatiguerate3
+            or stamina < 0.6 and TUNING.musha.fatiguerate2
+            or stamina < 0.8 and TUNING.musha.fatiguerate1
+            or 0
 
-    self.rate = (self:ModifierOnly() and self.modifiers:Get() or
-        self.baserate + self.modifiers:Get()) * self.multipliers:Get()
+        self.rate = (self.baserate + m) * modemult + self.modifiers:Get()
+    end
 
     self.ratelevel = (self.rate >= TUNING.musha.fatiguerate5 and RATE_SCALE.INCREASE_HIGH) or
-        (self.rate >= TUNING.musha.fatiguebaserate + TUNING.musha.fatiguerate3 and RATE_SCALE.INCREASE_MED) or
-        (self.rate >= TUNING.musha.fatiguebaserate + TUNING.musha.fatiguerate1 and RATE_SCALE.INCREASE_LOW) or
+        (self.rate >= self.baserate + TUNING.musha.fatiguerate3 and RATE_SCALE.INCREASE_MED) or
+        (self.rate >= self.baserate + TUNING.musha.fatiguerate1 and RATE_SCALE.INCREASE_LOW) or
         (self.rate <= -1.5 and RATE_SCALE.DECREASE_HIGH) or
         (self.rate <= -1 and RATE_SCALE.DECREASE_MED) or
         (self.rate < 0 and RATE_SCALE.DECREASE_LOW) or

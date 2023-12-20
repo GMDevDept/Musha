@@ -11,7 +11,7 @@ TUNING.musha = {
     spoiledfoodhungerrate = 1 / 6,
 
     maxmana = 80,
-    manaregenspeed = 0.5,
+    manaregenspeed = 0.1,
 
     maxstamina = 80,
     staminarate = 0,
@@ -83,14 +83,14 @@ TUNING.musha = {
             healthregen = 0.1,
             sanityregen = 0.1,
             staminaregen = 1,
-            manaregen = 0.5,
+            manaregenmult = 2,
             hungerdrain = 1.5,
             fatiguemultiplier = 1.5,
         },
         valkyrie = {
             damagetakenmultiplier = 0.8,
             bonusdamagetomonster = 0.5,
-            fatiguemultiplier = 2,
+            fatiguemultiplier = 2.5,
             manaregenbyelectric = 10,
             manaongoingmodifier = 0,
             healthregenonkill = 0.02,
@@ -185,10 +185,10 @@ TUNING.musha = {
             bonusmultiplier = 5, -- per level
         },
         manaregen1 = {
-            bonus = 0.25,
+            bonus = 0.15,
         },
         manaregen2 = {
-            bonus = 0.5,
+            bonus = 0.4,
         },
         maxstamina1 = {
             bonus = 30,
