@@ -2542,6 +2542,9 @@ local function common_postinit(inst)
     -- Able to craft balloons
     inst:AddTag("balloonomancer")
 
+    -- Fire no spread
+    inst:AddTag("controlled_burner")
+
     -- Additional animes
     inst.AnimState:AddOverrideBuild("player_idles_warly")
 

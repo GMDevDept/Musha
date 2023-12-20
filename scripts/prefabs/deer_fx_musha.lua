@@ -301,11 +301,11 @@ local function OnUpdateFireCircle(inst, x, z)
                         inst._track2[v] = (inst._track1[v] or 0) + 1
                         if v:HasTag("player") then -- Take longer to ignite players
                             if inst._track2[v] > 3 * TUNING.musha.skills.launchelement.rollingmagma.igniteframe then
-                                v.components.burnable:Ignite(true, inst)
+                                v.components.burnable:Ignite(true, inst.owner)
                             end
                         else
                             if inst._track2[v] > TUNING.musha.skills.launchelement.rollingmagma.igniteframe then
-                                v.components.burnable:Ignite(true, inst)
+                                v.components.burnable:Ignite(true, inst.owner)
                             end
                         end
                     else
