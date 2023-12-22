@@ -142,6 +142,13 @@ local function endbloom(inst)
     inst:DoTaskInTime(1, function() inst:Remove() end)
 end
 
+local function scheduleendbloom(inst)
+    local duration = TUNING.musha.skills.launchelement.bloomingfield.charged.duration
+        + TUNING.musha.skills.launchelement.bloomingfield.charged.durationgrowth * inst.owner.components.leveler.lvl
+
+    inst:DoTaskInTime(duration, function() endbloom(inst) end)
+end
+
 local function bloomfn()
     local inst = CreateEntity()
 
@@ -157,21 +164,21 @@ local function bloomfn()
         return inst
     end
 
-    -- inst.owner = nil -- Set at ChargedBlossomOnExplode
-
     inst.persists = false
 
+    -- inst.owner = nil -- Set at ChargedBlossomOnExplode
     inst.spawnbloom = spawnbloom
     inst.bloomfx = bloomfx
     inst.ontick = ontick
+
     inst:DoTaskInTime(0, function()
         spawnbloom(inst)
         dobloomfz(inst)
         ontick(inst)
     end)
 
-    inst:DoTaskInTime(TUNING.musha.skills.launchelement.bloomingfield.charged.duration, function()
-        endbloom(inst)
+    inst:DoTaskInTime(0, function()
+        scheduleendbloom(inst)
     end)
 
     return inst

@@ -152,7 +152,7 @@ local function OnUpdateIceCircle(inst, x, z)
             end
 
             if v.components.burnable ~= nil and v.components.fueled == nil then
-                v.components.burnable:Extinguish()
+                v.components.burnable:Extinguish(true, 0)
             end
 
             if v.components.freezable ~= nil and inst.fx ~= nil then -- TriggerFX has been called
@@ -377,7 +377,7 @@ local function ChargedFireOnExplode(inst)
         local offset = FindValidPositionByFan(
             math.random() * 2 * PI,
             math.random() * range,
-            4,
+            8,
             function(offset)
                 local x1 = x + offset.x
                 local z1 = z + offset.z
@@ -397,8 +397,8 @@ local function ChargedFireOnExplode(inst)
         end
     end
 
-    local min = TUNING.musha.skills.launchelement.rollingmagma.charged.mincount
-    local max = TUNING.musha.skills.launchelement.rollingmagma.charged.maxcount
+    local min = math.ceil(TUNING.musha.skills.launchelement.rollingmagma.charged.mincountmult * owner.components.leveler.lvl)
+    local max = math.ceil(TUNING.musha.skills.launchelement.rollingmagma.charged.maxcountmult * owner.components.leveler.lvl)
 
     TheWorld:CustomDoPeriodicTask(math.random(min, max) * 0.15, .15, Split)
 end

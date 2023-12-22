@@ -76,6 +76,9 @@ local function TargetOnAttacked(inst, data) -- inst = buff target
         if data.damage and data.damage > 0 then
             delta = delta + data.damage * TUNING.musha.skills.manashield.durabilitydamagemultiplier
         end
+        if data.spdamage and data.spdamage > 0 then
+            delta = delta + data.spdamage * TUNING.musha.skills.manashield.durabilitydamagemultiplier
+        end
         if data.stimuli and data.stimuli == "darkness" then
             delta = math.max(delta, shield.durability - 1)
         end

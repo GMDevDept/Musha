@@ -275,12 +275,17 @@ TUNING.musha = {
             damageabsorbrate = 0.5, -- Only affect health:DoDelta, combat:GetAttacked will always be cancelled
             lighttime = 4,
             brokendelay = 3,
-            durabilitybase = 600,
-            durabilitygrowth = 30,
-            durabilitybasedamage = 10,
+            durability = 600,
+            healthbonusmultiplier = 2,
+            durabilitybasedamage = 20,
             durabilitydamagemultiplier = 5,
-            healthtodurabilitymultiplier = 2,
             cooldown = 30,
+        },
+        manashielddurability1 = {
+            bonus = 600,
+        },
+        manashielddurability2 = {
+            bonusmultiplier = 40, -- per level
         },
         princessblessing = {
             manacost = 15,
@@ -288,6 +293,9 @@ TUNING.musha = {
             duration = 15,
             cooldown = 15,
             range = 18,
+        },
+        princessblessingduration1 = {
+            bonus = 10,
         },
         valkyriemode = {
             cooldown = 20,
@@ -324,34 +332,39 @@ TUNING.musha = {
                     range = 10,
                     mindistinterval = 2,
                     chargetime = 2,
-                    mincount = 20,
-                    maxcount = 30,
+                    mincountmult = 1, -- per level
+                    maxcountmult = 1.5, -- per level
                     cooldown = 5,
                 },
             },
             whitefrost = {
-                manacost = 15,
+                manacost = 10,
                 speedmultiplier = 0.25,
                 initialspeedmultiplier = 0.4,
                 coldnessperhit = 0.03,
                 damageperhit = 2 / 3,
                 radius = 4,
                 cooldown = 10,
-                duration = 10,
+                duration = 12,
                 slowdownduration = 3, -- Time before burst
                 charged = {
                     extramanacost = 15,
                     chargetime = 2,
-                    range = 10,
+                    range = 12,
                     casttime = 10,
                     frosttime = 10,
                     temperaturedecrease = 50,
                     tickperiod = 2,
                     coldnessontick = 0.4,
                     speedmultiplier = 0.25,
-                    basedamage = 100,
-                    percentdamage = 0.2,
-                    maxdamage = 2500,
+                    damageontick = 25,
+                    finalbasedamage = 10,
+                    basedamagegrowth = 3, -- per level
+                    finalpercentdamage = 0.04,
+                    percentdamagegrowth = 0.002, -- per level
+                    finalmaxdamage = 400,
+                    maxdamagegrowth = 20, -- per level
+                    frozendamagemultiplier = 2,
                     cooldown = 15,
                 },
             },
@@ -366,10 +379,11 @@ TUNING.musha = {
                 tickperiod = 1,
                 cooldown = 10,
                 charged = {
-                    extramanacost = 20,
-                    extrasanitycost = 20,
+                    extramanacost = 15,
+                    extrasanitycost = 15,
                     chargetime = 2,
-                    bouncetime = 4,
+                    bouncetime = 2,
+                    bouncetimegrowth = 0.2, -- 1 per 5 levels
                     maxbouncedist = 10,
                     minbouncedist = 3.5,
                     cooldown = 20,
@@ -379,7 +393,7 @@ TUNING.musha = {
                 manacost = 25,
                 radius = 8, -- same as SPIDER_HEALING_RADIUS
                 playerhealthregen = 25,
-                nonplayerhealthregen = 50,
+                nonplayerhealthregen = 250,
                 speedmultiplier = 1.5,
                 duration = 10,
                 cooldown = 10,
@@ -387,10 +401,11 @@ TUNING.musha = {
                     extramanacost = 75,
                     chargetime = 2,
                     radius = 20,
-                    duration = 90,
+                    duration = 30,
+                    durationgrowth = 3, -- per level
                     tickperiod = 3,
                     playerhealthregen = 5,
-                    nonplayerhealthregen = 30,
+                    nonplayerhealthregen = 50,
                     staminaregen = 15,
                     speedmultiplier = 1.5,
                     enemysleepprob = 0.1,
@@ -452,10 +467,13 @@ TUNING.musha = {
             },
         },
         magpiestep = {
-            staminaregenonhit = 10,
             maxdist = 10,
             usewindow = 0.5,
             radius = 2,
+            damagemultiplier = 0.5,
+        },
+        magpieslash = {
+            staminaregenonhit = 10,
             damagemultiplier = 1,
         },
         valkyrieparry = {

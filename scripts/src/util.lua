@@ -35,16 +35,20 @@ end
 
 -- Freeze
 local function StartFreezeCooldown(inst)
-    inst:AddDebuff("postfreezeslowdown", "debuff_slowdown", { duration = TUNING.musha.freezecooldowntime }) -- Add slowdown debuff upon unfreeze
+    if inst.components and inst.components.locomotor then
+        inst:AddDebuff("postfreezeslowdown", "debuff_slowdown", { duration = TUNING.musha.freezecooldowntime }) -- Add slowdown debuff upon unfreeze
+    end
     inst:DoTaskInTime(TUNING.musha.freezecooldowntime, function()
         inst:RemoveTag("freeze_cooldown")
-        inst:RemoveEventCallback("unfreeze", StartFreezeCooldown)
     end)
+    inst:RemoveEventCallback("unfreeze", StartFreezeCooldown)
 end
 
 GLOBAL.CustomOnFreeze = function(inst)
-    inst:AddTag("freeze_cooldown")
-    inst:ListenForEvent("unfreeze", StartFreezeCooldown)
+    if not inst:HasTag("freeze_cooldown") then
+        inst:AddTag("freeze_cooldown")
+        inst:ListenForEvent("unfreeze", StartFreezeCooldown)
+    end
 end
 
 ---------------------------------------------------------------------------------------------------------

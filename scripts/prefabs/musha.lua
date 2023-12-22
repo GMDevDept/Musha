@@ -710,9 +710,15 @@ local function PrincessBlessing(inst) local validtargets = 0
     local must_tags = { "_combat", "_health" }
     local ignore_tags = { "playerghost", "INLIMBO", "isdead" }
     local one_of_tags = { "player", "companion", "musha_companion" }
-    local durability = (TUNING.musha.skills.manashield.durabilitybase +
-        TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl +
-        TUNING.musha.skills.manashield.healthtodurabilitymultiplier * inst.components.health.maxhealth)
+    local durability = TUNING.musha.skills.manashield.durability
+        + TUNING.musha.skills.manashield.healthbonusmultiplier * inst.components.health.maxhealth
+        + (inst.components.mushaskilltree:IsActivated("manashielddurability1")
+            and TUNING.musha.skills.manashielddurability1.bonus or 0 )
+        + (inst.components.mushaskilltree:IsActivated("manashielddurability2")
+            and TUNING.musha.skills.manashielddurability2.bonusmultiplier * inst.components.leveler.lvl or 0 )
+    local duration = TUNING.musha.skills.princessblessing.duration
+        + (inst.components.mushaskilltree:IsActivated("princessblessingduration1")
+            and TUNING.musha.skills.princessblessingduration1.bonus or 0 )
 
     CustomDoAOE(inst, TUNING.musha.skills.princessblessing.range, must_tags, ignore_tags, one_of_tags, function(v)
         if not v.components.health then
@@ -720,7 +726,7 @@ local function PrincessBlessing(inst) local validtargets = 0
         end
 
         v:AddDebuff("manashield", "manashield",
-            { durability = durability, duration = TUNING.musha.skills.princessblessing.duration }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
+            { durability = durability, duration = duration }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
 
         validtargets = validtargets + 1
     end) -- Note: CustomDoAOE = function(center, radius, must_tags, additional_ignore_tags, one_of_tags, fn)
@@ -864,9 +870,13 @@ local function ShieldKeyUp(inst, x, y, z)
             CustomPlayFailedAnim(inst)
         else
             -- Mana cost handled at the time shield set off by debuff:OnDetached
-            local durability = TUNING.musha.skills.manashield.durabilitybase
-                + TUNING.musha.skills.manashield.durabilitygrowth * inst.components.leveler.lvl
-                + TUNING.musha.skills.manashield.healthtodurabilitymultiplier * inst.components.health.maxhealth
+            local durability = TUNING.musha.skills.manashield.durability
+                + TUNING.musha.skills.manashield.healthbonusmultiplier * inst.components.health.maxhealth
+                + (inst.components.mushaskilltree:IsActivated("manashielddurability1")
+                    and TUNING.musha.skills.manashielddurability1.bonus or 0 )
+                + (inst.components.mushaskilltree:IsActivated("manashielddurability2")
+                    and TUNING.musha.skills.manashielddurability2.bonusmultiplier * inst.components.leveler.lvl or 0 )
+
             inst:AddDebuff("manashield", "manashield", { durability = durability, single = true }) -- Note: EntityScript:AddDebuff(name, prefab, data, skip_test, pre_buff_fn), name is key
         end
     elseif inst.mode:value() == 2 then
@@ -1025,6 +1035,8 @@ local function PoisonSpore(inst, data)
         if charged then
             projectile.charged:push()
             projectile.bounce = TUNING.musha.skills.launchelement.poisonspore.charged.bouncetime
+                + math.floor(TUNING.musha.skills.launchelement.poisonspore.charged.bouncetimegrowth
+                    * inst.components.leveler.lvl)
             cooldownoverride = TUNING.musha.skills.launchelement.poisonspore.charged.cooldown
         end
         projectile.owner = inst

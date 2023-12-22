@@ -1,6 +1,6 @@
 local function ClassPostConstructFn(self)
     local _GetAttacked = self.GetAttacked
-    function self:GetAttacked(attacker, damage, weapon, stimuli, ...)
+    function self:GetAttacked(attacker, damage, weapon, stimuli, spdamage, ...)
         if self.inst:HasTag("manashieldactivated")
             and not (self.inst.components.health and self.inst.components.health:IsDead()) then
             -- By this way 'attacked' event won't be pushed to self.inst and 'onhitother' event won't be pushed to attacker
@@ -9,7 +9,7 @@ local function ClassPostConstructFn(self)
             self.lastattacker = attacker
             self.inst:PushEvent("blocked", { attacker = attacker })
             self.inst:PushEvent("manashieldonattacked",
-                { attacker = attacker, damage = damage, weapon = weapon, stimuli = stimuli }) -- Here is original damage before calculating equipments and health absorb multipliers
+                { attacker = attacker, damage = damage, weapon = weapon, stimuli = stimuli, spdamage = spdamage }) -- Here is original damage before calculating equipments and health absorb multipliers
             return false
         elseif (self.inst.sg and self.inst.sg:HasStateTag("musha_shadowparry"))
             and (self.inst.components.rider and self.inst.components.rider:IsRiding())
@@ -21,7 +21,7 @@ local function ClassPostConstructFn(self)
             self.inst:PushEvent("blocked", { attacker = attacker })
             return false
         else
-            return _GetAttacked(self, attacker, damage, weapon, stimuli, ...)
+            return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
         end
     end
 end

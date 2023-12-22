@@ -2548,9 +2548,7 @@ local musha_magpiestep = State {
                 inst.sg.statemem.targetpos.x, inst.sg.statemem.targetpos.z)) / (9 * FRAMES), 0, 0)
         end
 
-        if inst.components.mushaskilltree:IsActivated("magpieslash") then
-            inst.sg.statemem.slashready = true
-        end
+        inst.sg.statemem.slashready = true
     end,
 
     onupdate = function(inst)
@@ -2573,12 +2571,16 @@ local musha_magpiestep = State {
                 fx.Transform:SetRotation(inst.Transform:GetRotation())
                 fx.Transform:SetScale(2, 2, 2)
 
+                local damagemultiplier = TUNING.musha.skills.magpiestep.damagemultiplier
+                if inst.components.mushaskilltree:IsActivated("magpieslash") then
+                    damagemultiplier = TUNING.musha.skills.magpieslash.damagemultiplier
+                    inst.components.stamina:DoDelta(TUNING.musha.skills.magpieslash.staminaregenonhit)
+                end
+
                 local weapon = inst.components.combat:GetWeapon()
-                local damage = inst.components.combat:CalcDamage(target, weapon,
-                    TUNING.musha.skills.magpiestep.damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
+                local damage = inst.components.combat:CalcDamage(target, weapon, damagemultiplier) -- Note: CalcDamage(target, weapon, multiplier)
                 target.components.combat:GetAttacked(inst, damage, weapon)
 
-                inst.components.stamina:DoDelta(TUNING.musha.skills.magpiestep.staminaregenonhit)
                 inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
                 inst.SoundEmitter:PlaySound("dontstarve/impacts/impact_shadow_med_sharp")
                 inst.sg.statemem.slashready = nil

@@ -37,55 +37,13 @@ local function spawnicespike(inst)
     inst.reticule.Transform:SetScale(scale, scale, scale)
 end
 
-local NO_DAMAGE_TAGS = { "player", "companion", "musha_companion", "wall" }
-
-local function onfreeze(inst, target)
-    if not target:IsValid() then
-        --target killed or removed in combat damage phase
-        return
-    end
-
-    if target.components.burnable ~= nil then
-        if target.components.burnable:IsBurning() then
-            target.components.burnable:Extinguish()
-        elseif target.components.burnable:IsSmoldering() then
-            target.components.burnable:SmotherSmolder()
-        end
-    end
-
-    if target.components.combat ~= nil and not target:HasOneOfTags(NO_DAMAGE_TAGS) and inst.owner and
-        inst.owner:IsValid() then
-        target.components.combat:SuggestTarget(inst.owner)
-    end
-
-    if target.components.freezable and target.components.freezable:IsFrozen() and target.components.combat and
-        target.components.health and not target:HasOneOfTags(NO_DAMAGE_TAGS) and inst.owner and inst.owner:IsValid() then
-        local basedamage = TUNING.musha.skills.launchelement.whitefrost.charged.basedamage
-        local percentdamage = TUNING.musha.skills.launchelement.whitefrost.charged.percentdamage
-        local maxdamage = TUNING.musha.skills.launchelement.whitefrost.charged.maxdamage
-        target.components.combat:GetAttacked(inst.owner,
-            math.min(maxdamage, basedamage + percentdamage * target.components.health.maxhealth))
-    elseif target.components.freezable and not target.components.freezable:IsFrozen() then
-        target.components.freezable:Freeze(TUNING.musha.skills.launchelement.whitefrost.charged.frosttime)
-        target.components.freezable:SpawnShatterFX()
-        if target.components.freezable:IsFrozen() and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
-            CustomOnFreeze(target)
-        end
-    elseif not target.components.freezable and target.components.locomotor then
-        target:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
-            speedmult = TUNING.musha.skills.launchelement.whitefrost.charged.speedmultiplier,
-            duration = TUNING.musha.skills.launchelement.whitefrost.charged.frosttime,
-        })
-    end
-end
-
 local function dofreezefz(inst)
     if inst.freezetask then
         inst.freezetask:Cancel()
         inst.freezetask = nil
     end
-    local time = 0.1
-    inst.freezetask = inst:DoTaskInTime(time, function() inst.freezefx(inst) end)
+    local time = 0.2
+    inst.freezetask = inst:DoTaskInTime(time, function() inst:freezefx() end)
 end
 
 local function freezefx(inst)
@@ -93,7 +51,7 @@ local function freezefx(inst)
         local MAXRADIUS = TUNING.musha.skills.launchelement.whitefrost.charged.range
         local x, y, z = inst.Transform:GetWorldPosition()
         local theta = math.random() * 2 * PI
-        local radius = 4 + math.pow(math.random(), 0.8) * MAXRADIUS
+        local radius = 1 + math.pow(math.random(), 0.8) * MAXRADIUS
         local offset = Vector3(radius * math.cos(theta), 0, -radius * math.sin(theta))
 
         local prefab = "crab_king_icefx"
@@ -114,54 +72,102 @@ local function freezefx(inst)
     dofreezefz(inst)
 end
 
-local FREEZE_CANT_TAGS = { "ghost", "playerghost", "FX", "NOCLICK", "DECOR", "INLIMBO" }
+local FREEZE_CANT_TAGS = { "playerghost", "FX", "NOCLICK", "DECOR", "INLIMBO", "notarget", "noattack", "flight", "invisible", "isdead" }
+local FREEZE_ONEOF_TAGS = { "locomotor", "freezable", "fire", "smolder" }
+local NO_DAMAGE_TAGS = { "player", "companion", "musha_companion", "wall" }
 
 local function dofreeze(inst)
     local interval = TUNING.musha.skills.launchelement.whitefrost.charged.tickperiod
     local pos = Vector3(inst.Transform:GetWorldPosition())
     local range = TUNING.musha.skills.launchelement.whitefrost.charged.range
-    local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, range, nil, FREEZE_CANT_TAGS)
-    for i, v in pairs(ents) do
-        if v.components.temperature then
+    local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, range, nil, FREEZE_CANT_TAGS, FREEZE_ONEOF_TAGS)
+    for i, target in pairs(ents) do
+        if target.components.temperature then
             local rate = TUNING.musha.skills.launchelement.whitefrost.charged.temperaturedecrease /
                 (TUNING.musha.skills.launchelement.whitefrost.charged.casttime / interval)
 
-            if v.components.moisture then
-                rate = rate * Remap(v.components.moisture:GetMoisture(), 0, v.components.moisture.maxmoisture, 1, 3)
+            if target.components.moisture then
+                rate = rate * Remap(target.components.moisture:GetMoisture(), 0, target.components.moisture.maxmoisture, 1, 3)
             end
 
-            local mintemp = v.components.temperature.mintemp
-            local curtemp = v.components.temperature:GetCurrent()
+            local mintemp = target.components.temperature.mintemp
+            local curtemp = target.components.temperature:GetCurrent()
             if mintemp < curtemp then
-                v.components.temperature:DoDelta(math.max(-rate, mintemp - curtemp))
+                target.components.temperature:DoDelta(math.max(-rate, mintemp - curtemp))
             end
         end
 
-        if v.components.burnable ~= nil then
-            if v.components.burnable:IsBurning() then
-                v.components.burnable:Extinguish()
-            elseif v.components.burnable:IsSmoldering() then
-                v.components.burnable:SmotherSmolder()
+        if target.components.burnable ~= nil then
+            target.components.burnable:Extinguish(true, 0)
+        end
+
+        if target.components.health and target.components.combat and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+            local basedamage = TUNING.musha.skills.launchelement.whitefrost.charged.damageontick
+
+            if target.components.freezable and target.components.freezable:IsFrozen() then
+                local finaldamage = basedamage * TUNING.musha.skills.launchelement.whitefrost.charged.frozendamagemultiplier
+                target.components.health:DoDelta(-finaldamage)
+            else
+                target.components.combat:GetAttacked(inst.owner, basedamage)
             end
         end
 
-        if v.components.freezable ~= nil then
-            v.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.charged.coldnessontick)
-            v.components.freezable:SpawnShatterFX()
-            if v.components.freezable:IsFrozen() and not v:HasOneOfTags(NO_DAMAGE_TAGS) then
-                CustomOnFreeze(v)
+        if target.components.freezable ~= nil then
+            target.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.charged.coldnessontick)
+            target.components.freezable:SpawnShatterFX()
+            if target.components.freezable:IsFrozen() and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+                CustomOnFreeze(target)
             end
         end
 
-        if v.components.locomotor and not v:HasOneOfTags(NO_DAMAGE_TAGS) then
-            v:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
+        if target.components.locomotor and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+            target:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
                 speedmult = TUNING.musha.skills.launchelement.whitefrost.charged.speedmultiplier,
                 duration = interval,
             })
         end
     end
 
-    inst.lowertemptask = inst:DoTaskInTime(interval, function() inst.dofreeze(inst) end)
+    inst.ticktask = inst:DoTaskInTime(interval, function() inst.dofreeze(inst) end)
+end
+
+local function iceblast(inst, target)
+    if target.components.burnable ~= nil then
+       target.components.burnable:Extinguish(true, 0)
+    end
+
+    local nofreeze
+
+    if target.components.health and target.components.combat and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+        local basedamage = TUNING.musha.skills.launchelement.whitefrost.charged.finalbasedamage
+            + inst.owner.components.leveler.lvl * TUNING.musha.skills.launchelement.whitefrost.charged.basedamagegrowth
+        local percentdamage = TUNING.musha.skills.launchelement.whitefrost.charged.finalpercentdamage
+            + inst.owner.components.leveler.lvl * TUNING.musha.skills.launchelement.whitefrost.charged.percentdamagegrowth
+        local maxdamage = TUNING.musha.skills.launchelement.whitefrost.charged.finalmaxdamage
+            + inst.owner.components.leveler.lvl * TUNING.musha.skills.launchelement.whitefrost.charged.maxdamagegrowth
+        local finaldamage = math.min(maxdamage, basedamage + percentdamage * target.components.health.maxhealth)
+
+        if target.components.freezable and target.components.freezable:IsFrozen() then
+            finaldamage = finaldamage * TUNING.musha.skills.launchelement.whitefrost.charged.frozendamagemultiplier
+            target.components.freezable:SpawnShatterFX()
+            nofreeze = true
+        end
+
+        target.components.combat:GetAttacked(inst.owner, finaldamage)
+    end
+
+    if not nofreeze and target.components.freezable and not v:HasTag("freeze_cooldown") then
+        target.components.freezable:Freeze(TUNING.musha.skills.launchelement.whitefrost.charged.frosttime)
+        target.components.freezable:SpawnShatterFX()
+        if target.components.freezable:IsFrozen() and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+            CustomOnFreeze(target)
+        end
+    elseif target.components.freezable == nil and target.components.locomotor and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
+        target:AddDebuff("chargedwhitefrost", "debuff_slowdown", {
+            speedmult = TUNING.musha.skills.launchelement.whitefrost.charged.speedmultiplier,
+            duration = TUNING.musha.skills.launchelement.whitefrost.charged.frosttime,
+        })
+    end
 end
 
 local function endfreeze(inst)
@@ -170,17 +176,18 @@ local function endfreeze(inst)
         inst.freezetask = nil
     end
 
-    if inst.lowertemptask then
-        inst.lowertemptask:Cancel()
-        inst.lowertemptask = nil
+    if inst.ticktask then
+        inst.ticktask:Cancel()
+        inst.ticktask = nil
     end
 
     local pos = Vector3(inst.Transform:GetWorldPosition())
     local range = TUNING.musha.skills.launchelement.whitefrost.charged.range
-    local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, range, nil, FREEZE_CANT_TAGS)
+    local ents = TheSim:FindEntities(pos.x, pos.y, pos.z, range, nil, FREEZE_CANT_TAGS, FREEZE_ONEOF_TAGS)
     for i, v in pairs(ents) do
-        onfreeze(inst, v)
+        iceblast(inst, v)
     end
+
     CustomRemoveEntity(inst.reticule)
     SpawnPrefab("crabking_ring_fx").Transform:SetPosition(pos.x, pos.y, pos.z)
     inst.SoundEmitter:PlaySound("dontstarve/common/break_iceblock")
@@ -206,6 +213,7 @@ local function freezefn()
 
     inst:AddComponent("age")
 
+    -- inst.owner = nil -- set on ChargedIceOnExplode
     inst.spawnicespike = spawnicespike
     inst.freezefx = freezefx
     inst.dofreeze = dofreeze
