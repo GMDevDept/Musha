@@ -42,7 +42,7 @@ local function dofreezefz(inst)
         inst.freezetask:Cancel()
         inst.freezetask = nil
     end
-    local time = 0.2
+    local time = 0.1
     inst.freezetask = inst:DoTaskInTime(time, function() inst:freezefx() end)
 end
 
@@ -102,19 +102,13 @@ local function dofreeze(inst)
         end
 
         if target.components.health and target.components.combat and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
-            local basedamage = TUNING.musha.skills.launchelement.whitefrost.charged.damageontick
-
-            if target.components.freezable and target.components.freezable:IsFrozen() then
-                local finaldamage = basedamage * TUNING.musha.skills.launchelement.whitefrost.charged.frozendamagemultiplier
-                target.components.health:DoDelta(-finaldamage)
-            else
-                target.components.combat:GetAttacked(inst.owner, basedamage)
+            if not (target.components.freezable and target.components.freezable:IsFrozen()) then
+                target.components.combat:GetAttacked(inst.owner, TUNING.musha.skills.launchelement.whitefrost.charged.damageontick)
             end
         end
 
         if target.components.freezable ~= nil then
             target.components.freezable:AddColdness(TUNING.musha.skills.launchelement.whitefrost.charged.coldnessontick)
-            target.components.freezable:SpawnShatterFX()
             if target.components.freezable:IsFrozen() and not target:HasOneOfTags(NO_DAMAGE_TAGS) then
                 CustomOnFreeze(target)
             end
@@ -128,6 +122,7 @@ local function dofreeze(inst)
         end
     end
 
+    inst.SoundEmitter:PlaySound("hookline_2/creatures/boss/crabking/ice_attack")
     inst.ticktask = inst:DoTaskInTime(interval, function() inst.dofreeze(inst) end)
 end
 
@@ -156,7 +151,7 @@ local function iceblast(inst, target)
         target.components.combat:GetAttacked(inst.owner, finaldamage)
     end
 
-    if not nofreeze and target.components.freezable and not v:HasTag("freeze_cooldown") then
+    if not nofreeze and target.components.freezable and not target:HasTag("freeze_cooldown") then
         target.components.freezable:Freeze(TUNING.musha.skills.launchelement.whitefrost.charged.frosttime)
         target.components.freezable:SpawnShatterFX()
         if target.components.freezable:IsFrozen() and not target:HasOneOfTags(NO_DAMAGE_TAGS) then

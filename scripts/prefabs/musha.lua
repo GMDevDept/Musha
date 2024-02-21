@@ -1084,7 +1084,7 @@ end
 
 local function ChargedPoisonSpore(inst)
     inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.charged.extramanacost)
-    inst.components.mana:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.charged.extramanacost)
+    inst.components.sanity:DoDelta(-TUNING.musha.skills.launchelement.poisonspore.charged.extrasanitycost)
     local debuff = inst.components.debuffable:GetDebuff("elementloaded")
     debuff.charged:push() -- No need to set bounce time here because entity will be removed and respawned
 end
@@ -1281,7 +1281,7 @@ local function LightningRecharge(inst)
     end
     CustomAttachFx(inst, "electricchargedfx")
     inst.task_lightningfx = inst:DoPeriodicTask(2.6, function()
-        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx", { duration = 0 })
+        inst.fx_lightning = CustomAttachFx(inst, "mossling_spin_fx_musha", { duration = 0 })
     end, 0)
 end
 

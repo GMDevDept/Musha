@@ -76,7 +76,7 @@ local function SpawnFx(target, fx_name, data, scale, offset)
     fx.Transform:SetScale(a, b, c)
     fx.Transform:SetPosition(x, y, z)
 
-    if fx_name == "mossling_spin_fx" then
+    if fx_name == "mossling_spin_fx_musha" then
         fx.AnimState:SetSortOrder(3)
     end
 

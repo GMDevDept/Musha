@@ -27,6 +27,7 @@ PrefabFiles = {
     "shadow_pillar_musha",
     "bloomingfield",
     "reticuleaoe_musha",
+    "mossling_spin_fx_musha",
     "dummyplaceholder",
 
     -- General
