@@ -1,5 +1,10 @@
+<p align="center">
+    <img src="docs/assets/banner.png" alt="Musha Banner" width="640px" align="center">
+</p>
 
-# [DST] Musha (Neko Ver.)
+# Musha
+
+Rebuilt Musha character mod of Don't Starve Together
 
 ## 1. 角色
 
